@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 #         fail_silently=False,
 #     )
 
+
 from django.db import connection
 from rest_framework.views import APIView
 from rest_framework.response import Response
