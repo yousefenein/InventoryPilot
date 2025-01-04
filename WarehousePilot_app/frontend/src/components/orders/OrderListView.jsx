@@ -9,7 +9,7 @@ import {
   Input,
   Pagination,
   Button,
-} from '@nextui-org/react'; // <-- Added Button import from NextUI
+} from '@nextui-org/react';
 import { SearchIcon } from '@nextui-org/shared-icons';
 import axios from 'axios';
 import Sidebar from '../dashboard_sidebar/Sidebar';
@@ -23,51 +23,85 @@ const OrderListView = () => {
   const [page, setPage] = useState(1);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState(null); // Track which order is being updated
 
   const rowsPerPage = 10;
 
-  // Fetch orders on mount
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setError('No authorization token found');
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get('http://127.0.0.1:8000/orders/ordersview/', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        setRows(
-          response.data.map((row, index) => ({
-            id: index + 1, // Provide a unique ID for the table
-            order_id: row.order_id,
-            estimated_duration: row.estimated_duration,
-            status: row.status,
-            due_date: row.due_date,
-          }))
-        );
+  // Fetch orders function
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No authorization token found');
         setLoading(false);
-      } catch (err) {
-        console.error('Error fetching orders:', err);
-        setError('Failed to fetch orders');
-        setLoading(false);
+        return;
       }
-    };
 
+      const response = await axios.get('http://127.0.0.1:8000/orders/ordersview/', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      setRows(
+        response.data.map((row, index) => ({
+          id: index + 1,
+          order_id: row.order_id,
+          estimated_duration: row.estimated_duration,
+          status: row.status,
+          due_date: row.due_date,
+        }))
+      );
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError('Failed to fetch orders');
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
     fetchOrders();
   }, []);
 
   // Handle "Start" action
-  const handleStart = (orderId) => {
-    // For now, just log the ID. Replace with a real API call if needed.
-    console.log('Starting fulfillment for order:', orderId);
+  const handleStart = async (orderId) => {
+    try {
+      setUpdatingOrderId(orderId);
+      setError(null);
+  
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No authorization token found');
+        return;
+      }
+  
+      const response = await axios.post(`http://127.0.0.1:8000/orders/start_order/${orderId}/`, {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      // Check if the response was successful
+      if (response.data.status === 'success') {
+        // Update the local state immediately
+        setRows(prevRows => 
+          prevRows.map(row => 
+            row.order_id === orderId 
+              ? { ...row, status: 'In Progress' }
+              : row
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error starting the order:', err);
+      setError('Error starting the order');
+    } finally {
+      setUpdatingOrderId(null);
+    }
   };
 
   // Filter rows by search text
@@ -90,10 +124,8 @@ const OrderListView = () => {
     return filteredRows.slice(start, end);
   }, [page, rowsPerPage, filteredRows]);
 
-  // Total pages
   const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
 
-  // Toggle sidebar
   const toggleSidebar = () => {
     setSidebarOpen(!isSidebarOpen);
   };
@@ -108,7 +140,20 @@ const OrderListView = () => {
         <div className="mt-16 p-8">
           <h1 className="text-2xl font-bold mb-6">Orders</h1>
 
-          {/* Smaller Search Input */}
+          {/* Error message with dismiss button */}
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+              <span>{error}</span>
+              <button
+                onClick={() => setError(null)}
+                className="bg-transparent text-red-700 hover:text-red-900 font-semibold px-2"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Search Input */}
           <div className="mb-6 flex items-center gap-2">
             <Input
               size="md"
@@ -124,8 +169,6 @@ const OrderListView = () => {
             <div className="flex justify-center items-center h-64">
               <div>Loading...</div>
             </div>
-          ) : error ? (
-            <div className="text-red-500">{error}</div>
           ) : (
             <>
               <Table
@@ -138,7 +181,6 @@ const OrderListView = () => {
                   <TableColumn>Estimated Duration</TableColumn>
                   <TableColumn>Status</TableColumn>
                   <TableColumn>Due Date</TableColumn>
-                  {/* New Actions Column */}
                   <TableColumn>Action</TableColumn>
                 </TableHeader>
 
@@ -153,9 +195,11 @@ const OrderListView = () => {
                         <Button
                           color="primary"
                           size="sm"
+                          isLoading={updatingOrderId === item.order_id}
+                          isDisabled={item.status === 'In Progress' || updatingOrderId !== null}
                           onPress={() => handleStart(item.order_id)}
                         >
-                          Start
+                          {item.status === 'In Progress' ? 'Started' : 'Start'}
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -1,3 +1,5 @@
+from django.shortcuts import get_object_or_404
+from datetime import datetime
 from django.http import JsonResponse
 from .models import Orders
 from django.db import connection
@@ -5,6 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.utils import timezone  # Add this import
+
 
 class OrdersView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -31,3 +35,30 @@ class OrdersView(APIView):
             return Response(inventory_data)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+
+class StartOrderView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, order_id):
+        try:
+            order = get_object_or_404(Orders, order_id=order_id)
+
+            if order.status == 'In Progress':
+                return JsonResponse({'status': 'error', 'message': 'Order is already in progress'}, status=400)
+
+            order.status = 'In Progress'
+            order.start_timestamp = timezone.now()  # Use timezone.now() instead of datetime.now()
+            
+            order.save()
+
+            return JsonResponse({
+                'status': 'success',
+                'order_id': order.order_id,
+                'status': order.status,
+                'start_timestamp': order.start_timestamp.isoformat()
+            })
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
