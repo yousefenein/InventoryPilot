@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.utils import timezone  # Add this import
+from django.utils import timezone 
 
 
 class OrdersView(APIView):
@@ -16,22 +16,23 @@ class OrdersView(APIView):
 
     def get(self, request):
         try:
-            # Query to fetch inventory data with inventory_id
+            # Query to fetch order data
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT order_id, estimated_duration, status, due_date
+                    SELECT order_id, estimated_duration, status, due_date, start_timestamp
                     FROM orders_orders
                 """)
                 result = cursor.fetchall()
 
             # Process the result and return as JSON
             inventory_data = [{
-                "order_id": row[0],  
+                "order_id": row[0],
                 "estimated_duration": row[1],
                 "status": row[2],
                 "due_date": row[3],
+                "start_timestamp": row[4] if row[4] else None, 
             } for row in result]
-            
+
             return Response(inventory_data)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
