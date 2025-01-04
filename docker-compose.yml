@@ -18,7 +18,7 @@ services:
     env_file:
       - ./WarehousePilot_app/backend/.env
     environment:
-      DATABASE_URL: postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}    
+      DATABASE_URL: postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
     ports:
       - "8000:8000"
     command: python manage.py runserver 0.0.0.0:8000
@@ -31,8 +31,10 @@ services:
       - backend
     ports:
       - "5173:5173"
-    # hot reload for dev
     volumes:
-    - ./WarehousePilot_app/frontend/src:/frontend/src
-    - ./WarehousePilot_app/frontend/public:/frontend/public
+      - ./WarehousePilot_app/frontend/src:/frontend/src
+      - ./WarehousePilot_app/frontend/public:/frontend/public
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "100"
     command: npm run dev -- --host
