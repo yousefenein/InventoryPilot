@@ -20,14 +20,37 @@ const OrderListView = () => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const [page, setPage] = useState(1);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [userData, setUserData] = useState(null);
-  const [updatingOrderId, setUpdatingOrderId] = useState(null); // Track which order is being updated
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
   const rowsPerPage = 10;
 
-  // Fetch orders function
+  // Filter rows by search text
+  const filteredRows = useMemo(() => {
+    if (!filterValue.trim()) return rows;
+    const searchTerm = filterValue.toLowerCase();
+    return rows.filter((row) => {
+      const orderIdMatch = row.order_id?.toString().toLowerCase().includes(searchTerm);
+      const durationMatch = row.estimated_duration?.toString().toLowerCase().includes(searchTerm);
+      const statusMatch = row.status?.toLowerCase().includes(searchTerm);
+      const dueDateMatch = row.due_date?.toLowerCase().includes(searchTerm);
+      return orderIdMatch || durationMatch || statusMatch || dueDateMatch;
+    });
+  }, [rows, filterValue]);
+
+  // Apply pagination
+  const paginatedRows = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredRows.slice(start, end);
+  }, [page, filteredRows]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -61,16 +84,25 @@ const OrderListView = () => {
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  // Handle "Start" action
+  // Auto-dismiss success message after 3 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   const handleStart = async (orderId) => {
     try {
       setUpdatingOrderId(orderId);
       setError(null);
+      setSuccess(null); // Reset previous success message
   
       const token = localStorage.getItem('token');
       if (!token) {
@@ -85,16 +117,18 @@ const OrderListView = () => {
         },
       });
   
-      // Check if the response was successful
+      console.log('Response from backend:', response.data); // Log the response
+  
+      // Make sure the correct field name is accessed here
       if (response.data.status === 'success') {
-        // Update the local state immediately
         setRows(prevRows => 
           prevRows.map(row => 
             row.order_id === orderId 
-              ? { ...row, status: 'In Progress' }
+              ? { ...row, status: response.data.order_status, start_timestamp: response.data.start_timestamp }
               : row
           )
         );
+        setSuccess(`Order ${orderId} successfully started!`); // Set success message
       }
     } catch (err) {
       console.error('Error starting the order:', err);
@@ -103,44 +137,35 @@ const OrderListView = () => {
       setUpdatingOrderId(null);
     }
   };
-
-  // Filter rows by search text
-  const filteredRows = useMemo(() => {
-    if (!filterValue.trim()) return rows;
-    const searchTerm = filterValue.toLowerCase();
-    return rows.filter((row) => {
-      const orderIdMatch = row.order_id?.toString().toLowerCase().includes(searchTerm);
-      const durationMatch = row.estimated_duration?.toString().toLowerCase().includes(searchTerm);
-      const statusMatch = row.status?.toLowerCase().includes(searchTerm);
-      const dueDateMatch = row.due_date?.toLowerCase().includes(searchTerm);
-      return orderIdMatch || durationMatch || statusMatch || dueDateMatch;
-    });
-  }, [rows, filterValue]);
-
-  // Apply pagination
-  const paginatedRows = useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    return filteredRows.slice(start, end);
-  }, [page, rowsPerPage, filteredRows]);
-
-  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!isSidebarOpen);
-  };
+  
 
   return (
     <div className="flex h-full">
       <Sidebar userData={userData} isOpen={isSidebarOpen} />
 
       <div className="flex-1 sm:ml-64">
-        <Header userData={userData} toggleSidebar={toggleSidebar} />
+        <Header 
+          userData={userData} 
+          toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} 
+        />
 
         <div className="mt-16 p-8">
           <h1 className="text-2xl font-bold mb-6">Orders</h1>
 
-          {/* Error message with dismiss button */}
+          {/* Success message */}
+          {success && (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+              <span>{success}</span>
+              <button
+                onClick={() => setSuccess(null)}
+                className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Error message */}
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
               <span>{error}</span>
@@ -161,7 +186,7 @@ const OrderListView = () => {
               value={filterValue}
               onChange={(e) => setFilterValue(e.target.value)}
               endContent={<SearchIcon className="text-default-400" width={16} />}
-              css={{ width: '300px' }}
+              className="w-72"
             />
           </div>
 
@@ -173,8 +198,7 @@ const OrderListView = () => {
             <>
               <Table
                 aria-label="Order list"
-                shadow
-                css={{ height: 'auto', minWidth: '100%' }}
+                className="min-w-full"
               >
                 <TableHeader>
                   <TableColumn>Order ID</TableColumn>
@@ -189,11 +213,17 @@ const OrderListView = () => {
                     <TableRow key={item.id}>
                       <TableCell>{item.order_id}</TableCell>
                       <TableCell>{item.estimated_duration}</TableCell>
-                      <TableCell>{item.status}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded ${
+                          item.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : ''
+                        }`}>
+                          {item.status}
+                        </span>
+                      </TableCell>
                       <TableCell>{item.due_date}</TableCell>
                       <TableCell>
                         <Button
-                          color="primary"
+                          color={item.status === 'In Progress' ? 'success' : 'primary'}
                           size="sm"
                           isLoading={updatingOrderId === item.order_id}
                           isDisabled={item.status === 'In Progress' || updatingOrderId !== null}

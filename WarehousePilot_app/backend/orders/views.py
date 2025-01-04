@@ -36,7 +36,6 @@ class OrdersView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-
 class StartOrderView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -48,17 +47,19 @@ class StartOrderView(APIView):
             if order.status == 'In Progress':
                 return JsonResponse({'status': 'error', 'message': 'Order is already in progress'}, status=400)
 
+            # Update order status and set timestamp
             order.status = 'In Progress'
             order.start_timestamp = timezone.now()  # Use timezone.now() instead of datetime.now()
-            
             order.save()
 
+            # Return success response with the updated order data
             return JsonResponse({
-                'status': 'success',
+                'status': 'success',  # Overall success of the action
                 'order_id': order.order_id,
-                'status': order.status,
-                'start_timestamp': order.start_timestamp.isoformat()
+                'order_status': order.status,  # Changed this from 'status' to 'order_status'
+                'start_timestamp': order.start_timestamp.isoformat()  # ISO 8601 formatted timestamp
             })
 
         except Exception as e:
+            # In case of any error, return error details
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
