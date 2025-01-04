@@ -6,6 +6,8 @@ import OrderPickingAccuracy from "./OrderPickingAccuracy";
 import StockLevels from "./StockLevels";
 import WarehouseThroughput from "./WarehouseThroughput";
 import OrderFulfillmentRate from "./OrderFulfillmentRate";
+import StockLevelsPreview from "./StockLevelsPreview";
+
 
 import SideBar from "../dashboard_sidebar1/App";
 
@@ -36,6 +38,7 @@ const KPIDashboard = ({ userData }) => {
             <StockLevels />
             <WarehouseThroughput />
             <OrderFulfillmentRate />
+            <StockLevelsPreview />
           </div>
         </main>
       </div>
