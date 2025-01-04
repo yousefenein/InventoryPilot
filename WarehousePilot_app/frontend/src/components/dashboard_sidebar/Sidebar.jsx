@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Avatar from "./Avatar"; // Ensure the correct path
+import CSFLogo from "../../assets/CSFLogo.svg";
+
 
 const Sidebar = ({ isOpen }) => {
   const [userData, setUserData] = useState(null);
@@ -57,7 +59,11 @@ const Sidebar = ({ isOpen }) => {
         isOpen ? "translate-x-0" : "-translate-x-full"
       } transition-transform sm:block`}
     >
-      <h2 className="text-2xl font-bold mb-4 px-4 text-center">CSF</h2>
+    {/* Logo */}
+    <div className="flex justify-start items-center py-4 pl-6">
+        <img src={CSFLogo} alt="CSFLogo" className="h-16 w-auto" />
+      </div>
+      
 
       <div className="h-full px-3 pb-4 pt-10 overflow-y-auto">
         <ul className="space-y-2 font-medium text-base">
@@ -268,3 +274,4 @@ const Sidebar = ({ isOpen }) => {
 };
 
 export default Sidebar;
+
