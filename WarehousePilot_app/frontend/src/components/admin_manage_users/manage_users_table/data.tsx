@@ -85,7 +85,6 @@ export const fetchUserInfo = async (): Promise<Users[]> => {
       throw new Error("Failed to fetch user info");
     }
     const data = response.data;
-    console.log("Fetched data:", data); // Log the fetched data
     if (!Array.isArray(data)) {
       throw new Error("Response data is not an array");
     }

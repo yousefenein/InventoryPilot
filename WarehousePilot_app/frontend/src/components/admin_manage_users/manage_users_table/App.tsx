@@ -130,14 +130,12 @@ export default function ManageUsersTable() {
       );
     }
 
-    return filteredUsers;
+    const result = filteredUsers.filter(itemFilter);
+    return result;
   }, [filterValue, itemFilter, allUsers]);
 
-  const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
-
-
   const sortedItems = useMemo(() => {
-    return [...filteredItems].sort((a: Users, b: Users) => {
+    const result = [...filteredItems].sort((a: Users, b: Users) => {
       const col = sortDescriptor.column as keyof Users;
 
       let first = a[col];
@@ -161,13 +159,16 @@ export default function ManageUsersTable() {
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
+    return result;
   }, [sortDescriptor, filteredItems]);
+
+  const pages = Math.ceil(sortedItems.length / rowsPerPage) || 1;
 
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-
-    return sortedItems.slice(start, end);
+    const result = sortedItems.slice(start, end);
+    return result;
   }, [page, sortedItems, rowsPerPage]);
 
   const filterSelectedKeys = useMemo(() => {
@@ -563,12 +564,14 @@ export default function ManageUsersTable() {
             </TableColumn>
           )}
         </TableHeader>
-        <TableBody emptyContent={"No items found"} items={sortedItems}>
-          {(item) => (
-            <TableRow key={item.user_id}>
-              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-            </TableRow>
-          )}
+        <TableBody emptyContent={"No items found"} items={items}>
+          {(item) => {
+            return (
+              <TableRow key={item.user_id}>
+                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+              </TableRow>
+            );
+          }}
         </TableBody>
       </Table>
     </div>
