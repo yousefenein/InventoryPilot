@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import Header from "../dashboard_sidebar/Header";
-// import Sidebar from "../dashboard_sidebar/Sidebar";
+import Sidebar from "../dashboard_sidebar/Sidebar";
 import { useNavigate } from "react-router-dom";
-import SideBar from "../dashboard_sidebar1/App";
 
 const Dashboard = ({ userData }) => {
   const navigate = useNavigate();
@@ -19,12 +18,15 @@ const Dashboard = ({ userData }) => {
   };
 
   return (
-    <div className="flex h-dvh w-full">
-    <SideBar /> {/* Add the SideBar component here */}
+    <div className="flex">
+      {/* Sidebar */}
+      <Sidebar userData={userData} isOpen={isSidebarOpen} handleLogout={handleLogout} />
 
       {/* Main Content */}
-      <div className="flex-1 sm:ml-10 sm:mt-10">
-      
+      <div className="flex-1 sm:ml-64">
+        {/* Navbar */}
+        <Header userData={userData} toggleSidebar={toggleSidebar} />
+
         {/* Page Content */}
         <main className="p-4 mt-16 bg-gray-100 ">
           <h1 className="text-2xl font-semibold">This is the {userData?.role} dashboard</h1>

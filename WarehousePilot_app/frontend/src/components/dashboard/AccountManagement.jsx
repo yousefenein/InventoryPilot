@@ -4,10 +4,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-// import Sidebar from "../dashboard_sidebar/Sidebar";
+import Sidebar from "../dashboard_sidebar/Sidebar";
 import Header from "../dashboard_sidebar/Header";
 
-import SideBar from '../dashboard_sidebar1/App';
 
 function AccountManagement() {
     const [userData, setUserData] = useState(null);
@@ -43,9 +42,12 @@ function AccountManagement() {
     return (
       <div className="flex">
         {/* Sidebar */}
-        <SideBar userData={userData} isOpen={isSidebarOpen} />
+        <Sidebar userData={userData} isOpen={isSidebarOpen} />
+
         {/* Main Content */}
-        <div className="flex-1 sm:ml-10 sm:mt-16">
+        <div className="flex-1 sm:ml-64">
+          {/* Navbar */}
+          <Header userData={userData} toggleSidebar={toggleSidebar} />
           {/* Page Content */}
           <main className="p-4 mt-16 bg-gray-100 ">
         <h1>Account Management Page</h1>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-// import Sidebar from "../dashboard_sidebar/Sidebar";
+import Sidebar from "../dashboard_sidebar/Sidebar";
 import Header from "../dashboard_sidebar/Header";
 import CycleTime from "./CycleTime";
 import OrderPickingAccuracy from "./OrderPickingAccuracy";
@@ -9,8 +9,6 @@ import OrderFulfillmentRate from "./OrderFulfillmentRate";
 import StockLevelsPreview from "./StockLevelsPreview";
 
 
-import SideBar from "../dashboard_sidebar1/App";
-
 const KPIDashboard = ({ userData }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
@@ -19,12 +17,14 @@ const KPIDashboard = ({ userData }) => {
   };
 
   return (
-    <div className="flex bg-gray-100">
+    <div className="flex">
       {/* Sidebar */}
-      <SideBar userData={userData} isOpen={isSidebarOpen} />
+      <Sidebar userData={userData} isOpen={isSidebarOpen} />
 
       {/* Main Content */}
-      <div className="flex-1 sm:ml-10 sm:mt-5">
+      <div className="flex-1 sm:ml-64">
+        {/* Header */}
+        <Header userData={userData} toggleSidebar={toggleSidebar} />
 
         {/* KPI Dashboard Content */}
         <main className="p-6 bg-gray-100 h-screen">
