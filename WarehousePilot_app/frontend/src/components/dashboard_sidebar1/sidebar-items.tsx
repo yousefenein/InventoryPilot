@@ -1,21 +1,17 @@
 import {Icon} from "@iconify/react";
-import {type SidebarItem} from "./sidebar";
 
-const user = localStorage.getItem('user');
-const parsedUser = user ? JSON.parse(user) : null;
-const userRole = parsedUser ? parsedUser.role : null;
-console.log('user from local storage', parsedUser);
+import {type SidebarItem} from "./sidebar";
 
 export const items: SidebarItem[] = [
   {
     key: "dashboard",
-    href: userRole === 'admin' ? "/admin_dashboard" : "/manager_dashboard",
+    href: "/dashboard",
     icon: "solar:home-2-linear",
     title: "Dashboard",
-},
+  },
   {
     key: "kpi",
-    href: "/kpi", 
+    href: "/kpi", // Ensure this href matches the route path
     icon: "solar:chart-outline",
     title: "KPI",
   },
@@ -51,5 +47,3 @@ export const items: SidebarItem[] = [
   },
 ];
 
-
-export default items;
