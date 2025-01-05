@@ -494,8 +494,7 @@ export default function InventoryTable() {
   }
 
   return (
-    <div className="flex h-dvh w-full">
-      <NavBar />
+    <div>
       <SideBar /> {/* Add the SideBar component here */}
       <div className="flex-1 p-6" style={{ padding: "40px" }}>
         {topBar}
@@ -538,46 +537,6 @@ export default function InventoryTable() {
         </Table>
         <ToastContainer />
       </div>
-    <div className="h-full w-full p-6" style={{ padding: "40px" }}>
-      {topBar}
-      <Table
-        isHeaderSticky
-        aria-label="Example table with custom cells, pagination and sorting"
-        bottomContent={bottomContent}
-        bottomContentPlacement="outside"
-        classNames={{
-          td: "before:bg-transparent",
-        }}
-        selectedKeys={filterSelectedKeys}
-        selectionMode="multiple"
-        sortDescriptor={sortDescriptor}
-        topContent={topContent}
-        topContentPlacement="outside"
-        onSelectionChange={onSelectionChange}
-        onSortChange={setSortDescriptor}
-      >
-        <TableHeader columns={headerColumns}>
-          {(column) => (
-            <TableColumn
-              key={column.uid}
-              align={column.uid === "actions" ? "end" : "start"}
-              className={cn([
-                column.uid === "actions" ? "flex items-center justify-end px-[20px]" : "",
-              ])}
-            >
-              {column.name}
-            </TableColumn>
-          )}
-        </TableHeader>
-        <TableBody emptyContent={"No items found"} items={paginatedItems}>
-          {(item) => (
-            <TableRow key={item.inventory_id}>
-              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      <ToastContainer />
     </div>
   );
 }
