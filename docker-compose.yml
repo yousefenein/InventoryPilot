@@ -1,1 +1,40 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres_db_container
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    ports:
+      - "${DATABASE_PORT}:5432"
 
+  backend:
+    build:
+      context: ./WarehousePilot_app/backend
+      dockerfile: Dockerfile.backend
+    depends_on:
+      - db
+    env_file:
+      - ./WarehousePilot_app/backend/.env
+    environment:
+      DATABASE_URL: postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
+    ports:
+      - "8000:8000"
+    command: python manage.py runserver 0.0.0.0:8000
+
+  frontend:
+    build:
+      context: ./WarehousePilot_app/frontend
+      dockerfile: Dockerfile.frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./WarehousePilot_app/frontend/src:/frontend/src
+      - ./WarehousePilot_app/frontend/public:/frontend/public
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "100"
+    command: npm run dev -- --host
