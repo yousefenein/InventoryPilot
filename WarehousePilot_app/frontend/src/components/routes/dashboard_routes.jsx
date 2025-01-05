@@ -1,5 +1,4 @@
-import { Dashboard, ManagerDashboard, AdminDashboard, AccountManagement, ChangePassword  } from '../dashboard';
-import Profile from '../dashboard/profile';
+import { Dashboard, ManagerDashboard, AdminDashboard, AccountManagement, ChangePassword, Profile  } from '../dashboard';
 import KpiDashboard from "../dashboard/KpiDashboard"
 import InventoryTable from '../inventory-stock/App'; 
 import ManageUsersPage from '../admin_manage_users/ManageUsersPage';
