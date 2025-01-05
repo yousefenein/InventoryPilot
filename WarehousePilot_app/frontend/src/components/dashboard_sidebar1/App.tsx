@@ -30,6 +30,11 @@ export default function SideBar() {
     navigate('/admin_dashboard/manage_users');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
   return (
     <div style={{ width: '0px',  height: '0px' }}> 
       <Modal
@@ -118,6 +123,7 @@ export default function SideBar() {
                     />
                   }
                   variant="light"
+                  onPress={handleLogout}
                 >
                   Log Out
                 </Button>
