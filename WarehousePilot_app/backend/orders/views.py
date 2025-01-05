@@ -248,39 +248,53 @@ class InventoryPicklistView(APIView):
 class InventoryPicklistItemsView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-
+    
     def get(self, request, order_id):
         try:
-            # Validate the order ID
-            order = Orders.objects.filter(order_id=order_id, status='In Progress').first()
-            if not order:
+            # Validate the order ID using lower() for case-insensitive check
+            order = Orders.objects.filter(order_id=order_id).first()
+            if not order or order.status.lower() != 'in progress':
                 return Response(
                     {"error": "Order not found or not in progress"},
                     status=status.HTTP_404_NOT_FOUND
                 )
-
-            # Fetch inventory picklist items for the given order
+            
+            # Fetch picklist associated with the order
+            picklist = InventoryPicklist.objects.filter(order_id=order).first()
+            if not picklist:
+                return Response(
+                    {"error": "No picklist found for the given order"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Fetch picklist items for the given picklist
             picklist_items = InventoryPicklistItem.objects.filter(
-                picklist_id__order_id=order_id
+                picklist_id=picklist.picklist_id
             ).values(
-                'sku_color__sku_color',  # SKU color
-                'sku_color__name',       # Part name
-                'amount',                # Quantity
-                'location__location'     # Location (if available)
+                'picklist_item_id',
+                'location__location',
+                'sku_color__sku_color',  # Just get the sku_color
+                'amount',
+                'status'
             )
-
+            
             # Build response data
             response_data = [
                 {
+                    "picklist_item_id": item['picklist_item_id'],
+                    "location": item['location__location'],
                     "sku_color": item['sku_color__sku_color'],
-                    "part_name": item['sku_color__name'],
                     "quantity": item['amount'],
-                    "location": item['location__location']  # Include location if needed
+                    "status": item['status']
                 }
                 for item in picklist_items
             ]
-
+            
             return Response(response_data, status=status.HTTP_200_OK)
-
+            
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            print(f"Error occurred: {str(e)}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

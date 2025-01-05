@@ -61,7 +61,7 @@ const InventoryPickList = () => {
       }
 
       const response = await axios.get(
-        "http://127.0.0.1:8000/orders/inventory_pick_list/",
+        "http://127.0.0.1:8000/orders/inventory_picklist/",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -91,9 +91,10 @@ const InventoryPickList = () => {
     fetchPickList();
   }, []);
 
-  const handleViewOrderDetails = (orderId) => {
-    navigate(`/order-details/${orderId}`);
+  const handleViewOrderDetails = (order_id) => {
+    navigate(`/inventory_picklist_items/${order_id}`);
   };
+  
 
   return (
     <div className="flex h-full">

@@ -8,6 +8,7 @@ import NavBar from '../navbar/App';
 import OrderListView from '../orders/OrderListView'; 
 import ManageUsersTable from '../admin_manage_users/manage_users_table/App';
 import InventoyPickList from '../orders/InventoyPickList';
+import InventoryPickListItems from '../orders/InventoryPickListItems';
 
 
 export const dashboard_routes = [
@@ -27,4 +28,5 @@ export const dashboard_routes = [
   { path: '/orders', element: <OrderListView /> },
   { path: '/users-table', element: <ManageUsersTable /> },
   { path: '/inventory_pick_list', element: <InventoyPickList /> },
+  { path: '/inventory_picklist_items/:order_id', element: <InventoryPickListItems /> },
 ];
