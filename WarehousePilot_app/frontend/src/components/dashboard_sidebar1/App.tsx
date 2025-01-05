@@ -32,6 +32,13 @@ export default function SideBar() {
 
   return (
     <div style={{ width: '0px'}}> 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
+  return (
+    <div style={{ width: '0px',  height: '0px' }}> 
       <Modal
         classNames={{
           base: "justify-start sm:m-0 p-0 h-dvh max-h-full w-[var(--sidebar-width)]",
@@ -118,6 +125,7 @@ export default function SideBar() {
                     />
                   }
                   variant="light"
+                  onPress={handleLogout}
                 >
                   Log Out
                 </Button>

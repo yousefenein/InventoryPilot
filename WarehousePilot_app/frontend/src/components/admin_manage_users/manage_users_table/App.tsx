@@ -1,8 +1,7 @@
 "use client";
 
-import SideBar from "../dashboard_sidebar1/App"; 
 import type {Selection, SortDescriptor} from "@nextui-org/react";
-import type {ColumnsKey, Inventory, StatusOptions} from "./data";
+import type {ColumnsKey, StatusOptions, Users} from "./data";
 import type {Key} from "@react-types/shared";
 
 import {
@@ -18,6 +17,10 @@ import {
   TableCell,
   Input,
   Button,
+  RadioGroup,
+  Radio,
+  Chip,
+  User,
   Pagination,
   Divider,
   Tooltip,
@@ -25,17 +28,18 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-  Chip,
-  Badge,
 } from "@nextui-org/react";
 import {SearchIcon} from "@nextui-org/shared-icons";
 import React, {useMemo, useRef, useCallback, useState, useEffect} from "react";
 import {Icon} from "@iconify/react";
 import {cn} from "@nextui-org/react";
-import { saveAs } from 'file-saver';
+import axios from "axios";
+import { useNavigate } from 'react-router-dom';
+import { confirmDelete } from './data';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import {CopyText} from "./copy-text";
-import {EyeFilledIcon}from "./eye";
 import {EditLinearIcon} from "./edit";
 import {DeleteFilledIcon} from "./delete";
 import {ArrowDownIcon} from "./arrow-down";
@@ -43,52 +47,55 @@ import {ArrowUpIcon} from "./arrow-up";
 
 import {useMemoizedCallback} from "./use-memoized-callback";
 
-import {columns, INITIAL_VISIBLE_COLUMNS, fetchInventoryData, statusColorMap, deleteInventoryItems} from "./data";
-import NotifCard from "../notifications/notifications-card/App";
-import { AddItemForm } from "./add-item-form";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import {columns, INITIAL_VISIBLE_COLUMNS, fetchUserInfo, roleOptions, departmentOptions} from "./data";
+import {Status} from "./Status";
 
-import NavBar from "../navbar/App";
+const newColumns = [
+  { uid: "first_name", name: "First Name" },
+  { uid: "last_name", name: "Last Name" },
+  { uid: "staffID", name: "Staff ID" },
+  { uid: "email", name: "Email" },
+  { uid: "role", name: "Role" },
+  { uid: "department", name: "Department" },
+  { uid: "actions", name: "Actions" },
+];
 
-export default function InventoryTable() {
+export default function ManageUsersTable() {
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
   const [rowsPerPage] = useState(10);
   const [page, setPage] = useState(1);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-    column: "inventory_id",
+    column: "first_name",
     direction: "ascending",
   });
-  const [inventory, setInventory] = useState<Inventory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [unreadNotifications, setUnreadNotifications] = useState(() => {
-    const savedStatus = localStorage.getItem("unreadNotifications");
-    return savedStatus ? JSON.parse(savedStatus) : true;
-  }); 
-  const [isAddItemPopoverOpen, setIsAddItemPopoverOpen] = useState(false);
-  const [isDeletePopoverOpen, setIsDeletePopoverOpen] = useState(false);
 
+  const [workerTypeFilter, setWorkerTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [allUsers, setAllUsers] = useState<Users[]>([]);
+
+  const navigate = useNavigate();
+
+  // Fetch user data on component mount
   useEffect(() => {
-    const loadInventory = async () => {
+    const fetchData = async () => {
       try {
-        const data = await fetchInventoryData();
-        setInventory(data);
+        const usersData = await fetchUserInfo();
+        setAllUsers(usersData);
       } catch (error) {
-        console.error("Failed to fetch inventory data", error);
-      } finally {
-        setLoading(false);
+        console.error('Fetching user info failed:', error);
       }
     };
 
-    loadInventory();
+    fetchData();
   }, []);
 
   const headerColumns = useMemo(() => {
-    if (visibleColumns === "all") return columns;
+    if (visibleColumns === "all") return newColumns;
 
-    return columns
+    return newColumns
       .map((item) => {
         if (item.uid === sortDescriptor.column) {
           return {
@@ -102,38 +109,71 @@ export default function InventoryTable() {
       .filter((column) => Array.from(visibleColumns).includes(column.uid));
   }, [visibleColumns, sortDescriptor]);
 
+  const itemFilter = useCallback(
+    (user: Users) => {
+      const allWorkerType = workerTypeFilter === "all";
+      const allStatus = statusFilter === "all";
+      const allDepartment = departmentFilter === "all";
+
+      return (
+        (allWorkerType || workerTypeFilter === user.role.toLowerCase()) &&
+        (allDepartment || departmentFilter === user.department.toLowerCase())
+      );
+    },
+    [workerTypeFilter, departmentFilter],
+  );
+
+  
   const filteredItems = useMemo(() => {
-    let filteredInventory = [...inventory];
+    let filteredUsers = [...allUsers];
 
     if (filterValue) {
-      filteredInventory = filteredInventory.filter((item) =>
-        item.sku_color_id.toLowerCase().includes(filterValue.toLowerCase()),
+      filteredUsers = filteredUsers.filter((user) =>
+        user.first_name.toLowerCase().includes(filterValue.toLowerCase()) ||
+        user.last_name.toLowerCase().includes(filterValue.toLowerCase()) ||
+        user.email.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
 
-    return filteredInventory;
-  }, [filterValue, inventory]);
-
-  const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
+    const result = filteredUsers.filter(itemFilter);
+    return result;
+  }, [filterValue, itemFilter, allUsers]);
 
   const sortedItems = useMemo(() => {
-    return [...filteredItems].sort((a: Inventory, b: Inventory) => {
-      const col = sortDescriptor.column as keyof Inventory;
+    const result = [...filteredItems].sort((a: Users, b: Users) => {
+      const col = sortDescriptor.column as keyof Users;
 
-      const first = a[col];
-      const second = b[col];
+      let first = a[col];
+      let second = b[col];
+
+      if (col === "first_name") {
+        first = a.first_name.toLowerCase();
+        second = b.first_name.toLowerCase();
+      } else if (col === "last_name") {
+        first = a.last_name.toLowerCase();
+        second = b.last_name.toLowerCase();
+      } else if (col === "staffID") {
+        first = Number(a.staffID);
+        second = Number(b.staffID);
+      } else if (typeof first === 'string' && typeof second === 'string') {
+        first = first.toLowerCase();
+        second = second.toLowerCase();
+      }
 
       const cmp = first < second ? -1 : first > second ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
+    return result;
   }, [sortDescriptor, filteredItems]);
 
-  const paginatedItems = useMemo(() => {
+  const pages = Math.ceil(sortedItems.length / rowsPerPage) || 1;
+
+  const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-
-    return sortedItems.slice(start, end);
+    const result = sortedItems.slice(start, end);
+    return result;
   }, [page, sortedItems, rowsPerPage]);
 
   const filterSelectedKeys = useMemo(() => {
@@ -142,7 +182,7 @@ export default function InventoryTable() {
 
     if (filterValue) {
       filteredItems.forEach((item) => {
-        const stringId = String(item.inventory_id);
+        const stringId = String(item.user_id);
 
         if ((selectedKeys as Set<string>).has(stringId)) {
           resultKeys.add(stringId);
@@ -161,25 +201,47 @@ export default function InventoryTable() {
   const {getButtonProps: getEyesProps} = useButton({ref: eyesRef});
   const {getButtonProps: getEditProps} = useButton({ref: editRef});
   const {getButtonProps: getDeleteProps} = useButton({ref: deleteRef});
+  const getMemberInfoProps = useMemoizedCallback(() => ({
+    onClick: handleMemberClick,
+  }));
 
-  const renderCell = useMemoizedCallback((item: Inventory, columnKey: React.Key) => {
-    const itemKey = columnKey as ColumnsKey;
+  const renderCell = useMemoizedCallback((user: Users, columnKey: React.Key) => {
+    const userKey = columnKey as ColumnsKey;
 
-    const cellValue = item[itemKey as keyof Inventory] as string;
-
-    switch (itemKey) {
-      case "inventory_id":
-      case "sku_color_id":
-        return <CopyText>{cellValue}</CopyText>;
-      case "location":
-      case "qty":
-      case "warehouse_number":
-      case "amount_needed":
-        return <div className="text-default-foreground">{cellValue}</div>;
-      case "status":
-        return <div className="flex items-center gap-2">{statusColorMap[cellValue as StatusOptions]} {cellValue}</div>;
+    switch (userKey) {
+      case "first_name":
+        return <div className="text-default-foreground">{user.first_name}</div>;
+      case "last_name":
+        return <div className="text-default-foreground">{user.last_name}</div>;
+      case "staffID":
+        return <div className="text-default-foreground">{user.user_id}</div>;
+      case "email":
+        return <div className="text-default-foreground">{user.email}</div>;
+      case "role":
+        return <div className="text-default-foreground">{user.role}</div>;
+      case "department":
+        return <div className="text-default-foreground">{user.department}</div>;
+      case "actions":
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <EditLinearIcon
+              {...getEditProps()}
+              className="cursor-pointer text-default-400"
+              height={18}
+              width={18}
+              onClick={() => navigate(`/admin_dashboard/edit_user/${user.user_id}`)}
+            />
+            <DeleteFilledIcon
+              {...getDeleteProps()}
+              className="cursor-pointer text-default-400"
+              height={18}
+              width={18}
+              onClick={() => confirmDelete(user, fetchUserInfo)}
+            />
+          </div>
+        );
       default:
-        return cellValue;
+        return null;
     }
   });
 
@@ -207,7 +269,7 @@ export default function InventoryTable() {
   const onSelectionChange = useMemoizedCallback((keys: Selection) => {
     if (keys === "all") {
       if (filterValue) {
-        const resultKeys = new Set(filteredItems.map((item) => String(item.inventory_id)));
+        const resultKeys = new Set(filteredItems.map((item) => String(item.user_id)));
 
         setSelectedKeys(resultKeys);
       } else {
@@ -223,11 +285,11 @@ export default function InventoryTable() {
       });
       const selectedValue =
         selectedKeys === "all"
-          ? new Set(filteredItems.map((item) => String(item.inventory_id)))
+          ? new Set(filteredItems.map((item) => String(item.user_id)))
           : selectedKeys;
 
       selectedValue.forEach((v) => {
-        if (items.some((item) => String(item.inventory_id) === v)) {
+        if (items.some((item) => String(item.user_id) === v)) {
           return;
         }
         resultKeys.add(v);
@@ -235,71 +297,6 @@ export default function InventoryTable() {
       setSelectedKeys(new Set(resultKeys));
     }
   });
-
-  const handleNotificationsRead = () => {
-    setUnreadNotifications(false);
-    localStorage.setItem("unreadNotifications", JSON.stringify(false)); // Save to local storage
-  };
-
-  const exportData = () => {
-    let selectedItems;
-
-    if (filterSelectedKeys === "all") {
-      selectedItems = inventory;
-    } else {
-      selectedItems = inventory.filter(item => filterSelectedKeys.has(String(item.inventory_id)));
-    }
-    
-    const csvContent = [
-      ["Inventory ID", "SKU Color ID", "Location", "Quantity", "Warehouse Number", "Amount Needed", "Status"],
-      ...selectedItems.map(item => [
-        item.inventory_id,
-        item.sku_color_id,
-        item.location,
-        item.qty,
-        item.warehouse_number,
-        item.amount_needed,
-        item.status
-      ])
-    ].map(e => e.join(",")).join("\n");
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, 'inventory_data.csv');
-  };
-
-  const deleteSelectedItems = async () => {
-    try {
-      const itemIds = Array.from(filterSelectedKeys).map((key) => Number(key));
-      await deleteInventoryItems(itemIds);
-      const updatedInventory = await fetchInventoryData();
-      setInventory(updatedInventory);
-      setSelectedKeys(new Set());
-    } catch (error) {
-      console.error("Failed to delete selected items", error);
-    }
-  };
-
-  const handleSortChange = (column: ColumnsKey) => {
-    setSortDescriptor((prevSortDescriptor) => ({
-      column,
-      direction: prevSortDescriptor.column === column && prevSortDescriptor.direction === "ascending"
-        ? "descending"
-        : "ascending",
-    }));
-  };
-
-  const confirmDelete = () => {
-    
-    if (window.confirm("Are you sure you want to delete the selected items?")) {
-      handleDeleteConfirm();
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    setIsDeletePopoverOpen(false);
-    await deleteSelectedItems();
-    toast.success("Items deleted successfully!");
-  };
 
   const topContent = useMemo(() => {
     return (
@@ -309,11 +306,53 @@ export default function InventoryTable() {
             <Input
               className="min-w-[200px]"
               endContent={<SearchIcon className="text-default-400" width={16} />}
-              placeholder="Search by SKU Color ID"
+              placeholder="Search By Name or Email"
               size="sm"
               value={filterValue}
               onValueChange={onSearchChange}
             />
+            <div>
+              <Popover placement="bottom">
+                <PopoverTrigger>
+                  <Button
+                    className="bg-default-100 text-default-800"
+                    size="sm"
+                    startContent={
+                      <Icon className="text-default-400" icon="solar:tuning-2-linear" width={16} />
+                    }
+                  >
+                    Filter
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="flex w-full flex-col gap-6 px-2 py-4">
+                    <RadioGroup
+                      label="Role"
+                      value={workerTypeFilter}
+                      onValueChange={setWorkerTypeFilter}
+                    >
+                      {roleOptions.map((role) => (
+                        <Radio key={role.uid} value={role.uid}>
+                          {role.name}
+                        </Radio>
+                      ))}
+                    </RadioGroup>
+
+                    <RadioGroup
+                      label="Department"
+                      value={departmentFilter}
+                      onValueChange={setDepartmentFilter}
+                    >
+                      {departmentOptions.map((department) => (
+                        <Radio key={department.uid} value={department.uid}>
+                          {department.name}
+                        </Radio>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
             <div>
               <Dropdown>
                 <DropdownTrigger>
@@ -329,12 +368,18 @@ export default function InventoryTable() {
                 </DropdownTrigger>
                 <DropdownMenu
                   aria-label="Sort"
-                  items={headerColumns.filter((c) => !["actions", "status"].includes(c.uid))}
+                  items={headerColumns.filter((c) => !["actions"].includes(c.uid))}
                 >
                   {(item) => (
                     <DropdownItem
                       key={item.uid}
-                      onPress={() => handleSortChange(item.uid as ColumnsKey)}
+                      onPress={() => {
+                        setSortDescriptor({
+                          column: item.uid,
+                          direction:
+                            sortDescriptor.direction === "ascending" ? "descending" : "ascending",
+                        });
+                      }}
                     >
                       {item.name}
                     </DropdownItem>
@@ -396,8 +441,10 @@ export default function InventoryTable() {
                 </Button>
               </DropdownTrigger>
               <DropdownMenu aria-label="Selected Actions">
-                <DropdownItem key="export-data" onPress={exportData}>Export Data</DropdownItem>
-                <DropdownItem key="delete-items" onPress={confirmDelete}>Delete Items</DropdownItem>
+                <DropdownItem key="send-email">Send email</DropdownItem>
+                <DropdownItem key="pay-invoices">Pay invoices</DropdownItem>
+                <DropdownItem key="bulk-edit">Bulk edit</DropdownItem>
+                <DropdownItem key="end-contract">End contract</DropdownItem>
               </DropdownMenu>
             </Dropdown>
           )}
@@ -410,57 +457,37 @@ export default function InventoryTable() {
     filterSelectedKeys,
     headerColumns,
     sortDescriptor,
+    workerTypeFilter,
+    departmentFilter,
+    setWorkerTypeFilter,
+    setDepartmentFilter,
     onSearchChange,
     setVisibleColumns,
-    exportData,
-    confirmDelete
   ]);
 
   const topBar = useMemo(() => {
     return (
-      <div className="mb-[18px] flex items-center justify-between" style={{ marginTop: "40px" }}>
+      <div className="mb-[18px] flex items-center justify-between">
         <div className="flex w-[226px] items-center gap-2">
-          <h1 className="text-2xl font-[700] leading-[32px]">
-            <b>Inventory</b>
-          </h1>
+          <h1 className="text-2xl font-[700] leading-[32px]">Staff</h1>
           <Chip className="hidden items-center text-default-500 sm:flex" size="sm" variant="flat">
-            {inventory.length}
+            {allUsers.length}
           </Chip>
         </div>
-        <div className="flex items-center gap-6">
-          <Popover>
-            <PopoverTrigger>
-              <Button isIconOnly variant="flat">
-                <Badge color="danger" content=" " shape="circle" isInvisible={!unreadNotifications}>
-                  <Icon icon="solar:bell-outline" width={24} />
-                </Badge>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <NotifCard onMarkAllAsRead={handleNotificationsRead} />
-            </PopoverContent>
-          </Popover>
-          <Popover isOpen={isAddItemPopoverOpen} onOpenChange={setIsAddItemPopoverOpen}>
-            <PopoverTrigger>
-              <Button color="primary" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
-                Add Item
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <AddItemForm onAddItem={(newItem) => {
-                setInventory((prevInventory) => [...prevInventory, newItem]);
-                setIsAddItemPopoverOpen(false);
-              }} onCancel={() => setIsAddItemPopoverOpen(false)} />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <Button
+          color="primary"
+          endContent={<Icon icon="solar:add-circle-bold" width={20} />}
+          onPress={() => navigate('/admin_dashboard/add_users')}
+        >
+          Add New Staff
+        </Button>
       </div>
     );
-  }, [inventory.length, unreadNotifications, isAddItemPopoverOpen]);
+  }, [allUsers.length, navigate]);
 
   const bottomContent = useMemo(() => {
     return (
-      <div className="flex flex-col justify-between gap-2 px-2 py-2 sm:flex-row">
+      <div className="flex flex-col items-center justify-between gap-2 px-2 py-2 sm:flex-row">
         <Pagination
           isCompact
           showControls
@@ -470,13 +497,13 @@ export default function InventoryTable() {
           total={pages}
           onChange={setPage}
         />
-        <div className="flex items-center justify-end gap-6 ml-auto">
+        <div className="flex items-center justify-end gap-6">
           <span className="text-small text-default-400">
             {filterSelectedKeys === "all"
               ? "All items selected"
               : `${filterSelectedKeys.size} of ${filteredItems.length} selected`}
           </span>
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-3">
             <Button isDisabled={page === 1} size="sm" variant="flat" onPress={onPreviousPage}>
               Previous
             </Button>
@@ -489,56 +516,15 @@ export default function InventoryTable() {
     );
   }, [filterSelectedKeys, page, pages, filteredItems.length, onPreviousPage, onNextPage]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const handleMemberClick = useMemoizedCallback(() => {
+    setSortDescriptor({
+      column: "memberInfo",
+      direction: sortDescriptor.direction === "ascending" ? "descending" : "ascending",
+    });
+  });
 
   return (
-    <div className="flex h-dvh w-full">
-    <div>
-      <SideBar /> {/* Add the SideBar component here */}
-      <div className="flex-1 p-6" style={{ padding: "40px" }}>
-        {topBar}
-        <Table
-          isHeaderSticky
-          aria-label="Example table with custom cells, pagination and sorting"
-          bottomContent={bottomContent}
-          bottomContentPlacement="outside"
-          classNames={{
-            td: "before:bg-transparent",
-          }}
-          selectedKeys={filterSelectedKeys}
-          selectionMode="multiple"
-          sortDescriptor={sortDescriptor}
-          topContent={topContent}
-          topContentPlacement="outside"
-          onSelectionChange={onSelectionChange}
-          onSortChange={setSortDescriptor}
-        >
-          <TableHeader columns={headerColumns}>
-            {(column) => (
-              <TableColumn
-                key={column.uid}
-                align={column.uid === "actions" ? "end" : "start"}
-                className={cn([
-                  column.uid === "actions" ? "flex items-center justify-end px-[20px]" : "",
-                ])}
-              >
-                {column.name}
-              </TableColumn>
-            )}
-          </TableHeader>
-          <TableBody emptyContent={"No items found"} items={paginatedItems}>
-            {(item) => (
-              <TableRow key={item.inventory_id}>
-                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        <ToastContainer />
-      </div>
-    <div className="h-full w-full p-6" style={{ padding: "40px" }}>
+    <div className="h-full w-full p-6" style={{ padding: '40px' }}>
       {topBar}
       <Table
         isHeaderSticky
@@ -565,19 +551,36 @@ export default function InventoryTable() {
                 column.uid === "actions" ? "flex items-center justify-end px-[20px]" : "",
               ])}
             >
-              {column.name}
+              {column.uid === "memberInfo" ? (
+                <div
+                  {...getMemberInfoProps()}
+                  className="flex w-full cursor-pointer items-center justify-between"
+                >
+                  {column.name}
+                  {sortDescriptor.column === column.uid && sortDescriptor.direction === "ascending" ? (
+                    <ArrowUpIcon className="text-default-400" />
+                  ) : (
+                    <ArrowDownIcon className="text-default-400" />
+                  )}
+                </div>
+              ) : (
+                column.name
+              )}
             </TableColumn>
           )}
         </TableHeader>
-        <TableBody emptyContent={"No items found"} items={paginatedItems}>
-          {(item) => (
-            <TableRow key={item.inventory_id}>
-              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-            </TableRow>
-          )}
+        <TableBody emptyContent={"No items found"} items={items}>
+          {(item) => {
+            return (
+              <TableRow key={item.user_id}>
+                {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+              </TableRow>
+            );
+          }}
         </TableBody>
       </Table>
       <ToastContainer />
     </div>
   );
+
 }

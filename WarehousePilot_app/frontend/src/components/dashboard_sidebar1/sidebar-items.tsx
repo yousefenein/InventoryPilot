@@ -12,6 +12,7 @@ export const items: SidebarItem[] = [
   {
     key: "kpi",
     href: "/kpi", 
+    href: "/kpi", // Ensure this href matches the route path
     icon: "solar:chart-outline",
     title: "KPI",
   },

@@ -49,6 +49,7 @@ class InventoryTests(TestCase):
         self.assertEqual(new_item.warehouse_number, "499 B")
         self.assertEqual(new_item.amount_needed, 100)
 
+
     def test_delete_inventory_items(self):
         item_ids = [self.inventory_item.inventory_id]
         data = {"item_ids": item_ids}

@@ -84,6 +84,17 @@ npm run dev
 ```
 control click on the localhost to open the webpage
 ```
+### To run as a Docker container
+Make sure to have Docker for desktop installed [here](https://www.docker.com/get-started/).
+
+Add the .env file in the root directory and build your images and container using
+```
+docker-compose build
+```
+You can run the command below and control-click on local host to open the webpage
+```
+docker-compose up
+```
 
 
 ## Wiki table of contents
