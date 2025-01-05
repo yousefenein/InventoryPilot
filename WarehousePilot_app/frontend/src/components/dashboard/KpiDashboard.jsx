@@ -38,7 +38,7 @@ const KPIDashboard = ({ userData }) => {
             <StockLevels />
             <WarehouseThroughput />
             <OrderFulfillmentRate />
-            <StockLevelsPreview />
+            <StockLevels />
           </div>
         </main>
       </div>
