@@ -72,6 +72,26 @@ def add_inventory_item(request):
         logger.error("Failed to add inventory item: %s", str(e))
         return JsonResponse({"error": str(e)}, status=500)
 
+@csrf_exempt
+@require_POST
+def add_inventory_item(request):
+    try:
+        data = json.loads(request.body)
+        new_item = Inventory.objects.create(
+            location=data["location"],
+            sku_color_id=data["sku_color_id"],
+            qty=data["qty"],
+            warehouse_number=data["warehouse_number"],
+            amount_needed=data["amount_needed"],
+        )
+        return JsonResponse({"message": "Item added successfully", "item": new_item.inventory_id}, status=201)
+    except Exception as e:
+        logger.error("Failed to add inventory item: %s", str(e))
+        return JsonResponse({"error": str(e)}, status=500)
+
+def get_csrf_token(request):
+    return JsonResponse({'csrfToken': get_token(request)})
+
 def get_csrf_token(request):
     return JsonResponse({'csrfToken': get_token(request)})
 
@@ -100,3 +120,4 @@ class InventoryView(APIView):
             return Response(inventory_data)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+ 
