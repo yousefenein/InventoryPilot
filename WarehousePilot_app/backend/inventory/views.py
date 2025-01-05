@@ -92,9 +92,6 @@ def add_inventory_item(request):
 def get_csrf_token(request):
     return JsonResponse({'csrfToken': get_token(request)})
 
-def get_csrf_token(request):
-    return JsonResponse({'csrfToken': get_token(request)})
-
 class InventoryView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
