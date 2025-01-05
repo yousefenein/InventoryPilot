@@ -15,8 +15,6 @@ function App() {
             element={route.element} 
           />
         ))}
-      </Routes>
-    </Router>
   );
 }
 

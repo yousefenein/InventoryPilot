@@ -56,6 +56,11 @@ jobs:
         run: |
           cd WarehousePilot_app/frontend
           npm install
+
+      - name: Build frontend
+        run: |
+          cd WarehousePilot_app/frontend
+          npm run build
  
       - name: Run frontend tests
         run: |
