@@ -15,6 +15,10 @@ from django.db import connection
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from django.shortcuts import get_object_or_404
+from datetime import datetime
+from django.utils import timezone 
+
 #generates an inventory picklist and a maufacturing list of an order once the order is "started"
 # Note: print statements have been commented out and can be uncommented for debugging if needed
 class GenerateInventoryAndManufacturingListsView(APIView):
@@ -173,3 +177,110 @@ class OrdersView(APIView):
             return Response(inventory_data)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+        
+        
+
+class StartOrderView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, order_id):
+        try:
+            order = get_object_or_404(Orders, order_id=order_id)
+
+            if order.status == 'In Progress':
+                return JsonResponse({'status': 'error', 'message': 'Order is already in progress'}, status=400)
+
+            # Update order status and set timestamp
+            order.status = 'In Progress'
+            order.start_timestamp = timezone.now()  # Use timezone.now() instead of datetime.now()
+            order.save()
+
+            # Return success response with the updated order data
+            return JsonResponse({
+                'status': 'success',  # Overall success of the action
+                'order_id': order.order_id,
+                'order_status': order.status,  # Changed this from 'status' to 'order_status'
+                'start_timestamp': order.start_timestamp.isoformat()  # ISO 8601 formatted timestamp
+            })
+
+        except Exception as e:
+            # In case of any error, return error details
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        
+
+
+class InventoryPicklistView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Fetch started orders (status='In Progress') and their picklists
+            started_orders = Orders.objects.filter(status='In Progress').values(
+                'order_id', 'due_date'
+            )
+
+            # Build response data with additional fields `already_filled` and `assigned_to`
+            response_data = [
+                {
+                    "order_id": order['order_id'],
+                    "due_date": order['due_date'],
+                    # Determine if the picklist is filled (all items are marked as `True`)
+                    "already_filled": InventoryPicklistItem.objects.filter(
+                        picklist_id__order_id=order['order_id'], status=False
+                    ).exists() == False,
+                    # Get the assigned employee from the picklist, if any
+                    "assigned_to": InventoryPicklist.objects.filter(
+                        order_id=order['order_id']
+                    ).values_list('assigned_employee_id__username', flat=True).first()
+                }
+                for order in started_orders
+            ]
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class InventoryPicklistItemsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, order_id):
+        try:
+            # Validate the order ID
+            order = Orders.objects.filter(order_id=order_id, status='In Progress').first()
+            if not order:
+                return Response(
+                    {"error": "Order not found or not in progress"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Fetch inventory picklist items for the given order
+            picklist_items = InventoryPicklistItem.objects.filter(
+                picklist_id__order_id=order_id
+            ).values(
+                'sku_color__sku_color',  # SKU color
+                'sku_color__name',       # Part name
+                'amount',                # Quantity
+                'location__location'     # Location (if available)
+            )
+
+            # Build response data
+            response_data = [
+                {
+                    "sku_color": item['sku_color__sku_color'],
+                    "part_name": item['sku_color__name'],
+                    "quantity": item['amount'],
+                    "location": item['location__location']  # Include location if needed
+                }
+                for item in picklist_items
+            ]
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

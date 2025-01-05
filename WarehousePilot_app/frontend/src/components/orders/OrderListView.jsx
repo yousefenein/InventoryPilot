@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableHeader,
@@ -9,11 +9,12 @@ import {
   Input,
   Pagination,
   Button,
-} from '@nextui-org/react';
-import { SearchIcon } from '@nextui-org/shared-icons';
-import axios from 'axios';
-import Sidebar from '../dashboard_sidebar/Sidebar';
-import Header from '../dashboard_sidebar/Header';
+} from "@nextui-org/react";
+import { SearchIcon } from "@nextui-org/shared-icons";
+import axios from "axios";
+import Sidebar from "../dashboard_sidebar/Sidebar";
+import Header from "../dashboard_sidebar/Header";
+import { useNavigate } from "react-router-dom";
 
 const OrderListView = () => {
   const [filterValue, setFilterValue] = useState("");
@@ -25,7 +26,7 @@ const OrderListView = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
-
+  const navigate = useNavigate()
   const rowsPerPage = 10;
 
   // Filter rows by search text
@@ -33,8 +34,14 @@ const OrderListView = () => {
     if (!filterValue.trim()) return rows;
     const searchTerm = filterValue.toLowerCase();
     return rows.filter((row) => {
-      const orderIdMatch = row.order_id?.toString().toLowerCase().includes(searchTerm);
-      const durationMatch = row.estimated_duration?.toString().toLowerCase().includes(searchTerm);
+      const orderIdMatch = row.order_id
+        ?.toString()
+        .toLowerCase()
+        .includes(searchTerm);
+      const durationMatch = row.estimated_duration
+        ?.toString()
+        .toLowerCase()
+        .includes(searchTerm);
       const statusMatch = row.status?.toLowerCase().includes(searchTerm);
       const dueDateMatch = row.due_date?.toLowerCase().includes(searchTerm);
       return orderIdMatch || durationMatch || statusMatch || dueDateMatch;
@@ -53,19 +60,22 @@ const OrderListView = () => {
 
   const fetchOrders = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        setError('No authorization token found');
+        setError("No authorization token found");
         setLoading(false);
         return;
       }
 
-      const response = await axios.get('http://127.0.0.1:8000/orders/ordersview/', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await axios.get(
+        "http://127.0.0.1:8000/orders/ordersview/",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       setRows(
         response.data.map((row, index) => ({
@@ -78,8 +88,8 @@ const OrderListView = () => {
       );
       setLoading(false);
     } catch (err) {
-      console.error('Error fetching orders:', err);
-      setError('Failed to fetch orders');
+      console.error("Error fetching orders:", err);
+      setError("Failed to fetch orders");
       setLoading(false);
     }
   };
@@ -103,54 +113,74 @@ const OrderListView = () => {
       setUpdatingOrderId(orderId);
       setError(null);
       setSuccess(null); // Reset previous success message
-  
-      const token = localStorage.getItem('token');
+
+      const token = localStorage.getItem("token");
       if (!token) {
-        setError('No authorization token found');
+        setError("No authorization token found");
         return;
       }
-  
-      const response = await axios.post(`http://127.0.0.1:8000/orders/start_order/${orderId}/`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-  
-      console.log('Response from backend:', response.data); // Log the response
-  
+
+      const response = await axios.post(
+        `http://127.0.0.1:8000/orders/start_order/${orderId}/`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Response from backend:", response.data); // Log the response
+
       // Make sure the correct field name is accessed here
-      if (response.data.status === 'success') {
-        setRows(prevRows => 
-          prevRows.map(row => 
-            row.order_id === orderId 
-              ? { ...row, status: response.data.order_status, start_timestamp: response.data.start_timestamp }
+      if (response.data.status === "success") {
+        setRows((prevRows) =>
+          prevRows.map((row) =>
+            row.order_id === orderId
+              ? {
+                  ...row,
+                  status: response.data.order_status,
+                  start_timestamp: response.data.start_timestamp,
+                }
               : row
           )
         );
         setSuccess(`Order ${orderId} successfully started!`); // Set success message
       }
     } catch (err) {
-      console.error('Error starting the order:', err);
-      setError('Error starting the order');
+      console.error("Error starting the order:", err);
+      setError("Error starting the order");
     } finally {
       setUpdatingOrderId(null);
     }
   };
-  
 
   return (
     <div className="flex h-full">
       <Sidebar userData={userData} isOpen={isSidebarOpen} />
 
       <div className="flex-1 sm:ml-64">
-        <Header 
-          userData={userData} 
-          toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} 
+        <Header
+          userData={userData}
+          toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
         />
 
         <div className="mt-16 p-8">
+          <div className="flex flex-row gap-11">
+          
           <h1 className="text-2xl font-bold mb-6">Orders</h1>
+          <Button
+           color="primary"
+           variant='flat'
+           onClick = { ()=> navigate("/inventory_pick_list")}
+
+           >
+            Inventory picklist
+          </Button>
+
+          </div>
+          
 
           {/* Success message */}
           {success && (
@@ -185,7 +215,9 @@ const OrderListView = () => {
               placeholder="Search orders"
               value={filterValue}
               onChange={(e) => setFilterValue(e.target.value)}
-              endContent={<SearchIcon className="text-default-400" width={16} />}
+              endContent={
+                <SearchIcon className="text-default-400" width={16} />
+              }
               className="w-72"
             />
           </div>
@@ -196,10 +228,7 @@ const OrderListView = () => {
             </div>
           ) : (
             <>
-              <Table
-                aria-label="Order list"
-                className="min-w-full"
-              >
+              <Table aria-label="Order list" className="min-w-full">
                 <TableHeader>
                   <TableColumn>Order ID</TableColumn>
                   <TableColumn>Estimated Duration</TableColumn>
@@ -214,22 +243,33 @@ const OrderListView = () => {
                       <TableCell>{item.order_id}</TableCell>
                       <TableCell>{item.estimated_duration}</TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded ${
-                          item.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : ''
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded ${
+                            item.status === "In Progress"
+                              ? "bg-blue-100 text-blue-800"
+                              : ""
+                          }`}
+                        >
                           {item.status}
                         </span>
                       </TableCell>
                       <TableCell>{item.due_date}</TableCell>
                       <TableCell>
                         <Button
-                          color={item.status === 'In Progress' ? 'success' : 'primary'}
+                          color={
+                            item.status === "In Progress"
+                              ? "success"
+                              : "primary"
+                          }
                           size="sm"
                           isLoading={updatingOrderId === item.order_id}
-                          isDisabled={item.status === 'In Progress' || updatingOrderId !== null}
+                          isDisabled={
+                            item.status === "In Progress" ||
+                            updatingOrderId !== null
+                          }
                           onPress={() => handleStart(item.order_id)}
                         >
-                          {item.status === 'In Progress' ? 'Started' : 'Start'}
+                          {item.status === "In Progress" ? "Started" : "Start"}
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -16,10 +16,10 @@ export const items: SidebarItem[] = [
     title: "KPI",
   },
   {
-    key: "requests",
-    href: "#",
+    key: "orders",
+    href: "/orders",
     icon: "solar:clipboard-list-linear",
-    title: "Requests",
+    title: "Orders",
   },
   {
     key: "production_plan",
