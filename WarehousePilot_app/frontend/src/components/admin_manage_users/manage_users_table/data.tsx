@@ -3,6 +3,7 @@ import {DefaultCircleSvg} from "./default-circle";
 import {SuccessCircleSvg} from "./success-circle";
 import {WarningCircleSvg} from "./warning-circle";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export const statusOptions = [
   {name: "Active", uid: "active"},
@@ -95,5 +96,31 @@ export const fetchUserInfo = async (): Promise<Users[]> => {
   } catch (error) {
     console.error('Fetching user info failed:', error);
     throw error;
+  }
+};
+
+// Handle delete action
+export const deleteUser = async (user_id: number) => {
+  try {
+    const response = await axios.delete(`http://127.0.0.1:8000/admin_dashboard/delete_user/${user_id}/`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    });
+    toast.success(response.data.message);
+    return true;
+  } catch (error) {
+    console.error('Failed to delete user:', error);
+    toast.error("Couldn't delete the user.");
+    return false;
+  }
+};
+
+// Confirm deletion action
+export const confirmDelete = (user: Users, fetchUserInfo: () => void) => {
+  if (window.confirm(`Are you sure you want to delete user ${user.first_name} ${user.last_name} with ID ${user.user_id}?`)) {
+    deleteUser(user.user_id).then((success) => {
+      if (success) {
+        fetchUserInfo(); 
+      }
+    });
   }
 };

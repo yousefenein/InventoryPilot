@@ -34,9 +34,12 @@ import React, {useMemo, useRef, useCallback, useState, useEffect} from "react";
 import {Icon} from "@iconify/react";
 import {cn} from "@nextui-org/react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
+import { confirmDelete } from './data';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import {CopyText} from "./copy-text";
-import {EyeFilledIcon} from "./eye";
 import {EditLinearIcon} from "./edit";
 import {DeleteFilledIcon} from "./delete";
 import {ArrowDownIcon} from "./arrow-down";
@@ -72,6 +75,8 @@ export default function ManageUsersTable() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [allUsers, setAllUsers] = useState<Users[]>([]);
+
+  const navigate = useNavigate();
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -219,23 +224,19 @@ export default function ManageUsersTable() {
       case "actions":
         return (
           <div className="flex items-center justify-end gap-2">
-            <EyeFilledIcon
-              {...getEyesProps()}
-              className="cursor-pointer text-default-400"
-              height={18}
-              width={18}
-            />
             <EditLinearIcon
               {...getEditProps()}
               className="cursor-pointer text-default-400"
               height={18}
               width={18}
+              onClick={() => navigate(`/admin_dashboard/edit_user/${user.user_id}`)}
             />
             <DeleteFilledIcon
               {...getDeleteProps()}
               className="cursor-pointer text-default-400"
               height={18}
               width={18}
+              onClick={() => confirmDelete(user, fetchUserInfo)}
             />
           </div>
         );
@@ -468,17 +469,21 @@ export default function ManageUsersTable() {
     return (
       <div className="mb-[18px] flex items-center justify-between">
         <div className="flex w-[226px] items-center gap-2">
-          <h1 className="text-2xl font-[700] leading-[32px]">Users</h1>
+          <h1 className="text-2xl font-[700] leading-[32px]">Staff</h1>
           <Chip className="hidden items-center text-default-500 sm:flex" size="sm" variant="flat">
             {allUsers.length}
           </Chip>
         </div>
-        <Button color="primary" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
-          Add User
+        <Button
+          color="primary"
+          endContent={<Icon icon="solar:add-circle-bold" width={20} />}
+          onPress={() => navigate('/admin_dashboard/add_users')}
+        >
+          Add New Staff
         </Button>
       </div>
     );
-  }, [allUsers.length]);
+  }, [allUsers.length, navigate]);
 
   const bottomContent = useMemo(() => {
     return (
@@ -574,6 +579,7 @@ export default function ManageUsersTable() {
           }}
         </TableBody>
       </Table>
+      <ToastContainer />
     </div>
   );
 
