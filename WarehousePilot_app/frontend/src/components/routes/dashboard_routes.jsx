@@ -6,6 +6,7 @@ import ManageUsersPage from '../admin_manage_users/ManageUsersPage';
 import AddUsersDashboard from '../dashboard/AddUsersDashboard';
 import NotifCard from '../notifications/notifications-card/App';
 import OrderListView from '../orders/OrderListView'; 
+import ManageUsersTable from '../admin_manage_users/manage_users_table/App';
 
 
 export const dashboard_routes = [
@@ -22,4 +23,5 @@ export const dashboard_routes = [
   {path: '/admin_dashboard/edit_user/:user_id', element: <AddUsersDashboard />},
   { path: '/admin_dashboard/add_users', element: <AddUsersDashboard />},
   { path: '/orders', element: <OrderListView /> },
+  { path: '/users-table', element: <ManageUsersTable /> },
 ];
