@@ -1,0 +1,27 @@
+FROM node:16-slim
+
+# Create app directory
+WORKDIR /frontend
+
+# Copy package.json and package-lock.json
+COPY package*.json /frontend/
+
+# Install dependencies
+RUN npm install
+
+# Install serve globally for production
+# RUN npm install -g serve
+
+# Copy the rest of the React app
+COPY . /frontend
+
+# Build the production app, for later 
+# RUN npm run build
+
+EXPOSE 5173
+
+# for dev use, comment out the following line for prod 
+CMD ["npm", "run", "dev", "--", "--host"]
+
+# For production use
+# CMD ["serve", "-s", "build", "-l", "5173"]
