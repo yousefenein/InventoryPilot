@@ -1,71 +1,91 @@
-// route: /account_management
-// This is the account management page for the manager. It displays the user's account information.
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-// import Sidebar from "../dashboard_sidebar/Sidebar";
-import Header from "../dashboard_sidebar/Header";
 
 import SideBar from '../dashboard_sidebar1/App';
 
 function AccountManagement() {
-    const [userData, setUserData] = useState(null);
-    const navigate = useNavigate();
-    const [isSidebarOpen, setSidebarOpen] = useState(false);
-    const toggleSidebar = () => {
-      setSidebarOpen(!isSidebarOpen);
-    };
-  
-    useEffect(() => {
-      const fetchUserData = async () => {
-        const token = localStorage.getItem('token');
-        if (token) {
-          try {
-            const response = await axios.get('http://127.0.0.1:8000/auth/profile/', {     // this is the url to get the user data, not just managers. We can change later as required. 
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            setUserData(response.data);
-          } catch (error) {
-            console.error('Error fetching user data:', error);
-          }
-        }
-      };
-      fetchUserData();
-    }, []);
-  
-    const handleLogout = () => {
-      localStorage.removeItem('token');
-      navigate('/');
-    };
-  
+  const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
 
-    return (
-      <div className="flex">
-        {/* Sidebar */}
-        <SideBar userData={userData} isOpen={isSidebarOpen} />
-        {/* Main Content */}
-        <div className="flex-1 sm:ml-10 sm:mt-16">
-          {/* Page Content */}
-          <main className="p-4 mt-16 bg-gray-100 ">
-        <h1>Account Management Page</h1>
-        <p>This is the overview page.</p>
-        {userData ? (
-          <div>
-            <p data-testid="username">Username: {userData.username}</p>
-            <p data-testid="email">Email: {userData.email}</p>
-            <p data-testid="role">Role: {userData.role}</p>
-            <p data-testid="first_name">First Name: {userData.first_name}</p>
-            <p data-testid="last_name">Last Name: {userData.last_name}</p>
-            <p data-testid="department">Department: {userData.department}</p>          
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await axios.get('http://127.0.0.1:8000/auth/profile/', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setUserData(response.data);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <SideBar userData={userData} />
+
+      {/* Main Content */}
+      <div className="flex-1 p-6">
+        {/* Wrapper for consistent alignment */}
+        <div className="ml-4">
+          {/* Header Section */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-800 mt-14 mb-2">Account Management</h1>
+            <p className="text-lg text-gray-600">This is the overview page where you can view your account details.</p>
+          </div>
+
+          {/* Information Section */}
+          {userData ? (
+            <div className="grid grid-cols-2 gap-6">
+              {/* Basic Information */}
+              <div className="p-4 bg-white rounded-lg shadow">
+                <h2 className="text-lg font-semibold text-gray-700">Basic Information</h2>
+                <p className="mt-2">
+                  <strong>Username:</strong> {userData.username}
+                </p>
+                <p>
+                  <strong>Email:</strong> {userData.email}
+                </p>
+                <p>
+                  <strong>Role:</strong> {userData.role}
+                </p>
+              </div>
+
+              {/* Personal Information */}
+              <div className="p-4 bg-white rounded-lg shadow">
+                <h2 className="text-lg font-semibold text-gray-700">Personal Information</h2>
+                <p className="mt-2">
+                  <strong>First Name:</strong> {userData.first_name}
+                </p>
+                <p>
+                  <strong>Last Name:</strong> {userData.last_name}
+                </p>
+                <p>
+                  <strong>Department:</strong> {userData.department}
+                </p>
+              </div>
             </div>
-        ) : (
-          <p>Error</p>
-        )}
-        <button type='button' 
-        className="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-700"   // temporary style ? 
-        onClick={() => navigate('/change_password')}>Change Password</button>
-        </main>
+          ) : (
+            <p className="text-red-500">Error loading user data.</p>
+          )}
+
+          {/* Action Button Section */}
+          <div className="mt-6">
+            <button
+              type="button"
+              className="px-6 py-3 text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 transition duration-300"
+              onClick={() => navigate('/change_password')}
+            >
+              Change Password
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
