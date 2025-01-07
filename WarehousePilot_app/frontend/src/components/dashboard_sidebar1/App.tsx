@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   Avatar,
   Button,
@@ -25,22 +25,11 @@ export default function SideBar() {
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
   const navigate = useNavigate();
   const sidebarWidth = 288;
-  const [user, setUser] = useState({ name: '', role: '' });
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      setUser({ name: parsedUser.first_name, role: parsedUser.role });
-    }
-  }, []);
 
   const navigatetoUsers = () => {
     navigate('/admin_dashboard/manage_users');
   };
 
-  return (
-    <div style={{ width: '0px'}}> 
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
@@ -99,8 +88,8 @@ export default function SideBar() {
                   src=""
                 />
                 <div className="flex flex-col">
-                  <p className="text-small font-medium text-default-600">{user.name}</p>
-                  <p className="text-tiny text-default-400">{user.role}</p>
+                  <p className="text-small font-medium text-default-600">John Doe</p>
+                  <p className="text-tiny text-default-400">Manager</p>
                 </div>
               </div>
 
