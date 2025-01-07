@@ -579,5 +579,6 @@ export default function InventoryTable() {
       </Table>
       <ToastContainer />
     </div>
+  </div>
   );
 }
