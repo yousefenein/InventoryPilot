@@ -3,6 +3,7 @@
 import type {Selection, SortDescriptor} from "@nextui-org/react";
 import type {ColumnsKey, StatusOptions, Users} from "./data";
 import type {Key} from "@react-types/shared";
+import SideBar from "../../dashboard_sidebar1/App";
 
 import {
   Dropdown,
@@ -467,7 +468,7 @@ export default function ManageUsersTable() {
 
   const topBar = useMemo(() => {
     return (
-      <div className="mb-[18px] flex items-center justify-between">
+      <div className="mb-[18px] flex items-center justify-between" style={{ marginTop: '40px' }}>
         <div className="flex w-[226px] items-center gap-2">
           <h1 className="text-2xl font-[700] leading-[32px]">Staff</h1>
           <Chip className="hidden items-center text-default-500 sm:flex" size="sm" variant="flat">
@@ -524,7 +525,9 @@ export default function ManageUsersTable() {
   });
 
   return (
-    <div className="h-full w-full p-6" style={{ padding: '40px' }}>
+    <div> 
+      <SideBar />
+    <div className="flex-1 p-6" style={{ padding: '40px' }}>
       {topBar}
       <Table
         isHeaderSticky
@@ -580,6 +583,7 @@ export default function ManageUsersTable() {
         </TableBody>
       </Table>
       <ToastContainer />
+    </div>
     </div>
   );
 

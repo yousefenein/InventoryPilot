@@ -7,6 +7,7 @@ class Orders(models.Model):
     estimated_duration = models.IntegerField(null=True)
     status = models.CharField(max_length = 255, null=True)
     due_date = models.DateField(null=True)
+    start_timestamp = models.DateTimeField(null=True, blank=True, default=None)
 
 class OrderPart(models.Model):
     order_part_id = models.AutoField(primary_key = True)

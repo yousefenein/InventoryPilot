@@ -227,7 +227,7 @@ export default function InventoryTable() {
           : selectedKeys;
 
       selectedValue.forEach((v) => {
-        if (items.some((item) => String(item.inventory_id) === v)) {
+        if (filteredItems.some((item) => String(item.inventory_id) === v)) {
           return;
         }
         resultKeys.add(v);
