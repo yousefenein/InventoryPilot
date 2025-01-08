@@ -11,21 +11,37 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await axios.get('http://127.0.0.1:8000/auth/profile/', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setUserData(response.data);
-        } catch (error) {
-          console.error('Error fetching user data:', error);
+    const verifyAdminAccess = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
         }
-      }
+
+        try {
+            const response = await axios.get('http://127.0.0.1:8000/auth/profile/', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            
+            if (response.data.role !== 'admin') {
+                // Redirect based on role
+                if (response.data.role === 'manager') {
+                    navigate('/manager_dashboard');
+                } else {
+                    navigate('/dashboard');
+                }
+                return;
+            }
+            
+            setUserData(response.data);
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            navigate('/login');
+        }
     };
-    fetchUserData();
-  }, []);
+
+    verifyAdminAccess();
+}, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
