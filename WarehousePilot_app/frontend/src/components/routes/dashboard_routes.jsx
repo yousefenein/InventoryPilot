@@ -7,13 +7,15 @@ import NotifCard from '../notifications/notifications-card/App';
 import NavBar from '../navbar/App';
 import OrderListView from '../orders/OrderListView'; 
 import ManageUsersTable from '../admin_manage_users/manage_users_table/App';
+import InventoyPickList from '../orders/InventoyPickList';
+import InventoryPickListItems from '../orders/InventoryPickListItems';
 
 
 export const dashboard_routes = [
   { path: '/dashboard', element: <Dashboard /> },
   { path: '/manager_dashboard', element: <ManagerDashboard /> },
   { path: '/admin_dashboard', element: <AdminDashboard /> },
-  { path: '/admin_dashboard/manage_users', element: <ManageUsersPage /> },
+  { path: '/admin_dashboard/manage_users', element: <ManageUsersTable /> },
   { path: '/account_management', element: <AccountManagement /> },
   { path: '/profile', element: <Profile /> },
   { path: '/kpi', element: <KpiDashboard /> },
@@ -24,5 +26,6 @@ export const dashboard_routes = [
   {path: '/admin_dashboard/edit_user/:user_id', element: <AddUsersDashboard />},
   { path: '/admin_dashboard/add_users', element: <AddUsersDashboard />},
   { path: '/orders', element: <OrderListView /> },
-  { path: '/users-table', element: <ManageUsersTable /> },
+  { path: '/inventory_pick_list', element: <InventoyPickList /> },
+  { path: '/inventory_picklist_items/:order_id', element: <InventoryPickListItems /> },
 ];
