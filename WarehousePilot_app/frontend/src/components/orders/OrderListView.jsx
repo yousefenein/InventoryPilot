@@ -30,6 +30,7 @@ const OrderListView = () => {
   const [updatingOrderId, setUpdatingOrderId] = useState(null); // To track which order is being updated
   const navigate = useNavigate()
   const rowsPerPage = 10; // Number of rows to display per page
+  
 
   // Filter rows based on search text (order ID, duration, status, due date)
   const filteredRows = useMemo(() => {
@@ -107,7 +108,7 @@ const OrderListView = () => {
     if (successOrderStart) {
       const timer = setTimeout(() => {
         setSuccessOrderStart(null);
-      }, 3000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [successOrderStart]);
@@ -117,7 +118,7 @@ const OrderListView = () => {
     if (successListGeneration) {
       const timer = setTimeout(() => {
         setSuccessListGeneration(null);
-      }, 3000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [successListGeneration]);
@@ -192,143 +193,138 @@ const OrderListView = () => {
   return (
     <div className="flex h-full">
       <Sidebar userData={userData} isOpen={isSidebarOpen} />
-
+  
       <div className="flex-1 sm:ml-64">
-        <Header
-          userData={userData}
-          toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
-        />
-
+        <Header userData={userData} toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
+  
         <div className="mt-16 p-8">
-          <div className="flex flex-row gap-11">
-          
-          <h1 className="text-2xl font-bold mb-6">Orders</h1>
-
-          {/* Success message for starting the order */}
-          {successOrderStart && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
-              <span>{successOrderStart}</span>
-              <button
-                onClick={() => setSuccessOrderStart(null)}
-                className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-          {/* Success message for generating the lists */}
-          {successListGeneration && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
-              <span>{successListGeneration}</span>
-              <button
-                onClick={() => setSuccessListGeneration(null)}
-                className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-          {/* Error message */}
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
-              <span>{error}</span>
-              <button
-                onClick={() => setError(null)}
-                className="bg-transparent text-red-700 hover:text-red-900 font-semibold px-2"
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-          {/* Search Input */}
-          <div className="mb-6 flex items-center gap-2">
-            <Input
-              size="md"
-              placeholder="Search orders"
-              value={filterValue}
-              onChange={(e) => setFilterValue(e.target.value)}
-              endContent={
-                <SearchIcon className="text-default-400" width={16} />
-              }
-              className="w-72"
-            />
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div>Loading...</div>
-            </div>
-          ) : (
-            <>
-              <Table aria-label="Order list" className="min-w-full">
-                <TableHeader>
-                  <TableColumn>Order ID</TableColumn>
-                  <TableColumn>Estimated Duration</TableColumn>
-                  <TableColumn>Status</TableColumn>
-                  <TableColumn>Due Date</TableColumn>
-                  <TableColumn>Action</TableColumn>
-                </TableHeader>
-
-                <TableBody items={paginatedRows}>
-                  {(item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.order_id}</TableCell>
-                      <TableCell>{item.estimated_duration}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded ${
-                            item.status === "In Progress"
-                              ? "bg-blue-100 text-blue-800"
-                              : ""
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>{item.due_date}</TableCell>
-                      <TableCell>
-                        <Button
-                          color={
-                            item.status === "In Progress"
-                              ? "success"
-                              : "primary"
-                          }
-                          size="sm"
-                          isLoading={updatingOrderId === item.order_id}
-                          isDisabled={
-                            item.status === "In Progress" ||
-                            updatingOrderId !== null
-                          }
-                          onPress={() => handleStart(item.order_id)}
-                        >
-                          {item.status === "In Progress" ? "Started" : "Start"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-
-              <div className="flex justify-between items-center mt-4">
-                <span>
-                  Page {page} of {totalPages}
-                </span>
-                <Pagination
-                  total={totalPages}
-                  initialPage={1}
-                  current={page}
-                  onChange={(newPage) => setPage(newPage)}
-                />
+          <div className="flex flex-col gap-6">
+            <h1 className="text-2xl font-bold mb-6">Orders</h1>
+  
+            {/* Success message for starting the order */}
+            {successOrderStart && (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+                <span>{successOrderStart}</span>
+                <button
+                  onClick={() => setSuccessOrderStart(null)}
+                  className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
+                >
+                  ×
+                </button>
               </div>
-            </>
-          )}
+            )}
+  
+            {/* Success message for generating the lists */}
+            {successListGeneration && (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+                <span>{successListGeneration}</span>
+                <button
+                  onClick={() => setSuccessListGeneration(null)}
+                  className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+  
+            {/* Error message */}
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+                <span>{error}</span>
+                <button
+                  onClick={() => setError(null)}
+                  className="bg-transparent text-red-700 hover:text-red-900 font-semibold px-2"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+  
+            {/* Search Input */}
+            <div className="mb-6 flex items-center gap-2">
+              <Input
+                size="md"
+                placeholder="Search orders"
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+                endContent={<SearchIcon className="text-default-400" width={16} />}
+                className="w-72"
+              />
+            </div>
+  
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div>Loading...</div>
+              </div>
+            ) : (
+              <>
+                <Table aria-label="Order list" className="min-w-full">
+                  <TableHeader>
+                    <TableColumn>Order ID</TableColumn>
+                    <TableColumn>Estimated Duration</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn>Due Date</TableColumn>
+                    <TableColumn>Action</TableColumn>
+                  </TableHeader>
+  
+                  <TableBody items={paginatedRows}>
+                    {(item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.order_id}</TableCell>
+                        <TableCell>{item.estimated_duration}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`px-2 py-1 rounded ${
+                              item.status === "In Progress"
+                                ? "bg-blue-100 text-blue-800"
+                                : ""
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </TableCell>
+                        <TableCell>{item.due_date}</TableCell>
+                        <TableCell>
+                          <Button
+                            color={
+                              item.status === "In Progress"
+                                ? "success"
+                                : "primary"
+                            }
+                            size="sm"
+                            isDisabled={
+                              item.status === "In Progress" ||
+                              updatingOrderId !== null
+                            }
+                            onPress={() => handleStart(item.order_id)}
+                          >
+                            {item.status === "In Progress" ? "Started" : "Start"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+  
+                <div className="flex justify-between items-center mt-4">
+                  <span>
+                    Page {page} of {totalPages}
+                  </span>
+                  <Pagination
+                    total={totalPages}
+                    initialPage={1}
+                    current={page}
+                    onChange={(newPage) => setPage(newPage)}
+                  />
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
+  
 };
 
 export default OrderListView;
