@@ -28,9 +28,8 @@ const OrderListView = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false); // To toggle the sidebar visibility
   const [userData, setUserData] = useState(null); // To store user data
   const [updatingOrderId, setUpdatingOrderId] = useState(null); // To track which order is being updated
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const rowsPerPage = 10; // Number of rows to display per page
-  
 
   // Filter rows based on search text (order ID, duration, status, due date)
   const filteredRows = useMemo(() => {
@@ -51,15 +50,30 @@ const OrderListView = () => {
     });
   }, [rows, filterValue]);
 
+  // Sort rows so that "In Progress" items appear at the top
+  const sortedFilteredRows = useMemo(() => {
+    const rowsCopy = [...filteredRows];
+    rowsCopy.sort((a, b) => {
+      if (a.status === "In Progress" && b.status !== "In Progress") {
+        return -1;
+      }
+      if (a.status !== "In Progress" && b.status === "In Progress") {
+        return 1;
+      }
+      return 0;
+    });
+    return rowsCopy;
+  }, [filteredRows]);
+
   // Apply pagination to the filtered rows
   const paginatedRows = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    return filteredRows.slice(start, end);
-  }, [page, filteredRows]);
+    return sortedFilteredRows.slice(start, end);
+  }, [page, sortedFilteredRows]);
 
   // Calculate total pages based on the number of filtered rows
-  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+  const totalPages = Math.ceil(sortedFilteredRows.length / rowsPerPage);
 
   // Fetch orders data from the backend
   const fetchOrders = async () => {
@@ -129,61 +143,71 @@ const OrderListView = () => {
       setUpdatingOrderId(orderId);
       setError(null);
       setSuccessOrderStart(null); // Reset previous success message
-  
-      const token = localStorage.getItem('token');
+
+      const token = localStorage.getItem("token");
       if (!token) {
         setError("No authorization token found");
         return;
       }
-  
+
       // Send POST request to start the order
-      const response = await axios.post(`http://127.0.0.1:8000/orders/start_order/${orderId}/`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-  
-      console.log('Response from backend (start_order):', response.data); // Log the response
-  
-      if (response.data.status === 'success') {
+      const response = await axios.post(
+        `http://127.0.0.1:8000/orders/start_order/${orderId}/`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Response from backend (start_order):", response.data);
+
+      if (response.data.status === "success") {
         // Update the order status and start timestamp
-        setRows(prevRows => 
-          prevRows.map(row => 
-            row.order_id === orderId 
-              ? { ...row, status: response.data.order_status, start_timestamp: response.data.start_timestamp }
+        setRows((prevRows) =>
+          prevRows.map((row) =>
+            row.order_id === orderId
+              ? {
+                  ...row,
+                  status: response.data.order_status,
+                  start_timestamp: response.data.start_timestamp,
+                }
               : row
           )
         );
-        setSuccessOrderStart(`Order ${orderId} successfully started!`); // Set success message for starting the order
-  
+        setSuccessOrderStart(`Order ${orderId} successfully started!`);
+
         // Second POST request to generate the list (after starting the order)
         const generateListsResponse = await axios.post(
-          'http://127.0.0.1:8000/orders/generateLists/', 
-          { orderID: orderId }, // Send the orderId in the body
-          { 
+          "http://127.0.0.1:8000/orders/generateLists/",
+          { orderID: orderId },
+          {
             headers: {
               Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            }
+              "Content-Type": "application/json",
+            },
           }
         );
-        
-        console.log('Response from backend (generateLists):', generateListsResponse.data);
-  
+
+        console.log(
+          "Response from backend (generateLists):",
+          generateListsResponse.data
+        );
+
         if (generateListsResponse.data.detail) {
-          setSuccessListGeneration(generateListsResponse.data.detail); // Set the success message from the backend
+          setSuccessListGeneration(generateListsResponse.data.detail);
         }
       } else {
-        setError(`Error: ${response.data.message}`); // Display specific error message from backend if available
+        setError(`Error: ${response.data.message}`);
       }
     } catch (err) {
-      console.error('Error starting the order:', err);
-      // Check for specific error response from backend if available
+      console.error("Error starting the order:", err);
       if (err.response) {
-        setError(`Error: ${err.response.data.message || 'Unknown error occurred'}`);
+        setError(`Error: ${err.response.data.message || "Unknown error occurred"}`);
       } else {
-        setError('Error starting the order');
+        setError("Error starting the order");
       }
     } finally {
       setUpdatingOrderId(null);
@@ -193,14 +217,17 @@ const OrderListView = () => {
   return (
     <div className="flex h-full">
       <Sidebar userData={userData} isOpen={isSidebarOpen} />
-  
+
       <div className="flex-1 sm:ml-64">
-        <Header userData={userData} toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
-  
+        <Header
+          userData={userData}
+          toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+        />
+
         <div className="mt-16 p-8">
           <div className="flex flex-col gap-6">
             <h1 className="text-2xl font-bold mb-6">Orders</h1>
-  
+
             {/* Success message for starting the order */}
             {successOrderStart && (
               <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
@@ -213,7 +240,7 @@ const OrderListView = () => {
                 </button>
               </div>
             )}
-  
+
             {/* Success message for generating the lists */}
             {successListGeneration && (
               <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
@@ -226,7 +253,7 @@ const OrderListView = () => {
                 </button>
               </div>
             )}
-  
+
             {/* Error message */}
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
@@ -239,7 +266,7 @@ const OrderListView = () => {
                 </button>
               </div>
             )}
-  
+
             {/* Search Input */}
             <div className="mb-6 flex items-center gap-2">
               <Input
@@ -251,7 +278,7 @@ const OrderListView = () => {
                 className="w-72"
               />
             </div>
-  
+
             {loading ? (
               <div className="flex justify-center items-center h-64">
                 <div>Loading...</div>
@@ -266,7 +293,7 @@ const OrderListView = () => {
                     <TableColumn>Due Date</TableColumn>
                     <TableColumn>Action</TableColumn>
                   </TableHeader>
-  
+
                   <TableBody items={paginatedRows}>
                     {(item) => (
                       <TableRow key={item.id}>
@@ -305,7 +332,7 @@ const OrderListView = () => {
                     )}
                   </TableBody>
                 </Table>
-  
+
                 <div className="flex justify-between items-center mt-4">
                   <span>
                     Page {page} of {totalPages}
@@ -324,8 +351,5 @@ const OrderListView = () => {
       </div>
     </div>
   );
-  
 };
-
 export default OrderListView;
-
