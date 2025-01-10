@@ -1,7 +1,10 @@
 from django.urls import path
 
-from . import views
+
+from .views import ManufacturingListView
+
 
 urlpatterns = [
-    path("", views.index, name="index"),
+    path('manufacturing_list/', ManufacturingListView.as_view(), name="manufacturing_list"),
+    
 ]

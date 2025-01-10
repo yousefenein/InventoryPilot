@@ -24,7 +24,7 @@ const InventoryPickList = () => {
   const [page, setPage] = useState(1);
 
   const [userData, setUserData] = useState(null);
-  const rowsPerPage = 5;
+  const rowsPerPage = 8;
   const navigate = useNavigate();
 
   // Filter rows by search text

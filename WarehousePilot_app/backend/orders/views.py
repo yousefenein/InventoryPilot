@@ -220,26 +220,21 @@ class InventoryPicklistView(APIView):
 
     def get(self, request):
         try:
-            # Fetch started orders (status='In Progress') and their picklists
-            started_orders = Orders.objects.filter(status='In Progress').values(
-                'order_id', 'due_date'
-            )
+            # Fetch all inventory picklists
+            inventory_picklists = InventoryPicklist.objects.select_related('order_id', 'assigned_employee_id').all()
 
-            # Build response data with additional fields `already_filled` and `assigned_to`
+            # Build response data
             response_data = [
                 {
-                    "order_id": order['order_id'],
-                    "due_date": order['due_date'],
-                    # Determine if the picklist is filled (all items are marked as `True`)
-                    "already_filled": InventoryPicklistItem.objects.filter(
-                        picklist_id__order_id=order['order_id'], status=False
-                    ).exists() == False,
-                    # Get the assigned employee from the picklist, if any
-                    "assigned_to": InventoryPicklist.objects.filter(
-                        order_id=order['order_id']
-                    ).values_list('assigned_employee_id__username', flat=True).first()
+                    
+                    "order_id": picklist.order_id.order_id,  # From related Orders model
+                    "due_date": picklist.order_id.due_date,  # From related Orders model
+                    "already_filled": not InventoryPicklistItem.objects.filter(
+                        picklist_id=picklist.picklist_id, status=False
+                    ).exists(),  # Determine if all items are marked as filled
+                    "assigned_to": picklist.assigned_employee_id.username if picklist.assigned_employee_id else "Unassigned",
                 }
-                for order in started_orders
+                for picklist in inventory_picklists
             ]
 
             return Response(response_data, status=status.HTTP_200_OK)

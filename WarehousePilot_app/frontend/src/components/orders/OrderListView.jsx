@@ -171,10 +171,10 @@ const OrderListView = () => {
           <Button
            color="primary"
            variant='flat'
-           onClick = { ()=> navigate("/inventory_pick_list")}
+           onClick = { ()=> navigate("/inventory_and_manufacturing_picklist")}
 
            >
-            Inventory picklist
+            Inventory and Manufacturing List
           </Button>
 
           </div>
