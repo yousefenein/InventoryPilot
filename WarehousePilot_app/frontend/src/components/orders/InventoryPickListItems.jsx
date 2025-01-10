@@ -11,7 +11,7 @@ import {
 } from "@nextui-org/react";
 import { SearchIcon } from "@nextui-org/shared-icons";
 import axios from "axios";
-import Sidebar from "../dashboard_sidebar/Sidebar";
+import SideBar from "../dashboard_sidebar1/App";
 import Header from "../dashboard_sidebar/Header";
 import { useParams } from "react-router-dom";
 
@@ -85,14 +85,9 @@ const InventoryPicklistItems = () => {
 
   return (
     <div className="flex h-full">
-      <Sidebar userData={userData} isOpen={isSidebarOpen} />
+      <SideBar/>
 
-      <div className="flex-1 sm:ml-64">
-        <Header
-          userData={userData}
-          toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
-        />
-
+      <div className="flex-1">
         <div className="mt-16 p-8">
           <h1 className="text-2xl font-bold mb-6">
             Picklist Items for Order {order_id}
@@ -159,7 +154,7 @@ const InventoryPicklistItems = () => {
           )}
         </div>
       </div>
-    </div>
+  </div>
   );
 };
 

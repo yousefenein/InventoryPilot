@@ -233,8 +233,20 @@ const OrderListView = () => {
 
         <div className="mt-16 p-8">
           <div className="flex flex-col gap-6">
+
+          <div className="flex flex-row gap-11">
+            
             <h1 className="text-2xl font-bold mb-6">Orders</h1>
 
+            <Button
+           color="primary"
+           variant='flat'
+           onClick = { ()=> navigate("/inventory_pick_list")}
+
+           >
+            Inventory picklist
+          </Button>
+            </div>
             {/* Success message for starting the order */}
             {successOrderStart && (
               <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
