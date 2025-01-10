@@ -16,6 +16,15 @@ import Sidebar from "../dashboard_sidebar/Sidebar"; // Importing Sidebar compone
 import Header from "../dashboard_sidebar/Header";
 import { useNavigate } from "react-router-dom"; // Importing Header component
 
+// ---- NEW IMPORTS FOR TIMEZONE HANDLING ----
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+// Extend dayjs with UTC and timezone
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 const OrderListView = () => {
   // State variables
   const [filterValue, setFilterValue] = useState(""); // Filter value for search functionality
@@ -314,10 +323,12 @@ const OrderListView = () => {
                           </span>
                         </TableCell>
                         <TableCell>{item.due_date}</TableCell>
-                        {/* Display only the date portion (YYYY-MM-DD) */}
+                        {/* Convert UTC timestamp to Eastern time zone */}
                         <TableCell>
                           {item.start_timestamp
-                            ? item.start_timestamp.slice(0, 10)
+                            ? dayjs.utc(item.start_timestamp)
+                                .tz("America/Toronto") 
+                                .format("YYYY-MM-DD HH:mm")
                             : ""}
                         </TableCell>
                         <TableCell>
@@ -361,5 +372,5 @@ const OrderListView = () => {
     </div>
   );
 };
-export default OrderListView;
 
+export default OrderListView;
