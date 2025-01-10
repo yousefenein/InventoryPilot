@@ -12,7 +12,7 @@ import {
 } from "@nextui-org/react"; // Importing necessary components from NextUI for the table and buttons
 import { SearchIcon } from "@nextui-org/shared-icons"; // Importing SearchIcon from NextUI shared icons
 import axios from "axios"; // Importing Axios for making HTTP requests
-import Sidebar from "../dashboard_sidebar/Sidebar"; // Importing Sidebar component
+import SideBar from "../dashboard_sidebar1/App";
 import Header from "../dashboard_sidebar/Header";
 import { useNavigate } from "react-router-dom"; // Importing Header component
 
@@ -226,13 +226,10 @@ const OrderListView = () => {
 
   return (
     <div className="flex h-full">
-      <Sidebar userData={userData} isOpen={isSidebarOpen} />
+      <SideBar />
 
-      <div className="flex-1 sm:ml-64">
-        <Header
-          userData={userData}
-          toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
-        />
+      <div className="flex-1">
+        
 
         <div className="mt-16 p-8">
           <div className="flex flex-col gap-6">
