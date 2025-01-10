@@ -102,6 +102,7 @@ const OrderListView = () => {
           estimated_duration: row.estimated_duration,
           status: row.status,
           due_date: row.due_date,
+          start_timestamp: row.start_timestamp, // store the start timestamp here
         }))
       );
       setLoading(false);
@@ -291,6 +292,8 @@ const OrderListView = () => {
                     <TableColumn>Estimated Duration</TableColumn>
                     <TableColumn>Status</TableColumn>
                     <TableColumn>Due Date</TableColumn>
+                    {/* New Start Date column */}
+                    <TableColumn>Start Date</TableColumn>
                     <TableColumn>Action</TableColumn>
                   </TableHeader>
 
@@ -311,6 +314,12 @@ const OrderListView = () => {
                           </span>
                         </TableCell>
                         <TableCell>{item.due_date}</TableCell>
+                        {/* Display only the date portion (YYYY-MM-DD) */}
+                        <TableCell>
+                          {item.start_timestamp
+                            ? item.start_timestamp.slice(0, 10)
+                            : ""}
+                        </TableCell>
                         <TableCell>
                           <Button
                             color={
@@ -353,3 +362,4 @@ const OrderListView = () => {
   );
 };
 export default OrderListView;
+
