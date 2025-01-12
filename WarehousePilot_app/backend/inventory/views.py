@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from rest_framework import status
 from django.middleware.csrf import get_token
-from .models import InventoryPicklist
+from .models import InventoryPicklist, InventoryPicklistItem
 from .serializers import OrderSerializer
 from auth_app.models import users
 
@@ -148,3 +148,37 @@ class AssignOrderView(APIView):
 
         serializer = OrderSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class AssignedPicklistView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            current_user = request.user
+            # Find picklists assigned to this user
+            assigned_picklists = InventoryPicklist.objects.filter(
+                assigned_employee_id=current_user,               
+                order_id__status='In Progress'                  
+            )
+
+            response_data = []
+            for picklist in assigned_picklists:
+                order = picklist.order_id  
+                response_data.append({
+                    "order_id": order.order_id,
+                    "due_date": order.due_date,
+                    "already_filled": not InventoryPicklistItem.objects.filter(
+                        picklist_id=picklist.picklist_id,
+                        status=False
+                    ).exists(),
+                    "assigned_to": picklist.assigned_employee_id.first_name + " " + picklist.assigned_employee_id.last_name if picklist.assigned_employee_id else None
+                })
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

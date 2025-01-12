@@ -9,6 +9,7 @@ import OrderListView from '../orders/OrderListView';
 import ManageUsersTable from '../admin_manage_users/manage_users_table/App';
 import InventoyPickList from '../orders/InventoyPickList';
 import InventoryPickListItems from '../orders/InventoryPickListItems';
+import AssignedPickList from '../orders/AssignedPickList';
 
 
 export const dashboard_routes = [
@@ -29,4 +30,5 @@ export const dashboard_routes = [
   { path: '/inventory_pick_list', element: <InventoyPickList /> },
   { path: '/inventory_picklist_items/:order_id', element: <InventoryPickListItems /> },
   { path: '/staff_dashboard', element: <StaffDashboard /> },
+  { path: '/assigned_picklist', element: <AssignedPickList /> },
 ];
