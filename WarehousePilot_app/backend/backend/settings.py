@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     "parts.apps.PartsConfig",
     "manufacturingLists.apps.ManufacturinglistsConfig",
     "inventory.apps.InventoryConfig",
-    "reports.apps.ReportsConfig"
+    "reports.apps.ReportsConfig",
+    "staff_dashboard.apps.StaffDashboardConfig",
 ]
 
 MIDDLEWARE = [

@@ -5,7 +5,12 @@ from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 import json
+from rest_framework import status
 from django.middleware.csrf import get_token
+from .models import InventoryPicklist
+from .serializers import OrderSerializer
+from auth_app.models import users
+
 
 logger = logging.getLogger(__name__)
 
@@ -117,4 +122,29 @@ class InventoryView(APIView):
             return Response(inventory_data)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
- 
+
+class AssignOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, order_id):
+        print(f"[DEBUG] order_id from URL: {order_id}")
+        user_id = request.data.get('user_id')
+        print(f"[DEBUG] user_id from body: {user_id}")
+        if not user_id:
+            return Response({"detail": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            order = InventoryPicklist.objects.get(order_id=order_id)
+        except InventoryPicklist.DoesNotExist:
+            return Response({"detail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            staff_user = users.objects.get(user_id=user_id, role='staff')
+        except users.DoesNotExist:
+            return Response({"detail": "Staff user not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        order.assigned_employee_id = staff_user
+        order.save()
+
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=status.HTTP_200_OK)

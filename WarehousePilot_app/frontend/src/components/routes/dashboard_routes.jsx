@@ -1,4 +1,4 @@
-import { Dashboard, ManagerDashboard, AdminDashboard, AccountManagement, ChangePassword, Profile  } from '../dashboard';
+import { Dashboard, ManagerDashboard, AdminDashboard, AccountManagement, ChangePassword, Profile, StaffDashboard  } from '../dashboard';
 import KpiDashboard from "../dashboard/KpiDashboard"
 import InventoryTable from '../inventory-stock/App'; 
 import ManageUsersPage from '../admin_manage_users/ManageUsersPage';
@@ -28,4 +28,5 @@ export const dashboard_routes = [
   { path: '/orders', element: <OrderListView /> },
   { path: '/inventory_pick_list', element: <InventoyPickList /> },
   { path: '/inventory_picklist_items/:order_id', element: <InventoryPickListItems /> },
+  { path: '/staff_dashboard', element: <StaffDashboard /> },
 ];

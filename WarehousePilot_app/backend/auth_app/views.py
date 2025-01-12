@@ -9,6 +9,7 @@ from rest_framework import status
 from django.contrib.auth.hashers import check_password
 from .models import users
 from django.contrib.auth import update_session_auth_hash
+from .serializers import StaffSerializer
 
 # This is the view for the login endpoint
 class LoginView(APIView):
@@ -81,5 +82,17 @@ class ProfileView(APIView):
                 'department': getattr(user, 'department', 'N/A'),
             }
             return Response(user_data)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+        
+class RetrieveUsers(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            staffData = users.objects.all()
+            serializer = StaffSerializer(staffData, many=True)
+            return Response(serializer.data)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
