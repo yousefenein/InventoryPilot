@@ -12,8 +12,9 @@ import {
 import { SearchIcon } from "@nextui-org/shared-icons";
 import axios from "axios";
 import SideBar from "../dashboard_sidebar1/App";
-
+import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
+import { Button } from "@nextui-org/react";
 
 const InventoryPicklistItem = () => {
   const { order_id } = useParams();
@@ -24,6 +25,7 @@ const InventoryPicklistItem = () => {
   const [page, setPage] = useState(1);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [userData, setUserData] = useState(null);
+  const navigate = useNavigate()
   const rowsPerPage = 10;
 
   // Fetch picklist items for the given order
@@ -111,6 +113,11 @@ const InventoryPicklistItem = () => {
               endContent={<SearchIcon className="text-default-400" width={16} />}
               className="w-72"
             />
+            <Button 
+            color="primary"
+            variant="light"
+            onClick = { ()=> navigate("/inventory_and_manufacturing_picklist")}
+            > Go back</Button>
           </div>
 
           {loading ? (
