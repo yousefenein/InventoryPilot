@@ -7,8 +7,10 @@ import NotifCard from '../notifications/notifications-card/App';
 import NavBar from '../navbar/App';
 import OrderListView from '../orders/OrderListView'; 
 import ManageUsersTable from '../admin_manage_users/manage_users_table/App';
-import InventoryPickListItems from '../orders/InventoryPickListItems';
+import InventoryPickListItem from '../orders/InventoryPickListItem';
 import InventoryAndManufacturingList from '../orders/InventoryAndManufacturingList';
+import ManufacturingListItem from '../orders/ManufacturingListItem';
+
 
 
 export const dashboard_routes = [
@@ -27,5 +29,6 @@ export const dashboard_routes = [
   { path: '/admin_dashboard/add_users', element: <AddUsersDashboard />},
   { path: '/orders', element: <OrderListView /> },
   { path: '/inventory_and_manufacturing_picklist', element: <InventoryAndManufacturingList /> },
-  { path: '/inventory_picklist_items/:order_id', element: <InventoryPickListItems /> },
+  { path: '/inventory_picklist_items/:order_id', element: <InventoryPickListItem /> },
+  { path: '/manufacturing_list_item/:order_id', element: <ManufacturingListItem /> }
 ];

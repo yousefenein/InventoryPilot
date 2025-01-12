@@ -13,12 +13,15 @@ import {
 import { SearchIcon } from "@nextui-org/shared-icons";
 import axios from "axios";
 
+import { useNavigate } from "react-router-dom";
+
 const ManufacturingList = () => {
   const [filterValue, setFilterValue] = useState("");
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
+  const navigate = useNavigate();
 
   const rowsPerPage = 8;
 
@@ -85,6 +88,10 @@ const ManufacturingList = () => {
     fetchManufacturingList();
   }, []);
 
+  const handleViewOrderDetails = (order_id) => {
+    navigate(`/manufacturing_list_item/${order_id}`);
+  };
+
   return (
     <div className="mt-2 p-8">
       <h1 className="text-2xl font-bold mb-6">Manufacturing List</h1>
@@ -132,11 +139,7 @@ const ManufacturingList = () => {
                     <Button
                       color="primary"
                       size="sm"
-                      onPress={() =>
-                        alert(
-                          `Viewing details for Manufacturing List ${item.manufacturing_list_id}`
-                        )
-                      }
+                      onPress={() => handleViewOrderDetails(item.order_id)}
                     >
                       View Details
                     </Button>

@@ -115,11 +115,12 @@ const OrderListView = () => {
       setSuccess(null); // Reset previous success message
 
       const token = localStorage.getItem("token");
+      
       if (!token) {
         setError("No authorization token found");
         return;
       }
-
+      
       const response = await axios.post(
         `http://127.0.0.1:8000/orders/start_order/${orderId}/`,
         {},
@@ -176,6 +177,7 @@ const OrderListView = () => {
            >
             Inventory and Manufacturing List
           </Button>
+          
 
           </div>
           

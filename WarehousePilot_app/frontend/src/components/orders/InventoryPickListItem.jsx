@@ -11,11 +11,11 @@ import {
 } from "@nextui-org/react";
 import { SearchIcon } from "@nextui-org/shared-icons";
 import axios from "axios";
-import Sidebar from "../dashboard_sidebar/Sidebar";
-import Header from "../dashboard_sidebar/Header";
+import SideBar from "../dashboard_sidebar1/App";
+
 import { useParams } from "react-router-dom";
 
-const InventoryPicklistItems = () => {
+const InventoryPicklistItem = () => {
   const { order_id } = useParams();
   const [filterValue, setFilterValue] = useState("");
   const [items, setItems] = useState([]);
@@ -35,7 +35,7 @@ const InventoryPicklistItems = () => {
         setLoading(false);
         return;
       }
-
+      
       const response = await axios.get(
         `http://127.0.0.1:8000/orders/inventory_picklist_items/${order_id}/`,
         {
@@ -85,14 +85,10 @@ const InventoryPicklistItems = () => {
 
   return (
     <div className="flex h-full">
-      <Sidebar userData={userData} isOpen={isSidebarOpen} />
+         <SideBar isOpen={isSidebarOpen} />
 
-      <div className="flex-1 sm:ml-64">
-        <Header
-          userData={userData}
-          toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
-        />
-
+      <div className="flex-1 sm:ml-8">
+      
         <div className="mt-16 p-8">
           <h1 className="text-2xl font-bold mb-6">
             Picklist Items for Order {order_id}
@@ -163,4 +159,4 @@ const InventoryPicklistItems = () => {
   );
 };
 
-export default InventoryPicklistItems;
+export default InventoryPicklistItem;

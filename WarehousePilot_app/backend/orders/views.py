@@ -250,33 +250,23 @@ class InventoryPicklistItemsView(APIView):
     
     def get(self, request, order_id):
         try:
-            # Validate the order ID using lower() for case-insensitive check
-            order = Orders.objects.filter(order_id=order_id).first()
-            if not order or order.status.lower() != 'in progress':
-                return Response(
-                    {"error": "Order not found or not in progress"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            # Fetch picklist associated with the order
-            picklist = InventoryPicklist.objects.filter(order_id=order).first()
-            if not picklist:
-                return Response(
-                    {"error": "No picklist found for the given order"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
+            # Fetch the order based on the provided order_id
+            order = Orders.objects.get(order_id=order_id)
+
+            # Fetch the inventory picklist associated with the order
+            picklist = InventoryPicklist.objects.get(order_id=order)
+
             # Fetch picklist items for the given picklist
             picklist_items = InventoryPicklistItem.objects.filter(
                 picklist_id=picklist.picklist_id
             ).values(
                 'picklist_item_id',
                 'location__location',
-                'sku_color__sku_color',  # Just get the sku_color
+                'sku_color__sku_color',
                 'amount',
                 'status'
             )
-            
+
             # Build response data
             response_data = [
                 {
@@ -288,12 +278,24 @@ class InventoryPicklistItemsView(APIView):
                 }
                 for item in picklist_items
             ]
-            
+
             return Response(response_data, status=status.HTTP_200_OK)
-            
+
+        except Orders.DoesNotExist:
+            return Response(
+                {"error": "Order not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except InventoryPicklist.DoesNotExist:
+            return Response(
+                {"error": "No picklist found for the given order"},
+                status=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
             print(f"Error occurred: {str(e)}")
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
