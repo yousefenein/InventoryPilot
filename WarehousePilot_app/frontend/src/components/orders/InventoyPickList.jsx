@@ -310,7 +310,8 @@ const InventoryPickList = () => {
             }}
             className="w-full"
           >
-            {filteredStaffList.map((staff) => {
+            {filteredStaffList
+              .filter((staff) => staff.role === "staff") .map((staff) => {
               const fullName = `${staff.first_name} ${staff.last_name}`;
               return (
                 <SelectItem
