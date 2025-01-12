@@ -155,7 +155,7 @@ const InventoryPicklistItem = () => {
           )}
         </div>
       </div>
-    </div>
+  </div>
   );
 };
 
