@@ -16,6 +16,7 @@ export const items: SidebarItem[] = [
   {
     key: "kpi",
     href: "/kpi", 
+    href: "/kpi", 
     icon: "solar:chart-outline",
     title: "KPI",
   },
