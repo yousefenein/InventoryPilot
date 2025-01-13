@@ -27,6 +27,10 @@ const InventoryPicklistItem = () => {
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate()
   const rowsPerPage = 10;
+  const user = localStorage.getItem('user');
+  const parsedUser = user ? JSON.parse(user) : null;
+  const userRole = parsedUser ? parsedUser.role : null;
+
 
   // Fetch picklist items for the given order
   const fetchPicklistItems = async () => {
@@ -113,13 +117,20 @@ const InventoryPicklistItem = () => {
               endContent={<SearchIcon className="text-default-400" width={16} />}
               className="w-72"
             />
-            <Button 
-            color="primary"
-            variant="light"
-            onClick = { ()=> navigate("/inventory_and_manufacturing_picklist")}
-            > Go back</Button>
+            <Button
+              color="primary"
+              variant="light"
+              onPress={() => {
+                if (userRole === "admin" && userRole === "manager") {
+                  navigate("/inventory_and_manufacturing_picklist");
+                } else if (userRole === "staff") {
+                  navigate("/assigned_picklist");
+                }
+              }}
+            >
+              Go back
+            </Button>          
           </div>
-
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div>Loading...</div>

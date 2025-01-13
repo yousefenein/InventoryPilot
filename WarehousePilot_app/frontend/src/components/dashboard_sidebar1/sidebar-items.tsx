@@ -49,6 +49,12 @@ export const items: SidebarItem[] = [
     icon: "solar:user-outline",
     title: "Account Management",
   },
+  {
+    key: "assigned_picklist",
+    href: "/assigned_picklist",
+    icon: "solar:clipboard-list-outline",
+    title: "My Assigned Picklist",
+  },
 ];
 
 

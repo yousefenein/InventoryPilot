@@ -44,6 +44,10 @@ function Login() {
         navigate('/admin_dashboard');
       } else if (user.role === 'manager') {
         navigate('/manager_dashboard');
+      } else if (user.role === 'staff') {
+        navigate('/staff_dashboard');
+      } else if (user.role === 'qa') {
+        navigate('/qa_dashboard');
       } else {
         navigate('/dashboard');
       }
