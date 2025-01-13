@@ -8,7 +8,6 @@ import NavBar from '../navbar/App';
 import OrderListView from '../orders/OrderListView'; 
 import ManageUsersTable from '../admin_manage_users/manage_users_table/App';
 import InventoyPickList from '../orders/InventoyPickList';
-import InventoryPickListItems from '../orders/InventoryPickListItems';
 import AssignedPickList from '../orders/AssignedPickList';
 import InventoryPickListItem from '../orders/InventoryPickListItem';
 import InventoryAndManufacturingList from '../orders/InventoryAndManufacturingList';
@@ -26,13 +25,12 @@ export const dashboard_routes = [
   { path: '/kpi', element: <KpiDashboard /> },
   { path: '/change_password', element: <ChangePassword /> },
   { path: '/inventory-stock', element: <InventoryTable /> },
-  {path: '/admin_dashboard/add_users', element: <AddUsersDashboard />},
+  { path: '/admin_dashboard/add_users', element: <AddUsersDashboard />},
   { path: '/navbar', element: <NavBar /> },
-  {path: '/admin_dashboard/edit_user/:user_id', element: <AddUsersDashboard />},
+  { path: '/admin_dashboard/edit_user/:user_id', element: <AddUsersDashboard />},
   { path: '/admin_dashboard/add_users', element: <AddUsersDashboard />},
   { path: '/orders', element: <OrderListView /> },
   { path: '/inventory_pick_list', element: <InventoyPickList /> },
-  { path: '/inventory_picklist_items/:order_id', element: <InventoryPickListItems /> },
   { path: '/staff_dashboard', element: <StaffDashboard /> },
   { path: '/assigned_picklist', element: <AssignedPickList /> },
   { path: '/inventory_and_manufacturing_picklist', element: <InventoryAndManufacturingList /> },
