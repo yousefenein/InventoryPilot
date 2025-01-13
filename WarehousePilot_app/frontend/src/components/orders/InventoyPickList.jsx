@@ -16,7 +16,8 @@ import {
 } from "@nextui-org/react";
 import { SearchIcon } from "@nextui-org/shared-icons";
 import axios from "axios";
-import SideBar from "../dashboard_sidebar1/App";
+
+
 import { useNavigate } from "react-router-dom";
 
 const InventoryPickList = () => {
@@ -25,9 +26,9 @@ const InventoryPickList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
+
   const [userData, setUserData] = useState(null);
-  const rowsPerPage = 10;
+  const rowsPerPage = 8;
   const navigate = useNavigate();
 
   // For staff assignment modal
@@ -196,11 +197,9 @@ const InventoryPickList = () => {
 
 
   return (
-    <div className="flex h-full">
-      <SideBar/>
+    
 
-        <div className="flex-1">
-          <div className="mt-16 p-8">
+        <div className="mt-16 p-8">
           <h1 className="text-2xl font-bold mb-6">Inventory Pick List</h1>
 
           {/* Error message */}
@@ -281,8 +280,6 @@ const InventoryPickList = () => {
               </div>
             </>
           )}
-           </div>
-        </div>
       {/* Staff Assignment Modal */}
       <Modal isOpen={assignModalOpen} onClose={handleCloseModal}>
       <ModalContent>

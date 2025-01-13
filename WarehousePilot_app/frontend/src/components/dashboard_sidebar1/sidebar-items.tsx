@@ -27,7 +27,7 @@ export const items: SidebarItem[] = [
   },
   {
     key: "production_plan",
-    href: "#",
+    href: "/sidebar",
     icon: "solar:calendar-outline",
     title: "Production Plan",
   },

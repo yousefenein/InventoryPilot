@@ -155,6 +155,7 @@ const OrderListView = () => {
       setSuccessOrderStart(null); // Reset previous success message
 
       const token = localStorage.getItem("token");
+      
       if (!token) {
         setError("No authorization token found");
         return;
@@ -241,10 +242,10 @@ const OrderListView = () => {
             <Button
            color="primary"
            variant='flat'
-           onClick = { ()=> navigate("/inventory_pick_list")}
+           onClick = { ()=> navigate("/inventory_and_manufacturing_picklist")}
 
            >
-            Inventory picklist
+            Inventory and Manufacturing List
           </Button>
             </div>
             {/* Success message for starting the order */}
