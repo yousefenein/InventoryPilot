@@ -28,5 +28,5 @@ urlpatterns = [
     path('inventory/', include('inventory.urls')),
     path('reports/', include('reports.urls')),
     path('staff_dashboard/', include('staff_dashboard.urls')),
-
+    path('logging/', include('logging_app.urls'))
 ]
