@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from rest_framework.response import Response
+import logging
+import json
 
 # THE PURPOSE OF THIS FILE IS TO HELP ADD LOGGING TO YOUR BACKEND:
 
@@ -27,3 +29,27 @@ def logging_example_view(request):
     except Exception as e:
         logger.error("An error occurred: %s", str(e), exc_info=True) # LOGGING AN ERROR
         return Response({"message": "Error"}, status=500)
+    
+
+# -------------------------------------------------------------------------------
+#  BELOW THIS POINT IS A LOGGING API TO SEND LOGS FROM FRONTEND BACK INTO DJANGO
+# -------------------------------------------------------------------------------
+
+# Backend API to pass log messages from frontend to Django
+def logs_from_frontend(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        level = data.get('level', 'info').lower()
+        message = data.get('message', '')
+        logger = logging.getLogger('WarehousePilot_app')
+
+        if level == 'debug':
+            logger.info(message)
+        elif level == 'warning':
+            logger.warning(message)
+        elif level == 'error':
+            logger.error(message)
+        elif level == 'critical':
+            logger.critical(message)       
+        else:
+            logger.info(message)
