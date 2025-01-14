@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "inventory.apps.InventoryConfig",
     "reports.apps.ReportsConfig",
     "staff_dashboard.apps.StaffDashboardConfig",
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [
