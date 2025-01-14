@@ -8,6 +8,9 @@ import {
   TableCell,
   Input,
   Pagination,
+  Tab,
+  Modal,
+  ModalContent,
 } from "@nextui-org/react";
 import { SearchIcon } from "@nextui-org/shared-icons";
 import axios from "axios";
@@ -30,6 +33,9 @@ const InventoryPicklistItem = () => {
   const user = localStorage.getItem('user');
   const parsedUser = user ? JSON.parse(user) : null;
   const userRole = parsedUser ? parsedUser.role : null;
+  // pick item modal
+  const [pickModalOpen, setPickModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
 
   // Fetch picklist items for the given order
@@ -89,6 +95,51 @@ const InventoryPicklistItem = () => {
 
   const totalPages = Math.ceil(filteredItems.length / rowsPerPage);
 
+  // Pick Item Logic 
+  const openPickModal = (item) => {
+    setSelectedItem(item);
+    setPickModalOpen(true);
+  };
+
+  const closePickModal = () => {
+    setSelectedItem(null);
+    setPickModalOpen(false);
+  };
+
+  const handleConfirmPick = async () => {
+    if (!selectedItem) return;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No authorization token found");
+        return;
+      }
+      await axios.patch(
+        `http://127.0.0.1:8000/inventory/inventory_picklist_items/${selectedItem.picklist_item_id}/pick/`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      // If success, update state to reflect item.status=true
+      setItems((prev) =>
+        prev.map((it) =>
+          it.picklist_item_id === selectedItem.picklist_item_id
+            ? { ...it, status: true }
+            : it
+        )
+      );
+      closePickModal();
+    } catch (err) {
+      console.error("Error picking item:", err);
+      setError("Failed to pick item");
+    }
+  };
+
+
   return (
     <div className="flex h-full">
          <SideBar isOpen={isSidebarOpen} />
@@ -144,6 +195,7 @@ const InventoryPicklistItem = () => {
                   <TableColumn>SKU Color</TableColumn>
                   <TableColumn>Quantity</TableColumn>
                   <TableColumn>Status</TableColumn>
+                  <TableColumn>Action</TableColumn>
                 </TableHeader>
                 <TableBody items={paginatedItems}>
                   {(item) => (
@@ -152,7 +204,18 @@ const InventoryPicklistItem = () => {
                       <TableCell>{item.location}</TableCell>
                       <TableCell>{item.sku_color}</TableCell>
                       <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.status}</TableCell>
+                      <TableCell>{item.status ? "Picked" : "To Pick"}</TableCell>
+                      <TableCell>
+                        {/* Button or checkbox to pick the item */}
+                        {item.status ? (
+                          <span>Picked</span>
+                        ) : (
+                          <input
+                            type="checkbox"
+                            onChange={() => openPickModal(item)}
+                          />
+                        )}
+                      </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -173,6 +236,32 @@ const InventoryPicklistItem = () => {
           )}
         </div>
       </div>
+      {/* Confirmation Modal for picking item */}
+      <Modal isOpen={pickModalOpen} onClose={closePickModal}>
+        <ModalContent>
+          <div className="p-4">
+            {selectedItem && (
+              <>
+                <h2 className="text-xl font-semibold mb-4">
+                  Pick Item Confirmation
+                </h2>
+                <p>
+                  Do you want to pick this <b>{selectedItem.sku_color}</b> item?
+                </p>
+
+                <div className="flex justify-end mt-6 gap-4">
+                  <Button onPress={closePickModal} color="default">
+                    Cancel
+                  </Button>
+                  <Button onPress={handleConfirmPick} color="primary">
+                    Yes, Pick
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </ModalContent>
+      </Modal>
   </div>
   );
 };

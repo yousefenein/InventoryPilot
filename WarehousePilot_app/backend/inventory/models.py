@@ -28,4 +28,4 @@ class InventoryPicklistItem(models.Model):
       location = models.ForeignKey(Inventory, null=True, on_delete=models.SET_NULL)
       sku_color = models.ForeignKey(Part, on_delete=models.CASCADE)
       amount = models.IntegerField()
-      status = models.BooleanField()
+      status = models.BooleanField() # True if picked, False if not picked
