@@ -185,3 +185,21 @@ class AssignedPicklistView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+class PickPicklistItemView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, picklist_item_id):
+        try:
+            item = InventoryPicklistItem.objects.get(picklist_item_id=picklist_item_id)
+        except InventoryPicklistItem.DoesNotExist:
+            return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.role != 'staff':
+            return Response({"error": "Not allowed"}, status=403)
+
+        item.status = True
+        item.save()
+
+        return Response({"message": "Item picked successfully"}, status=status.HTTP_200_OK)
