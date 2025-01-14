@@ -25,12 +25,12 @@ class ManufacturingTask(models.Model):
     due_date = models.DateField()
     status = models.CharField(max_length=25, choices=MANUFACTURING_PROCESSES)
     
-    cut_start_time = models.DateField(null=True)
-    cut_end_time = models.DateField(null=True)
-    bend_start_time = models.DateField(null=True)
-    bend_end_time = models.DateField(null=True)
-    paint_start_time = models.DateField(null=True)
-    paint_end_time = models.DateField(null=True)
+    cut_start_time = models.DateTimeField(null=True)
+    cut_end_time = models.DateTimeField(null=True)
+    bend_start_time = models.DateTimeField(null=True)
+    bend_end_time = models.DateTimeField(null=True)
+    paint_start_time = models.DateTimeField(null=True)
+    paint_end_time = models.DateTimeField(null=True)
     
     cut_qa = models.BooleanField(default=False)
     bend_qa = models.BooleanField(default=False)
