@@ -16,8 +16,7 @@ import {
 } from "@nextui-org/react";
 import { SearchIcon } from "@nextui-org/shared-icons";
 import axios from "axios";
-
-
+import {Spinner} from "@heroui/spinner";
 import { useNavigate } from "react-router-dom";
 
 const InventoryPickList = () => {
@@ -33,7 +32,7 @@ const InventoryPickList = () => {
 
   // For staff assignment modal
   const [assignModalOpen, setAssignModalOpen] = useState(false);
-  const [staffList, setStaffList] = useState([]);        // all staff users
+  const [staffList, setStaffList] = useState([]); // all staff users
   const [staffSearchTerm, setStaffSearchTerm] = useState(""); // search text for staff
   const [selectedStaffId, setSelectedStaffId] = useState(null);
   const [assigningOrderId, setAssigningOrderId] = useState(null);
@@ -105,7 +104,7 @@ const InventoryPickList = () => {
   const handleViewOrderDetails = (order_id) => {
     navigate(`/inventory_picklist_items/${order_id}`);
   };
-  
+
   // Staff assignment modal
   // Open the modal for a specific order
   const handleOpenAssignModal = async (orderId) => {
@@ -119,11 +118,14 @@ const InventoryPickList = () => {
         setError("No authorization token found");
         return;
       }
-      const staffResp = await axios.get("http://127.0.0.1:8000/auth/retrieve_users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const staffResp = await axios.get(
+        "http://127.0.0.1:8000/auth/retrieve_users",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       // staffResp.data => array of staff like [{ id, first_name, last_name }, ...]
       setStaffList(staffResp.data);
       console.log("staffResp.data =>", staffResp.data);
@@ -134,7 +136,7 @@ const InventoryPickList = () => {
   };
 
   // Filter staff by staffSearchTerm
-  // TODO: Integrate with dropdown? 
+  // TODO: Integrate with dropdown?
   const filteredStaffList = useMemo(() => {
     if (!staffSearchTerm.trim()) return staffList;
     const lower = staffSearchTerm.toLowerCase();
@@ -195,141 +197,143 @@ const InventoryPickList = () => {
     setAssigningOrderId(null);
   };
 
-
   return (
-    
+    <div className="mt-16 p-8">
+      <h1 className="text-2xl font-bold mb-6">Inventory Pick List</h1>
+      <h6 className="text-md font-bold">Few examples to test the different cases of orders being picked</h6>
+      <p>order have both inventory picklist and manufacturinglist 90171, 89851 ,89672</p>
+      <p>order have both inventory picklist and no  manufacturinglist 80555 </p>
+      <p>order have none 89345 </p>
 
-        <div className="mt-16 p-8">
-          <h1 className="text-2xl font-bold mb-6">Inventory Pick List</h1>
+      {/* Error message */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+          {error}
+        </div>
+      )}
 
-          {/* Error message */}
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-              {error}
-            </div>
-          )}
+      {/* Search Input */}
+      <div className="mb-6 flex items-center gap-2">
+        <Input
+          size="md"
+          placeholder="Search orders"
+          value={filterValue}
+          onChange={(e) => setFilterValue(e.target.value)}
+          endContent={<SearchIcon className="text-default-400" width={16} />}
+          className="w-72"
+        />
+      </div>
 
-          {/* Search Input */}
-          <div className="mb-6 flex items-center gap-2">
-            <Input
-              size="md"
-              placeholder="Search orders"
-              value={filterValue}
-              onChange={(e) => setFilterValue(e.target.value)}
-              endContent={<SearchIcon className="text-default-400" width={16} />}
-              className="w-72"
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          Loading...
+          <Spinner size="lg" />
+          
+        </div>
+      ) : (
+        <>
+          <Table aria-label="Inventory Pick List" className="min-w-full">
+            <TableHeader>
+              <TableColumn>Order ID</TableColumn>
+              <TableColumn>Due Date</TableColumn>
+              <TableColumn>Already Filled</TableColumn>
+              <TableColumn>Assigned To</TableColumn>
+              <TableColumn>Action</TableColumn>
+            </TableHeader>
+
+            <TableBody items={paginatedRows}>
+              {(item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.order_id}</TableCell>
+                  <TableCell>{item.due_date}</TableCell>
+                  <TableCell>{item.already_filled ? "Yes" : "No"}</TableCell>
+                  <TableCell>{item.assigned_to || "Unassigned"}</TableCell>
+                  <TableCell>
+                    <Button
+                      color="primary"
+                      size="sm"
+                      onPress={() => handleViewOrderDetails(item.order_id)}
+                    >
+                      Pick Order
+                    </Button>
+                    <Button
+                      color="primary"
+                      size="sm"
+                      onPress={() => handleOpenAssignModal(item.order_id)}
+                      className="ml-2"
+                    >
+                      Assign Staff
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+
+          <div className="flex justify-between items-center mt-4">
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <Pagination
+              total={totalPages}
+              initialPage={1}
+              current={page}
+              onChange={(newPage) => setPage(newPage)}
             />
           </div>
-
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div>Loading...</div>
-            </div>
-          ) : (
-            <>
-              <Table aria-label="Inventory Pick List" className="min-w-full">
-                <TableHeader>
-                  <TableColumn>Order ID</TableColumn>
-                  <TableColumn>Due Date</TableColumn>
-                  <TableColumn>Already Filled</TableColumn>
-                  <TableColumn>Assigned To</TableColumn>
-                  <TableColumn>Action</TableColumn>
-                </TableHeader>
-
-                <TableBody items={paginatedRows}>
-                  {(item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.order_id}</TableCell>
-                      <TableCell>{item.due_date}</TableCell>
-                      <TableCell>
-                        {item.already_filled ? "Yes" : "No"}
-                      </TableCell>
-                      <TableCell>{item.assigned_to || "Unassigned"}</TableCell>
-                      <TableCell>
-                        <Button
-                          color="primary"
-                          size="sm"
-                          onPress={() => handleViewOrderDetails(item.order_id)}
-                        >
-                          Pick Order
-                        </Button>
-                        <Button
-                          color="primary"
-                          size="sm"
-                          onPress={() => handleOpenAssignModal(item.order_id)}
-                          className="ml-2"
-                        >
-                          Assign Staff
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-
-              <div className="flex justify-between items-center mt-4">
-                <span>
-                  Page {page} of {totalPages}
-                </span>
-                <Pagination
-                  total={totalPages}
-                  initialPage={1}
-                  current={page}
-                  onChange={(newPage) => setPage(newPage)}
-                />
-              </div>
-            </>
-          )}
+        </>
+      )}
       {/* Staff Assignment Modal */}
       <Modal isOpen={assignModalOpen} onClose={handleCloseModal}>
-      <ModalContent>
-        <div className="p-4">
-          <h2 className="text-xl font-semibold mb-4">Assign Staff</h2>
+        <ModalContent>
+          <div className="p-4">
+            <h2 className="text-xl font-semibold mb-4">Assign Staff</h2>
 
-          {/* Search bar for staff */}
-          <Input
-            size="md"
-            placeholder="Search staff"
-            value={staffSearchTerm}
-            onChange={(e) => setStaffSearchTerm(e.target.value)}
-            className="mb-3"
-          />
+            {/* Search bar for staff */}
+            <Input
+              size="md"
+              placeholder="Search staff"
+              value={staffSearchTerm}
+              onChange={(e) => setStaffSearchTerm(e.target.value)}
+              className="mb-3"
+            />
 
-          {/* Staff dropdown */}
-          <Select
-            label="Assign Staff"
-            placeholder="Select a staff member"
-            value={selectedStaffId ? selectedStaffId.toString() : undefined}
-            onChange={(newVal) => {
-              console.log("Dropdown value:", newVal.target.value);
-              setSelectedStaffId(Number(newVal.target.value));   
-              console.log("Selected staff:" + selectedStaffId);
-            }}
-            className="w-full"
-          >
-            {filteredStaffList
-              .filter((staff) => staff.role === "staff") .map((staff) => {
-              const fullName = `${staff.first_name} ${staff.last_name}`;
-              return (
-                <SelectItem
-                  key={staff.user_id}  // toString() if needed ? ?
-                  value={staff.user_id}
-                >
-                  {fullName}
-                </SelectItem>
-              );
-            })}
-          </Select>
-          <div className="flex justify-end mt-6 gap-4">
-            <Button onPress={handleCloseModal} color="default">
-              Cancel
-            </Button>
-            <Button onPress={handleConfirmAssign} color="primary">
-              Confirm
-            </Button>
+            {/* Staff dropdown */}
+            <Select
+              label="Assign Staff"
+              placeholder="Select a staff member"
+              value={selectedStaffId ? selectedStaffId.toString() : undefined}
+              onChange={(newVal) => {
+                console.log("Dropdown value:", newVal.target.value);
+                setSelectedStaffId(Number(newVal.target.value));
+                console.log("Selected staff:" + selectedStaffId);
+              }}
+              className="w-full"
+            >
+              {filteredStaffList
+                .filter((staff) => staff.role === "staff")
+                .map((staff) => {
+                  const fullName = `${staff.first_name} ${staff.last_name}`;
+                  return (
+                    <SelectItem
+                      key={staff.user_id} // toString() if needed ? ?
+                      value={staff.user_id}
+                    >
+                      {fullName}
+                    </SelectItem>
+                  );
+                })}
+            </Select>
+            <div className="flex justify-end mt-6 gap-4">
+              <Button onPress={handleCloseModal} color="default">
+                Cancel
+              </Button>
+              <Button onPress={handleConfirmAssign} color="primary">
+                Confirm
+              </Button>
+            </div>
           </div>
-        </div>
-      </ModalContent>
+        </ModalContent>
       </Modal>
     </div>
   );

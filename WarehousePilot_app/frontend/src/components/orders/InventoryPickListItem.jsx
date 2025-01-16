@@ -220,7 +220,7 @@ const InventoryPicklistItem = () => {
                 if (userRole === "admin" || userRole === "manager") {
                   navigate("/inventory_and_manufacturing_picklist");
                 } else if (userRole === "staff") {
-                  navigate("/assigned_picklist");
+                  navigate("/inventory_and_manufacturing_picklist");// Will be changed to /assigned_picklist once the table is completed
                 }
               }}
             >
