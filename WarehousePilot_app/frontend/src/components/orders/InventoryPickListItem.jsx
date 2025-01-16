@@ -8,94 +8,104 @@ import {
   TableCell,
   Input,
   Pagination,
-  Tab,
+  Button,
   Modal,
   ModalContent,
 } from "@nextui-org/react";
 import { SearchIcon } from "@nextui-org/shared-icons";
-import axios from "axios";
+import { useNavigate, useParams } from "react-router-dom";
 import SideBar from "../dashboard_sidebar1/App";
-import { useNavigate } from "react-router-dom";
-import { useParams } from "react-router-dom";
-import { Button } from "@nextui-org/react";
+import axios from "axios";
 
 const InventoryPicklistItem = () => {
   const { order_id } = useParams();
-  const [filterValue, setFilterValue] = useState("");
-  const [items, setItems] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [manufacturingItems, setManufacturingItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filterValue, setFilterValue] = useState("");
   const [page, setPage] = useState(1);
+  const [inventoryPage, setInventoryPage] = useState(1);
+
+  const [items, setItems] = useState([]);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [userData, setUserData] = useState(null);
-  const navigate = useNavigate()
-  const rowsPerPage = 10;
-  const user = localStorage.getItem('user');
+
+  const navigate = useNavigate();
+  const rowsPerPage = 8;
+
+  const user = localStorage.getItem("user");
   const parsedUser = user ? JSON.parse(user) : null;
   const userRole = parsedUser ? parsedUser.role : null;
   // pick item modal
   const [pickModalOpen, setPickModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-
-  // Fetch picklist items for the given order
-  const fetchPicklistItems = async () => {
+  // Fetch both inventory and manufacturing items for the given order
+  const fetchOrderItems = async (order_id) => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        setError("No authorization token found");
-        setLoading(false);
-        return;
-      }
-      
-      const response = await axios.get(
-        `http://127.0.0.1:8000/orders/inventory_picklist_items/${order_id}/`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      if (!token) throw new Error("No authorization token found");
 
-      setItems(response.data);
+      const [inventoryResponse, manufacturingResponse] = await Promise.all([
+        axios.get(
+          `http://127.0.0.1:8000/orders/inventory_picklist_items/${order_id}/`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        ),
+        axios.get(
+          `http://127.0.0.1:8000/manufacturingLists/manufacturing_list_item/${order_id}/`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        ),
+      ]);
+
+      setInventoryItems(inventoryResponse.data);
+      setManufacturingItems(manufacturingResponse.data);
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching picklist items:", err);
-      setError("Failed to fetch picklist items");
+      console.error("Error fetching order items:", err);
+      setError("Failed to fetch order items");
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPicklistItems();
+    fetchOrderItems(order_id);
   }, [order_id]);
 
   // Filter rows by search text
-  const filteredItems = useMemo(() => {
-    if (!filterValue.trim()) return items;
+  const filteredInventoryItems = useMemo(() => {
+    if (!filterValue.trim()) return inventoryItems;
     const searchTerm = filterValue.toLowerCase();
-    return items.filter((item) => {
-      const picklistIdMatch = item.picklist_item_id
-        ?.toString()
-        .toLowerCase()
-        .includes(searchTerm);
-      const locationMatch = item.location?.toLowerCase().includes(searchTerm);
-      const skuColorMatch = item.sku_color?.toLowerCase().includes(searchTerm);
-      return picklistIdMatch || locationMatch || skuColorMatch;
-    });
-  }, [items, filterValue]);
+    return inventoryItems.filter(
+      (item) =>
+        item.picklist_item_id?.toString().toLowerCase().includes(searchTerm) ||
+        item.location?.toLowerCase().includes(searchTerm) ||
+        item.sku_color?.toLowerCase().includes(searchTerm)
+    );
+  }, [inventoryItems, filterValue]);
 
-  // Apply pagination
-  const paginatedItems = useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    return filteredItems.slice(start, end);
-  }, [page, filteredItems]);
+  const filteredManufacturingItems = useMemo(() => {
+    if (!filterValue.trim()) return manufacturingItems;
+    const searchTerm = filterValue.toLowerCase();
+    return manufacturingItems.filter(
+      (item) =>
+        item.manufacturing_list_item_id
+          ?.toString()
+          .toLowerCase()
+          .includes(searchTerm) ||
+        item.sku_color?.toLowerCase().includes(searchTerm) ||
+        item.manufacturing_process?.toLowerCase().includes(searchTerm)
+    );
+  }, [manufacturingItems, filterValue]);
 
-  const totalPages = Math.ceil(filteredItems.length / rowsPerPage);
+  const totalInventoryPages = Math.ceil(filteredInventoryItems.length / rowsPerPage);
+  const totalManufacturingPages = Math.ceil(filteredManufacturingItems.length / rowsPerPage);
 
-  // Pick Item Logic 
+  // Pick Item Logic
   const openPickModal = (item) => {
     setSelectedItem(item);
     setPickModalOpen(true);
@@ -124,7 +134,6 @@ const InventoryPicklistItem = () => {
           },
         }
       );
-      // If success, update state to reflect item.status=true
       setItems((prev) =>
         prev.map((it) =>
           it.picklist_item_id === selectedItem.picklist_item_id
@@ -134,40 +143,51 @@ const InventoryPicklistItem = () => {
       );
       closePickModal();
     } catch (err) {
-      console.error("Error picking item:", err);
-      setError("Failed to pick item");
+      console.error("Error picking item:", err.response?.data || err.message);
+      setError("Not allowed, you need to login as a staff");
     }
   };
 
+  // Apply pagination for inventory items
+  const paginatedInventoryItems = useMemo(() => {
+    const start = (inventoryPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredInventoryItems.slice(start, end);
+  }, [inventoryPage, filteredInventoryItems]);
+
+  // Apply pagination for manufacturing items
+  const paginatedManufacturingItems = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredManufacturingItems.slice(start, end);
+  }, [page, filteredManufacturingItems]);
 
   return (
     <div className="flex h-full">
-         <SideBar isOpen={isSidebarOpen} />
+      <SideBar isOpen={isSidebarOpen} />
 
       <div className="flex-1 sm:ml-8">
-      
         <div className="mt-16 p-8">
-          <h1 className="text-2xl font-bold mb-6">
-            Picklist Items for Order {order_id}
-          </h1>
+          <h1 className="text-2xl font-bold mb-6">Order {order_id} Details</h1>
 
-          {/* Error message */}
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
               {error}
             </div>
           )}
 
-          {/* Search Input */}
           <div className="mb-6 flex items-center gap-2">
             <Input
               size="md"
               placeholder="Search items"
               value={filterValue}
               onChange={(e) => setFilterValue(e.target.value)}
-              endContent={<SearchIcon className="text-default-400" width={16} />}
+              endContent={
+                <SearchIcon className="text-default-400" width={16} />
+              }
               className="w-72"
             />
+
             <Button
               color="primary"
               variant="light"
@@ -180,89 +200,142 @@ const InventoryPicklistItem = () => {
               }}
             >
               Go back
-            </Button>          
+            </Button>
           </div>
+
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div>Loading...</div>
             </div>
           ) : (
             <>
-              <Table aria-label="Picklist Items" className="min-w-full">
-                <TableHeader>
-                  <TableColumn>Picklist Item ID</TableColumn>
-                  <TableColumn>Location</TableColumn>
-                  <TableColumn>SKU Color</TableColumn>
-                  <TableColumn>Quantity</TableColumn>
-                  <TableColumn>Status</TableColumn>
-                  <TableColumn>Action</TableColumn>
-                </TableHeader>
-                <TableBody items={paginatedItems}>
-                  {(item) => (
-                    <TableRow key={item.picklist_item_id}>
-                      <TableCell>{item.picklist_item_id}</TableCell>
-                      <TableCell>{item.location}</TableCell>
-                      <TableCell>{item.sku_color}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.status ? "Picked" : "To Pick"}</TableCell>
-                      <TableCell>
-                        {/* Button or checkbox to pick the item */}
-                        {item.status ? (
-                          <span>Picked</span>
-                        ) : (
-                          <input
-                            type="checkbox"
-                            onChange={() => openPickModal(item)}
-                          />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              {paginatedInventoryItems.length > 0 && (
+                <div>
+                  <h2 className="text-lg font-semibold mb-4">
+                    Inventory Pick List Items
+                  </h2>
+                  <Table>
+                    <TableHeader>
+                      <TableColumn>Picklist Item ID</TableColumn>
+                      <TableColumn>Location</TableColumn>
+                      <TableColumn>SKU Color</TableColumn>
+                      <TableColumn>Quantity</TableColumn>
+                      <TableColumn>Status</TableColumn>
+                      <TableColumn>Action</TableColumn>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedInventoryItems.map((item) => (
+                        <TableRow key={item.picklist_item_id}>
+                          <TableCell>{item.picklist_item_id}</TableCell>
+                          <TableCell>{item.location}</TableCell>
+                          <TableCell>{item.sku_color}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>
+                            {item.status ? "Picked" : "To Pick"}
+                          </TableCell>
+                          <TableCell>
+                            {item.status ? (
+                              <span>Picked</span>
+                            ) : (
+                              <input
+                                type="checkbox"
+                                onChange={() => openPickModal(item)}
+                              />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  
+                  {/* Inventory Items Pagination */}
+                  <div className="flex justify-between items-center mt-4">
+                    <span>
+                      Page {inventoryPage} of {totalInventoryPages}
+                    </span>
+                    <Pagination
+                      total={totalInventoryPages}
+                      initialPage={1}
+                      current={inventoryPage}
+                      onChange={(newPage) => setInventoryPage(newPage)}
+                    />
+                  </div>
+                </div>
+              )}
 
-              <div className="flex justify-between items-center mt-4">
-                <span>
-                  Page {page} of {totalPages}
-                </span>
-                <Pagination
-                  total={totalPages}
-                  initialPage={1}
-                  current={page}
-                  onChange={(newPage) => setPage(newPage)}
-                />
-              </div>
+              <Modal isOpen={pickModalOpen} onClose={closePickModal}>
+                <ModalContent>
+                  <div className="p-4">
+                    {selectedItem && (
+                      <>
+                        <h2 className="text-xl font-semibold mb-4">
+                          Pick Item Confirmation
+                        </h2>
+                        <p>
+                          Do you want to pick this <b>{selectedItem.sku_color}</b> item?
+                        </p>
+
+                        <div className="flex justify-end mt-6 gap-4">
+                          <Button onPress={closePickModal} color="default">
+                            Cancel
+                          </Button>
+                          <Button onPress={handleConfirmPick} color="primary">
+                            Yes, Pick
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </ModalContent>
+              </Modal>
+
+              {paginatedManufacturingItems.length > 0 && (
+                <div className="mt-8">
+                  <h2 className="text-lg font-semibold mb-4">
+                    Manufacturing List Items
+                  </h2>
+                  <Table>
+                    <TableHeader>
+                      <TableColumn>Item ID</TableColumn>
+                      <TableColumn>SKU Color</TableColumn>
+                      <TableColumn>Quantity</TableColumn>
+                      <TableColumn>Manufacturing Process</TableColumn>
+                      <TableColumn>Process Progress</TableColumn>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedManufacturingItems.map((item) => (
+                        <TableRow key={item.manufacturing_list_item_id}>
+                          <TableCell>
+                            {item.manufacturing_list_item_id}
+                          </TableCell>
+                          <TableCell>{item.sku_color}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.manufacturing_process}</TableCell>
+                          <TableCell>{item.process_progress}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {/* Manufacturing Items Pagination */}
+                  <div className="flex justify-between items-center mt-4">
+                    <span>
+                      Page {page} of {totalManufacturingPages}
+                    </span>
+                    <Pagination
+                      total={totalManufacturingPages}
+                      initialPage={1}
+                      current={page}
+                      onChange={(newPage) => setPage(newPage)}
+                    />
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
-      {/* Confirmation Modal for picking item */}
-      <Modal isOpen={pickModalOpen} onClose={closePickModal}>
-        <ModalContent>
-          <div className="p-4">
-            {selectedItem && (
-              <>
-                <h2 className="text-xl font-semibold mb-4">
-                  Pick Item Confirmation
-                </h2>
-                <p>
-                  Do you want to pick this <b>{selectedItem.sku_color}</b> item?
-                </p>
-
-                <div className="flex justify-end mt-6 gap-4">
-                  <Button onPress={closePickModal} color="default">
-                    Cancel
-                  </Button>
-                  <Button onPress={handleConfirmPick} color="primary">
-                    Yes, Pick
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </ModalContent>
-      </Modal>
-  </div>
+    </div>
   );
 };
 
