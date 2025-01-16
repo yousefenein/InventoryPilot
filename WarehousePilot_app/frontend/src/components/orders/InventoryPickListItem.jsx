@@ -41,6 +41,10 @@ const InventoryPicklistItem = () => {
   const [pickModalOpen, setPickModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
+  const [inventoryError, setInventoryError] = useState(null);
+  const [manufacturingError, setManufacturingError] = useState(null);
+  
+
   // Fetch both inventory and manufacturing items for the given order
   const fetchOrderItems = async (order_id) => {
     try {
@@ -53,13 +57,19 @@ const InventoryPicklistItem = () => {
           {
             headers: { Authorization: `Bearer ${token}` },
           }
-        ),
+        ).catch(error => {
+          setInventoryError("No inventory items found for this order");
+          return { data: [] };
+        }),
         axios.get(
           `http://127.0.0.1:8000/manufacturingLists/manufacturing_list_item/${order_id}/`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
-        ),
+        ).catch(error => {
+          setManufacturingError("No manufacturing items found for this order");
+          return { data: [] };
+        }),
       ]);
 
       setInventoryItems(inventoryResponse.data);
@@ -75,6 +85,7 @@ const InventoryPicklistItem = () => {
   useEffect(() => {
     fetchOrderItems(order_id);
   }, [order_id]);
+
 
   // Filter rows by search text
   const filteredInventoryItems = useMemo(() => {
@@ -162,58 +173,66 @@ const InventoryPicklistItem = () => {
     return filteredManufacturingItems.slice(start, end);
   }, [page, filteredManufacturingItems]);
 
-  return (
-    <div className="flex h-full">
-      <SideBar isOpen={isSidebarOpen} />
+  // ... (keep all the imports and component code the same until the return statement)
 
-      <div className="flex-1 sm:ml-8">
-        <div className="mt-16 p-8">
-          <h1 className="text-2xl font-bold mb-6">Order {order_id} Details</h1>
+return (
+  <div className="flex h-full">
+    <SideBar isOpen={isSidebarOpen} />
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-              {error}
-            </div>
-          )}
+    <div className="flex-1 sm:ml-8">
+      <div className="mt-16 p-8">
+        <h1 className="text-2xl font-bold mb-6">Order {order_id} Details</h1>
 
-          <div className="mb-6 flex items-center gap-2">
-            <Input
-              size="md"
-              placeholder="Search items"
-              value={filterValue}
-              onChange={(e) => setFilterValue(e.target.value)}
-              endContent={
-                <SearchIcon className="text-default-400" width={16} />
-              }
-              className="w-72"
-            />
-
-            <Button
-              color="primary"
-              variant="light"
-              onPress={() => {
-                if (userRole === "admin" && userRole === "manager") {
-                  navigate("/inventory_and_manufacturing_picklist");
-                } else if (userRole === "staff") {
-                  navigate("/assigned_picklist");
-                }
-              }}
-            >
-              Go back
-            </Button>
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+            {error}
           </div>
+        )}
 
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div>Loading...</div>
-            </div>
-          ) : (
-            <>
-              {paginatedInventoryItems.length > 0 && (
-                <div>
-                  <h2 className="text-lg font-semibold mb-4">
-                    Inventory Pick List Items
-                  </h2>
+        <div className="mb-6 flex items-center gap-2">
+          <Input
+            size="md"
+            placeholder="Search items"
+            value={filterValue}
+            onChange={(e) => setFilterValue(e.target.value)}
+            endContent={
+              <SearchIcon className="text-default-400" width={16} />
+            }
+            className="w-72"
+          />
+
+          <Button
+            color="primary"
+            variant="light"
+            onPress={() => {
+              if (userRole === "admin" && userRole === "manager") {
+                navigate("/inventory_and_manufacturing_picklist");
+              } else if (userRole === "staff") {
+                navigate("/assigned_picklist");
+              }
+            }}
+          >
+            Go back
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div>Loading...</div>
+          </div>
+        ) : (
+          <div>
+            {/* Inventory Items Section */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4">
+                Inventory Pick List Items
+              </h2>
+              {inventoryError ? (
+                <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded">
+                  {inventoryError}
+                </div>
+              ) : paginatedInventoryItems.length > 0 ? (
+                <>
                   <Table>
                     <TableHeader>
                       <TableColumn>Picklist Item ID</TableColumn>
@@ -248,7 +267,6 @@ const InventoryPicklistItem = () => {
                     </TableBody>
                   </Table>
                   
-                  {/* Inventory Items Pagination */}
                   <div className="flex justify-between items-center mt-4">
                     <span>
                       Page {inventoryPage} of {totalInventoryPages}
@@ -260,40 +278,51 @@ const InventoryPicklistItem = () => {
                       onChange={(newPage) => setInventoryPage(newPage)}
                     />
                   </div>
+                </>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded">
+                  No inventory items found for this order.
                 </div>
               )}
+            </div>
 
-              <Modal isOpen={pickModalOpen} onClose={closePickModal}>
-                <ModalContent>
-                  <div className="p-4">
-                    {selectedItem && (
-                      <>
-                        <h2 className="text-xl font-semibold mb-4">
-                          Pick Item Confirmation
-                        </h2>
-                        <p>
-                          Do you want to pick this <b>{selectedItem.sku_color}</b> item?
-                        </p>
+            <Modal isOpen={pickModalOpen} onClose={closePickModal}>
+              <ModalContent>
+                <div className="p-4">
+                  {selectedItem && (
+                    <>
+                      <h2 className="text-xl font-semibold mb-4">
+                        Pick Item Confirmation
+                      </h2>
+                      <p>
+                        Do you want to pick this <b>{selectedItem.sku_color}</b> item?
+                      </p>
 
-                        <div className="flex justify-end mt-6 gap-4">
-                          <Button onPress={closePickModal} color="default">
-                            Cancel
-                          </Button>
-                          <Button onPress={handleConfirmPick} color="primary">
-                            Yes, Pick
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </ModalContent>
-              </Modal>
+                      <div className="flex justify-end mt-6 gap-4">
+                        <Button onPress={closePickModal} color="default">
+                          Cancel
+                        </Button>
+                        <Button onPress={handleConfirmPick} color="primary">
+                          Yes, Pick
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </ModalContent>
+            </Modal>
 
-              {paginatedManufacturingItems.length > 0 && (
-                <div className="mt-8">
-                  <h2 className="text-lg font-semibold mb-4">
-                    Manufacturing List Items
-                  </h2>
+            {/* Manufacturing Items Section */}
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold mb-4">
+                Manufacturing List Items
+              </h2>
+              {manufacturingError ? (
+                <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded">
+                  {manufacturingError}
+                </div>
+              ) : paginatedManufacturingItems.length > 0 ? (
+                <>
                   <Table>
                     <TableHeader>
                       <TableColumn>Item ID</TableColumn>
@@ -317,7 +346,6 @@ const InventoryPicklistItem = () => {
                     </TableBody>
                   </Table>
 
-                  {/* Manufacturing Items Pagination */}
                   <div className="flex justify-between items-center mt-4">
                     <span>
                       Page {page} of {totalManufacturingPages}
@@ -329,14 +357,19 @@ const InventoryPicklistItem = () => {
                       onChange={(newPage) => setPage(newPage)}
                     />
                   </div>
+                </>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded">
+                  No manufacturing items found for this order.
                 </div>
               )}
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default InventoryPicklistItem;
