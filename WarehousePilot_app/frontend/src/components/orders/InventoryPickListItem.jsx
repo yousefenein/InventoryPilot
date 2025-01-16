@@ -92,6 +92,7 @@ const InventoryPicklistItem = () => {
   }, [order_id]);
 
   // Filter rows by search text
+  // Filter rows for inventory items based on search text
   const filteredInventoryItems = useMemo(() => {
     if (!filterValue.trim()) return inventoryItems;
     const searchTerm = filterValue.toLowerCase();
@@ -103,6 +104,7 @@ const InventoryPicklistItem = () => {
     );
   }, [inventoryItems, filterValue]);
 
+  // Filter rows for manufacturing items based on search text
   const filteredManufacturingItems = useMemo(() => {
     if (!filterValue.trim()) return manufacturingItems;
     const searchTerm = filterValue.toLowerCase();
@@ -116,6 +118,8 @@ const InventoryPicklistItem = () => {
         item.manufacturing_process?.toLowerCase().includes(searchTerm)
     );
   }, [manufacturingItems, filterValue]);
+
+  
 
   const totalInventoryPages = Math.ceil(
     filteredInventoryItems.length / rowsPerPage
@@ -213,7 +217,7 @@ const InventoryPicklistItem = () => {
               color="primary"
               variant="light"
               onPress={() => {
-                if (userRole === "admin" && userRole === "manager") {
+                if (userRole === "admin" || userRole === "manager") {
                   navigate("/inventory_and_manufacturing_picklist");
                 } else if (userRole === "staff") {
                   navigate("/assigned_picklist");
