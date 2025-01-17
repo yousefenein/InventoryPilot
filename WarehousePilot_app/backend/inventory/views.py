@@ -197,7 +197,7 @@ class PickPicklistItemView(APIView):
             return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
 
         if request.user.role != 'staff':
-            return Response({"error": "Not allowed"}, status=403)
+            return Response({"error": "Not allowed. You need login as a staff "}, status=403)
 
         item.status = True
         item.save()

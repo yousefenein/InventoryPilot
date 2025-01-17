@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import SideBar from "../dashboard_sidebar1/App";
 import InventoryPickList from "./InventoyPickList";
-import ManufacturingList from "./ManufacturingList";
+// import ManufacturingList from "./ManufacturingList";
 
 const InventoryAndManufacturingList = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -13,7 +13,7 @@ const InventoryAndManufacturingList = () => {
       <div className="flex-1 sm:ml-8">
 
         <InventoryPickList />
-        <ManufacturingList />
+        {/* <ManufacturingList /> */}
       </div>
     </div>
   );

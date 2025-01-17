@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-import SideBar from '../dashboard_sidebar1/App';
+import SideBar from "../dashboard_sidebar1/App";
 
 function AccountManagement() {
   const [userData, setUserData] = useState(null);
@@ -10,15 +10,15 @@ function AccountManagement() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (token) {
         try {
-          const response = await axios.get('http://127.0.0.1:8000/auth/profile/', {
+          const response = await axios.get("http://127.0.0.1:8000/auth/profile/", {
             headers: { Authorization: `Bearer ${token}` },
           });
           setUserData(response.data);
         } catch (error) {
-          console.error('Error fetching user data:', error);
+          console.error("Error fetching user data:", error);
         }
       }
     };
@@ -26,23 +26,26 @@ function AccountManagement() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-100">
       {/* Sidebar */}
       <SideBar userData={userData} />
 
       {/* Main Content */}
       <div className="flex-1 p-6">
-        {/* Wrapper for consistent alignment */}
         <div className="ml-4">
           {/* Header Section */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 mt-14 mb-2">Account Management</h1>
-            <p className="text-lg text-gray-600">This is the overview page where you can view your account details.</p>
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mt-8 lg:mt-14 mb-2">
+              Account Management
+            </h1>
+            <p className="text-base lg:text-lg text-gray-600">
+              This is the overview page where you can view your account details.
+            </p>
           </div>
 
           {/* Information Section */}
           {userData ? (
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Basic Information */}
               <div className="p-4 bg-white rounded-lg shadow">
                 <h2 className="text-lg font-semibold text-gray-700">Basic Information</h2>
@@ -76,11 +79,11 @@ function AccountManagement() {
           )}
 
           {/* Action Button Section */}
-          <div className="mt-6">
+          <div className="mt-6 flex justify-center lg:justify-start">
             <button
               type="button"
               className="px-6 py-3 text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 transition duration-300"
-              onClick={() => navigate('/change_password')}
+              onClick={() => navigate("/change_password")}
             >
               Change Password
             </button>
