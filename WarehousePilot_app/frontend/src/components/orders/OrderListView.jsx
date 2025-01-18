@@ -155,7 +155,7 @@ const OrderListView = () => {
       setSuccessOrderStart(null); // Reset previous success message
 
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
         setError("No authorization token found");
         return;
@@ -216,7 +216,9 @@ const OrderListView = () => {
     } catch (err) {
       console.error("Error starting the order:", err);
       if (err.response) {
-        setError(`Error: ${err.response.data.message || "Unknown error occurred"}`);
+        setError(
+          `Error: ${err.response.data.message || "Unknown error occurred"}`
+        );
       } else {
         setError("Error starting the order");
       }
@@ -230,23 +232,20 @@ const OrderListView = () => {
       <SideBar />
 
       <div className="flex-1">
-        
-
         <div className="mt-16 p-8">
           <div className="flex flex-col gap-6">
+            <div className="flex flex-row gap-11">
+              <h1 className="text-2xl font-bold mb-6">Orders</h1>
 
-          <div className="flex flex-row gap-11">
-            
-            <h1 className="text-2xl font-bold mb-6">Orders</h1>
-
-            <Button
-           color="primary"
-           variant='flat'
-           onClick = { ()=> navigate("/inventory_and_manufacturing_picklist")}
-
-           >
-            Inventory and Manufacturing List
-          </Button>
+              <Button
+                color="primary"
+                variant="flat"
+                onClick={() =>
+                  navigate("/inventory_and_manufacturing_picklist")
+                }
+              >
+                Inventory and Manufacturing List
+              </Button>
             </div>
             {/* Success message for starting the order */}
             {successOrderStart && (
@@ -294,7 +293,9 @@ const OrderListView = () => {
                 placeholder="Search orders"
                 value={filterValue}
                 onChange={(e) => setFilterValue(e.target.value)}
-                endContent={<SearchIcon className="text-default-400" width={16} />}
+                endContent={
+                  <SearchIcon className="text-default-400" width={16} />
+                }
                 className="w-72"
               />
             </div>
@@ -326,18 +327,20 @@ const OrderListView = () => {
                             className={`px-2 py-1 rounded ${
                               item.status === "In Progress"
                                 ? "bg-blue-100 text-blue-800"
-                                : ""
+                                : "bg-red-100 text-gray-800" // Default styling for other statuses
                             }`}
                           >
-                            {item.status}
+                            {item.status || "Not Started"}{" "}
+                            {/* Fallback if status is undefined */}
                           </span>
                         </TableCell>
                         <TableCell>{item.due_date}</TableCell>
                         {/* Convert UTC timestamp to Eastern time zone */}
                         <TableCell>
                           {item.start_timestamp
-                            ? dayjs.utc(item.start_timestamp)
-                                .tz("America/Toronto") 
+                            ? dayjs
+                                .utc(item.start_timestamp)
+                                .tz("America/Toronto")
                                 .format("YYYY-MM-DD HH:mm")
                             : ""}
                         </TableCell>
@@ -355,7 +358,9 @@ const OrderListView = () => {
                             }
                             onPress={() => handleStart(item.order_id)}
                           >
-                            {item.status === "In Progress" ? "Started" : "Start"}
+                            {item.status === "In Progress"
+                              ? "Started"
+                              : "Start"}
                           </Button>
                         </TableCell>
                       </TableRow>
