@@ -134,7 +134,7 @@ export default function SideBar() {
       </Modal>
       <div className="w-full flex-1 flex-col p-4">
         <header className="flex items-center gap-3 rounded-medium p-4">
-          <Button isIconOnly size="sm" variant="light" onPress={onOpen} style={{ marginRight: '30px' }}>
+          <Button isIconOnly size="sm" variant="light" onPress={onOpen} style={{ zIndex: 50 }}>
             <Icon
               className="text-default-500"
               height={24}
