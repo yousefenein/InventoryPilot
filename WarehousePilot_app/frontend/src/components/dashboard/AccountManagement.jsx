@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 // import Sidebar from "../dashboard_sidebar/Sidebar";
 import Header from "../dashboard_sidebar/Header";
+import NavBar from "../navbar/App";
 
 import SideBar from '../dashboard_sidebar1/App';
 
@@ -41,9 +42,10 @@ function AccountManagement() {
   
 
     return (
-      <div className="flex">
+      <div>
         {/* Sidebar */}
-        <SideBar userData={userData} isOpen={isSidebarOpen} />
+        <SideBar />
+        <NavBar/>
         {/* Main Content */}
         <div className="flex-1 sm:ml-10 sm:mt-16">
           {/* Page Content */}
