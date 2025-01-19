@@ -117,8 +117,6 @@ class GenerateInventoryAndManufacturingListsView(APIView):
             invSkuLen = len(set(list(inventory.values_list("sku_color", flat=True))))
             print(f"matching inventory sku len): {invSkuLen}")
             print(f"orderPartSkuColor): {len(orderPartSkuColor)}")
-            #create empty inventory picklist for the order
-            inventoryPicklist = InventoryPicklist.objects.create(status = False, order_id=order)
             #create the manufacturing list if it is not already created
             if (ManufacturingLists.objects.filter(order_id=order).exists()) == False:
                 print("**Creating manufacturing list 2nd if block")
@@ -148,6 +146,9 @@ class GenerateInventoryAndManufacturingListsView(APIView):
                     print("add manuList item")
                     manuListItems.append(ManufacturingListItem(sku_color=Part.objects.get(sku_color=s), manufacturing_list_id=manuList, amount = orderQty))
             ManufacturingListItem.objects.bulk_create(manuListItems)
+        #create empty inventory picklist for the order
+        inventoryPicklist = InventoryPicklist.objects.get_or_create(status = False, order_id=order)
+
         #'''
         try:
             manuList = ManufacturingLists.objects.get(order_id = order)
