@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     "parts.apps.PartsConfig",
     "manufacturingLists.apps.ManufacturinglistsConfig",
     "inventory.apps.InventoryConfig",
-    "reports.apps.ReportsConfig"
+    "reports.apps.ReportsConfig",
+    "staff_dashboard.apps.StaffDashboardConfig",
 ]
 
 MIDDLEWARE = [
@@ -149,7 +150,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
@@ -179,3 +179,54 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS = True
 AUTH_USER_MODEL = 'auth_app.users'
+
+
+# create log folder and log file when it doesn't exist
+log_path = os.path.join(BASE_DIR, "backend\logs")
+if not os.path.exists(log_path):
+    os.mkdir(log_path)
+    with open(os.path.join(log_path, "django.log"), "w") as log_file:
+        log_file.close()
+
+# used to get the path to logs                               
+STATIC_ROOT = os.path.join(log_path, "django.log")
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO', # records all logger messages of level INFO (low) and above
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': STATIC_ROOT,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'WarehousePilot_app': { # Logger for our application
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

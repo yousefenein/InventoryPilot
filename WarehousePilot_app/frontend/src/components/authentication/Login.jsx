@@ -28,6 +28,8 @@ function Login() {
     try {
       const response = await axios.post('http://127.0.0.1:8000/auth/login/', { username, password });
       console.log('Login response:', response.data); // Log the entire response
+
+
       const { access, user } = response.data; 
       console.log('User:', user); // Log the user object to see its structure
       localStorage.setItem('token', access);
@@ -42,6 +44,10 @@ function Login() {
         navigate('/admin_dashboard');
       } else if (user.role === 'manager') {
         navigate('/manager_dashboard');
+      } else if (user.role === 'staff') {
+        navigate('/staff_dashboard');
+      } else if (user.role === 'qa') {
+        navigate('/qa_dashboard');
       } else {
         navigate('/dashboard');
       }

@@ -16,6 +16,7 @@ export const items: SidebarItem[] = [
   {
     key: "kpi",
     href: "/kpi", 
+    href: "/kpi", 
     icon: "solar:chart-outline",
     title: "KPI",
   },
@@ -27,7 +28,7 @@ export const items: SidebarItem[] = [
   },
   {
     key: "production_plan",
-    href: "#",
+    href: "/sidebar",
     icon: "solar:calendar-outline",
     title: "Production Plan",
   },
@@ -48,6 +49,12 @@ export const items: SidebarItem[] = [
     href: "/account_management",
     icon: "solar:user-outline",
     title: "Account Management",
+  },
+  {
+    key: "assigned_picklist",
+    href: "/assigned_picklist",
+    icon: "solar:clipboard-list-outline",
+    title: "My Assigned Picklist",
   },
 ];
 
