@@ -318,7 +318,7 @@ const InventoryPickList = () => {
                   const fullName = `${staff.first_name} ${staff.last_name}`;
                   return (
                     <SelectItem
-                      key={staff.user_id} // toString() if needed ? ?
+                      key={staff.user_id} 
                       value={staff.user_id}
                     >
                       {fullName}
