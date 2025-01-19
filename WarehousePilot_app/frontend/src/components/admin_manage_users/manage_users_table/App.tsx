@@ -79,6 +79,29 @@ export default function ManageUsersTable() {
 
   const navigate = useNavigate();
 
+  // Check user's privilege (must be admin)
+  useEffect(() => {
+    const checkPrivileges = () => {
+        const user = localStorage.getItem("user");
+        console.log(user);
+        if (user) {
+            const parsedUser = JSON.parse(user);
+            if (parsedUser.role != "admin") {
+                // Navigate to correct dashboard
+                if (parsedUser.role == "manager") {
+                    navigate("/manager_dashboard");
+                } else if (parsedUser.role == "staff") {
+                    navigate("/staff_dashboard");
+                }
+            }
+        } else {
+            alert("Not logged in");
+            navigate("/");
+        }
+    }
+    checkPrivileges();
+}, [navigate]);
+
   // Fetch user data on component mount
   useEffect(() => {
     const fetchData = async () => {
