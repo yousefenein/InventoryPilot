@@ -9,6 +9,8 @@ import {
   Input,
   Pagination,
   Button,
+  Select,
+  SelectItem,
 } from "@nextui-org/react";
 import { SearchIcon } from "@nextui-org/shared-icons";
 import axios from "axios";
@@ -53,7 +55,7 @@ const QATasks = () => {
           manufacturing_id: row.manufacturing_task_id,
           qty: row.qty,
           status: row.status,
-          sku_color: row.sku_color_id, 
+          sku_color: row.sku_color_id,
           due_date: row.due_date || "N/A",
           prod_qa: row.prod_qa ? "Completed" : "Pending",
           paint_qa: row.paint_qa ? "Completed" : "Pending",
@@ -70,6 +72,28 @@ const QATasks = () => {
   useEffect(() => {
     fetchTasks();
   }, []);
+
+  const handleUpdate = async (taskId, prodQa, paintQa) => {
+    try {
+      await axios.post(
+        "http://127.0.0.1:8000/qa_dashboard/qa_tasks/update/",
+        {
+          manufacturing_task_id: taskId,
+          prod_qa: prodQa,
+          paint_qa: paintQa,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      fetchTasks(); // Refresh data after update
+    } catch (error) {
+      console.error("Error updating QA task:", error);
+    }
+  };
 
   const filteredRows = useMemo(() => {
     if (!filterValue.trim()) return rows;
@@ -106,9 +130,7 @@ const QATasks = () => {
               placeholder="Search tasks"
               value={filterValue}
               onChange={(e) => setFilterValue(e.target.value)}
-              endContent={
-                <SearchIcon className="text-default-400" width={16} />
-              }
+              endContent={<SearchIcon className="text-default-400" width={16} />}
               className="w-72 mb-4"
             />
             {loading ? (
@@ -138,10 +160,47 @@ const QATasks = () => {
                             ? dayjs(item.due_date).format("YYYY-MM-DD")
                             : "N/A"}
                         </TableCell>
-                        <TableCell>{item.prod_qa}</TableCell>
-                        <TableCell>{item.paint_qa}</TableCell>
                         <TableCell>
-                          <Button size="sm" variant="shadow" color="primary">
+                          <Select
+                            size="sm"
+                            value={item.prod_qa}
+                            onChange={(e) =>
+                              handleUpdate(
+                                item.manufacturing_id,
+                                e.target.value,
+                                item.paint_qa
+                              )
+                            }
+                          >
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Completed">Completed</SelectItem>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            size="sm"
+                            value={item.paint_qa}
+                            onChange={(e) =>
+                              handleUpdate(
+                                item.manufacturing_id,
+                                item.prod_qa,
+                                e.target.value
+                              )
+                            }
+                          >
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Completed">Completed</SelectItem>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="shadow"
+                            color="primary"
+                            onClick={() =>
+                              handleUpdate(item.manufacturing_id, "Completed", "Completed")
+                            }
+                          >
                             Complete
                           </Button>
                         </TableCell>
@@ -170,3 +229,4 @@ const QATasks = () => {
 };
 
 export default QATasks;
+

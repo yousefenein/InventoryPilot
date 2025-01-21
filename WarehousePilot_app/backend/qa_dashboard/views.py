@@ -24,13 +24,13 @@ class QAManufacturingTasksView(APIView):
             print(f"User type: {type(user)}")  # Debugging line
             print(f"User attributes: {dir(user)}")
             print(f"User role: {getattr(user, 'role', 'No role attribute found')}")
+            print(f"User ID: {user.user_id}")
 
             if not hasattr(user, 'role') or getattr(user, 'role', '').lower() != 'qa':
                 return Response({"error": "Unauthorized: User is not a QA staff member."}, status=status.HTTP_403_FORBIDDEN)
 
             tasks = ManufacturingTask.objects.filter(
-                Q(prod_qa_employee_id=user) | Q(paint_qa_employee_id=user),
-                status='Pending'
+                Q(prod_qa_employee_id=user.user_id) | Q(paint_qa_employee_id=user.user_id)
             )
 
             response_data = []
@@ -40,8 +40,8 @@ class QAManufacturingTasksView(APIView):
                     "sku_color_id": task.sku_color_id,
                     "qty": task.qty,
                     "due_date": task.due_date,
-                    "prod_qa": task.prod_qa,
-                    "paint_qa": task.paint_qa,
+                    "prod_qa": "Completed" if task.prod_qa else "Pending",
+                    "paint_qa": "Completed" if task.paint_qa else "Pending",
                     "status": task.status,
                 })
 
@@ -50,30 +50,36 @@ class QAManufacturingTasksView(APIView):
             print(f"Error: {str(e)}")
             return Response({"error": "An unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class MarkQATaskCompleteView(APIView):
+class UpdateQATaskView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         try:
+            print("Received data:", request.data)
             task_id = request.data.get("manufacturing_task_id")
-            step = request.data.get("qa_step")
+            prod_qa = request.data.get("prod_qa")
+            paint_qa = request.data.get("paint_qa")
+
             task = ManufacturingTask.objects.get(manufacturing_task_id=task_id)
 
-            if step == "Production QA":
-                task.prod_qa = True
-            elif step == "Paint QA":
-                task.paint_qa = True
+            if prod_qa is not None:
+                task.prod_qa = prod_qa == "Completed"
+
+            if paint_qa is not None:
+                task.paint_qa = paint_qa == "Completed"
 
             if task.prod_qa and task.paint_qa:
                 task.status = 'Completed'
 
             task.save()
-            return Response({"message": "QA task marked as completed."}, status=status.HTTP_200_OK)
+            return Response({"message": "QA task updated successfully."}, status=status.HTTP_200_OK)
+
         except ManufacturingTask.DoesNotExist:
             return Response({"error": "Task not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"error": "An error occurred while processing."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class ReportQAErrorView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -90,5 +96,3 @@ class ReportQAErrorView(APIView):
             return Response({"error": "Task not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": "An error occurred while reporting the issue."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
