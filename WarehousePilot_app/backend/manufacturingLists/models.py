@@ -25,23 +25,23 @@ class ManufacturingTask(models.Model):
     due_date = models.DateField()
     status = models.CharField(max_length=25, choices=MANUFACTURING_PROCESSES)
     
-    cut_start_time = models.DateTimeField(null=True)
-    cut_end_time = models.DateTimeField(null=True)
-    bend_start_time = models.DateTimeField(null=True)
-    bend_end_time = models.DateTimeField(null=True)
-    paint_start_time = models.DateTimeField(null=True)
-    paint_end_time = models.DateTimeField(null=True)
+    cut_start_time = models.DateTimeField(null=True, default=None)
+    cut_end_time = models.DateTimeField(null=True, default=None)
+    bend_start_time = models.DateTimeField(null=True, default=None)
+    bend_end_time = models.DateTimeField(null=True, default=None)
+    paint_start_time = models.DateTimeField(null=True, default=None)
+    paint_end_time = models.DateTimeField(null=True, default=None)
     
     cut_qa = models.BooleanField(default=False)
     bend_qa = models.BooleanField(default=False)
     paint_qa = models.BooleanField(default=False)
     
-    cut_employee = models.ForeignKey(users, null=True, on_delete=models.SET_NULL, related_name="cut_employee", related_query_name="cut_employee")
-    cut_qa_employee = models.ForeignKey(users, null=True, on_delete=models.SET_NULL, related_name="cut_qa_employee", related_query_name="cut_qa_employee")
-    bend_employee = models.ForeignKey(users, null=True, on_delete=models.SET_NULL, related_name="bend_employee", related_query_name="bend_employee")
-    bend_qa_employee = models.ForeignKey(users, null=True, on_delete=models.SET_NULL, related_name="bend_qa_employee", related_query_name="bend_qa_employee")
-    paint_employee = models.ForeignKey(users, null=True, on_delete=models.SET_NULL, related_name="paint_employee", related_query_name="paint_employee")
-    paint_qa_employee = models.ForeignKey(users, null=True, on_delete=models.SET_NULL, related_name="paint_qa_employee", related_query_name="paint_qa_employee")
+    cut_employee = models.ForeignKey(users, null=True, default=None, on_delete=models.SET_NULL, related_name="cut_employee", related_query_name="cut_employee")
+    cut_qa_employee = models.ForeignKey(users, null=True, default=None, on_delete=models.SET_NULL, related_name="cut_qa_employee", related_query_name="cut_qa_employee")
+    bend_employee = models.ForeignKey(users, null=True, default=None, on_delete=models.SET_NULL, related_name="bend_employee", related_query_name="bend_employee")
+    bend_qa_employee = models.ForeignKey(users, null=True, default=None, on_delete=models.SET_NULL, related_name="bend_qa_employee", related_query_name="bend_qa_employee")
+    paint_employee = models.ForeignKey(users, null=True, default=None, on_delete=models.SET_NULL, related_name="paint_employee", related_query_name="paint_employee")
+    paint_qa_employee = models.ForeignKey(users, null=True, default=None, on_delete=models.SET_NULL, related_name="paint_qa_employee", related_query_name="paint_qa_employee")
     
 class ManufacturingListItem(models.Model):
     MANUFACTURING_PROCESSES={
