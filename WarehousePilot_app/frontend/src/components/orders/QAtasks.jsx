@@ -53,14 +53,15 @@ const QATasks = () => {
           id: index + 1,
           manufacturing_id: row.manufacturing_task_id,
           qty: row.qty,
-          status: row.status,
+          status: row.status?.trim(), 
           sku_color: row.sku_color_id,
           due_date: row.due_date || "N/A",
-          // The back end returns "Completed" or "Pending" as strings
           prod_qa: row.prod_qa,
           paint_qa: row.paint_qa,
+          final_qa: row.final_qa,
         }))
       );
+      
       setLoading(false);
     } catch (err) {
       console.error("Error fetching QA tasks:", err);
@@ -74,14 +75,15 @@ const QATasks = () => {
   }, []);
 
 
-  const handleUpdate = async (taskId, prodQaValue, paintQaValue) => {
+  const handleUpdate = async (taskId, prodQaValue, paintQaValue, finalQaValue) => {
     try {
       await axios.post(
         "http://127.0.0.1:8000/qa_dashboard/qa_tasks/update/",
         {
           manufacturing_task_id: taskId,
-          prod_qa: prodQaValue,     // "Completed" or "Pending"
-          paint_qa: paintQaValue,   // "Completed" or "Pending"
+          prod_qa: prodQaValue, // "Completed" or "Pending"
+          paint_qa: paintQaValue, // "Completed" or "Pending"
+          final_qa: finalQaValue,  // "Completed" or "Pending"
         },
         {
           headers: {
@@ -96,6 +98,7 @@ const QATasks = () => {
       alert("Failed to update QA task.");
     }
   };
+  
 
   // Report an error with subject & comment
   const handleReportError = async (taskId) => {
@@ -182,8 +185,9 @@ const QATasks = () => {
                     <TableColumn>Due Date</TableColumn>
                     <TableColumn>Production QA</TableColumn>
                     <TableColumn>Paint QA</TableColumn>
-                    <TableColumn>Status</TableColumn>
                     <TableColumn>Actions</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn>Final QA</TableColumn>
                   </TableHeader>
                   <TableBody items={paginatedRows}>
                     {(item) => (
@@ -196,6 +200,8 @@ const QATasks = () => {
                             ? dayjs(item.due_date).format("YYYY-MM-DD")
                             : "N/A"}
                         </TableCell>
+                        
+                        
                         {/* Production QA checkbox */}
                         <TableCell>
                           <Checkbox
@@ -204,12 +210,13 @@ const QATasks = () => {
                             onValueChange={(isSelected) => {
                               // Convert boolean to "Completed"/"Pending"
                               const newProdQa = isSelected ? "Completed" : "Pending";
-                              handleUpdate(item.manufacturing_id, newProdQa, item.paint_qa);
+                              handleUpdate(item.manufacturing_id, newProdQa, item.paint_qa, item.final_qa);
                             }}
                           >
                         
                           </Checkbox>
                         </TableCell>
+                        
                         {/* Paint QA checkbox */}
                         <TableCell>
                           <Checkbox
@@ -217,13 +224,13 @@ const QATasks = () => {
                             isSelected={item.paint_qa === "Completed"}
                             onValueChange={(isSelected) => {
                               const newPaintQa = isSelected ? "Completed" : "Pending";
-                              handleUpdate(item.manufacturing_id, item.prod_qa, newPaintQa);
+                              handleUpdate(item.manufacturing_id, item.prod_qa, newPaintQa, item.final_qa);
                             }}
                           >
                             
                           </Checkbox>
                         </TableCell>
-                        <TableCell>{item.status}</TableCell>
+                       
                         <TableCell>
                           {/* Report an error */}
                           <Button
@@ -235,6 +242,26 @@ const QATasks = () => {
                             Report Error
                           </Button>
                         </TableCell>
+                        <TableCell>{item.status}</TableCell>
+                         
+                         
+                         
+                         {/* Final QA checkbox */}
+                         <TableCell>
+                          <Checkbox
+                            color="success"
+                            isSelected={item.paint_qa === "Completed" && item.prod_qa === "Completed"}
+                            //isSelecte d={item.final_qa === "Completed"}
+                            isDisabled={item.status !== "Completed"}
+                            onValueChange={(isSelected) => {
+                              const newFinalQa = isSelected ? "Completed" : "Pending";
+                              handleUpdate(item.manufacturing_id, item.prod_qa, item.paint_qa, newFinalQa);
+                            }}
+                          />
+                        </TableCell>
+
+
+
                       </TableRow>
                     )}
                   </TableBody>
