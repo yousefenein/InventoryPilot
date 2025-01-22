@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './authentication.css';
 
+
+
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -22,6 +24,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+
       const response = await axios.post('http://127.0.0.1:8000/auth/login/', { username, password });
       const { access, user } = response.data;
       
