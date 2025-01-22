@@ -9,8 +9,7 @@ import {
   Input,
   Pagination,
   Button,
-  Select,
-  SelectItem,
+  Checkbox,
 } from "@nextui-org/react";
 import { SearchIcon } from "@nextui-org/shared-icons";
 import axios from "axios";
@@ -57,8 +56,9 @@ const QATasks = () => {
           status: row.status,
           sku_color: row.sku_color_id,
           due_date: row.due_date || "N/A",
-          prod_qa: row.prod_qa ? "Completed" : "Pending",
-          paint_qa: row.paint_qa ? "Completed" : "Pending",
+          // The back end returns "Completed" or "Pending" as strings
+          prod_qa: row.prod_qa,
+          paint_qa: row.paint_qa,
         }))
       );
       setLoading(false);
@@ -73,14 +73,15 @@ const QATasks = () => {
     fetchTasks();
   }, []);
 
-  const handleUpdate = async (taskId, prodQa, paintQa) => {
+
+  const handleUpdate = async (taskId, prodQaValue, paintQaValue) => {
     try {
       await axios.post(
         "http://127.0.0.1:8000/qa_dashboard/qa_tasks/update/",
         {
           manufacturing_task_id: taskId,
-          prod_qa: prodQa,
-          paint_qa: paintQa,
+          prod_qa: prodQaValue,     // "Completed" or "Pending"
+          paint_qa: paintQaValue,   // "Completed" or "Pending"
         },
         {
           headers: {
@@ -92,19 +93,53 @@ const QATasks = () => {
       fetchTasks(); // Refresh data after update
     } catch (error) {
       console.error("Error updating QA task:", error);
+      alert("Failed to update QA task.");
     }
   };
 
+  // Report an error with subject & comment
+  const handleReportError = async (taskId) => {
+    
+    const subject = prompt("Enter the subject of the error:", "Defect Found");
+    if (subject == null) return; // user cancelled
+    const comment = prompt("Enter additional details:", "Describe the issue...");
+    if (comment == null) return; // user cancelled
+
+    try {
+      await axios.post(
+        "http://127.0.0.1:8000/qa_dashboard/qa_tasks/report_error/",
+        {
+          manufacturing_task_id: taskId,
+          subject,
+          comment,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      alert("Error reported successfully");
+      fetchTasks();
+    } catch (error) {
+      console.error("Error reporting QA error:", error);
+      alert("Failed to report error");
+    }
+  };
+
+  // Filter rows
   const filteredRows = useMemo(() => {
     if (!filterValue.trim()) return rows;
     const searchTerm = filterValue.toLowerCase();
-    return rows.filter((row) => {
-      return Object.values(row).some((value) =>
+    return rows.filter((row) =>
+      Object.values(row).some((value) =>
         value?.toString().toLowerCase().includes(searchTerm)
-      );
-    });
+      )
+    );
   }, [rows, filterValue]);
 
+  // Paginate rows
   const paginatedRows = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
@@ -147,7 +182,8 @@ const QATasks = () => {
                     <TableColumn>Due Date</TableColumn>
                     <TableColumn>Production QA</TableColumn>
                     <TableColumn>Paint QA</TableColumn>
-                    <TableColumn>Action</TableColumn>
+                    <TableColumn>Status</TableColumn>
+                    <TableColumn>Actions</TableColumn>
                   </TableHeader>
                   <TableBody items={paginatedRows}>
                     {(item) => (
@@ -156,66 +192,62 @@ const QATasks = () => {
                         <TableCell>{item.qty}</TableCell>
                         <TableCell>{item.sku_color}</TableCell>
                         <TableCell>
-                          {item.due_date
+                          {item.due_date !== "N/A"
                             ? dayjs(item.due_date).format("YYYY-MM-DD")
                             : "N/A"}
                         </TableCell>
+                        {/* Production QA checkbox */}
                         <TableCell>
-                          <Select
-                            size="sm"
-                            value={item.prod_qa}
-                            onChange={(e) =>
-                              handleUpdate(
-                                item.manufacturing_id,
-                                e.target.value,
-                                item.paint_qa
-                              )
-                            }
+                          <Checkbox
+                            color="success"
+                            isSelected={item.prod_qa === "Completed"}
+                            onValueChange={(isSelected) => {
+                              // Convert boolean to "Completed"/"Pending"
+                              const newProdQa = isSelected ? "Completed" : "Pending";
+                              handleUpdate(item.manufacturing_id, newProdQa, item.paint_qa);
+                            }}
                           >
-                            <SelectItem value="Pending">Pending</SelectItem>
-                            <SelectItem value="Completed">Completed</SelectItem>
-                          </Select>
+                        
+                          </Checkbox>
                         </TableCell>
+                        {/* Paint QA checkbox */}
                         <TableCell>
-                          <Select
-                            size="sm"
-                            value={item.paint_qa}
-                            onChange={(e) =>
-                              handleUpdate(
-                                item.manufacturing_id,
-                                item.prod_qa,
-                                e.target.value
-                              )
-                            }
+                          <Checkbox
+                            color="success"
+                            isSelected={item.paint_qa === "Completed"}
+                            onValueChange={(isSelected) => {
+                              const newPaintQa = isSelected ? "Completed" : "Pending";
+                              handleUpdate(item.manufacturing_id, item.prod_qa, newPaintQa);
+                            }}
                           >
-                            <SelectItem value="Pending">Pending</SelectItem>
-                            <SelectItem value="Completed">Completed</SelectItem>
-                          </Select>
+                            
+                          </Checkbox>
                         </TableCell>
+                        <TableCell>{item.status}</TableCell>
                         <TableCell>
+                          {/* Report an error */}
                           <Button
                             size="sm"
-                            variant="shadow"
-                            color="primary"
-                            onClick={() =>
-                              handleUpdate(item.manufacturing_id, "Completed", "Completed")
-                            }
+                            variant="flat"
+                            color="danger"
+                            onClick={() => handleReportError(item.manufacturing_id)}
                           >
-                            Complete
+                            Report Error
                           </Button>
                         </TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
+                {/* Pagination */}
                 <div className="flex justify-between items-center mt-4">
                   <span>
                     Page {page} of {totalPages}
                   </span>
                   <Pagination
                     total={totalPages}
+                    page={page}
                     initialPage={1}
-                    current={page}
                     onChange={(newPage) => setPage(newPage)}
                   />
                 </div>
