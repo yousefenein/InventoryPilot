@@ -21,6 +21,10 @@ class InventoryPicklist(models.Model):
     order_id = models.ForeignKey(Orders, on_delete=models.CASCADE)
     assigned_employee_id = models.ForeignKey(users, null=True, on_delete=models.SET_NULL)
     status = models.BooleanField()
+    class Meta:
+        constraints = [
+        models.UniqueConstraint(fields=['order_id'], name='unique_order_picklist')
+        ]
 
 class InventoryPicklistItem(models.Model):
       picklist_item_id = models.AutoField(primary_key=True)
@@ -28,4 +32,4 @@ class InventoryPicklistItem(models.Model):
       location = models.ForeignKey(Inventory, null=True, on_delete=models.SET_NULL)
       sku_color = models.ForeignKey(Part, on_delete=models.CASCADE)
       amount = models.IntegerField()
-      status = models.BooleanField()
+      status = models.BooleanField() # True if picked, False if not picked

@@ -146,6 +146,9 @@ class GenerateInventoryAndManufacturingListsView(APIView):
                     print("add manuList item")
                     manuListItems.append(ManufacturingListItem(sku_color=Part.objects.get(sku_color=s), manufacturing_list_id=manuList, amount = orderQty))
             ManufacturingListItem.objects.bulk_create(manuListItems)
+        #create empty inventory picklist for the order
+        inventoryPicklist = InventoryPicklist.objects.get_or_create(status = False, order_id=order)
+
         #'''
         try:
             manuList = ManufacturingLists.objects.get(order_id = order)
@@ -225,27 +228,60 @@ class InventoryPicklistView(APIView):
 
     def get(self, request):
         try:
-            # Fetch all inventory picklists
-            inventory_picklists = InventoryPicklist.objects.select_related('order_id', 'assigned_employee_id').all()
+            # Fetch started orders (status='In Progress') and their picklists
+            started_orders = Orders.objects.filter(status='In Progress').values(
+                'order_id', 'due_date'
+            )
 
-            # Build response data
+            # Build response data with additional fields `already_filled` and `assigned_to`
             response_data = [
                 {
-                    
-                    "order_id": picklist.order_id.order_id,  # From related Orders model
-                    "due_date": picklist.order_id.due_date,  # From related Orders model
-                    "already_filled": not InventoryPicklistItem.objects.filter(
-                        picklist_id=picklist.picklist_id, status=False
-                    ).exists(),  # Determine if all items are marked as filled
-                    "assigned_to": picklist.assigned_employee_id.username if picklist.assigned_employee_id else "Unassigned",
+                    "order_id": order['order_id'],
+                    "due_date": order['due_date'],
+                    # Determine if the picklist is filled (all items are marked as `True`)
+                    "already_filled": InventoryPicklistItem.objects.filter(
+                        picklist_id__order_id=order['order_id'], status=False
+                    ).exists() == False,
+                    # Get the assigned employee from the picklist, if any
+                    "assigned_to": InventoryPicklist.objects.filter(
+                        order_id=order['order_id']
+                    ).values_list('assigned_employee_id__username', flat=True).first()
                 }
-                for picklist in inventory_picklists
+                for order in started_orders
             ]
 
             return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# class InventoryPicklistView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         try:
+#             # Fetch all inventory picklists
+#             inventory_picklists = InventoryPicklist.objects.select_related('order_id', 'assigned_employee_id').all()
+
+#             # Build response data
+#             response_data = [
+#                 {
+                    
+#                     "order_id": picklist.order_id.order_id,  # From related Orders model
+#                     "due_date": picklist.order_id.due_date,  # From related Orders model
+#                     "already_filled": not InventoryPicklistItem.objects.filter(
+#                         picklist_id=picklist.picklist_id, status=False
+#                     ).exists(),  # Determine if all items are marked as filled
+#                     "assigned_to": picklist.assigned_employee_id.username if picklist.assigned_employee_id else "Unassigned",
+#                 }
+#                 for picklist in inventory_picklists
+#             ]
+
+#             return Response(response_data, status=status.HTTP_200_OK)
+
+#         except Exception as e:
+#             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 

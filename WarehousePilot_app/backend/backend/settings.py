@@ -38,9 +38,9 @@ ALLOWED_HOSTS = ['*']
 
 #add your apps here 
 INSTALLED_APPS = [
-#    'django.contrib.admin',
+    'django.contrib.admin',
     'django.contrib.auth',
-   'django.contrib.contenttypes',
+    'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "inventory.apps.InventoryConfig",
     "reports.apps.ReportsConfig",
     "staff_dashboard.apps.StaffDashboardConfig",
+    "qa_dashboard.apps.QADashboardConfig",
 ]
 
 MIDDLEWARE = [
