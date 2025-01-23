@@ -5,8 +5,7 @@ from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import status
 from auth_app.models import users
-from .models import AdminDashboardActivity, DashboardSettings
-from .serializers import StaffSerializer, AdminDashboardActivitySerializer, DashboardSettingsSerializer
+from .serializers import StaffSerializer
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 import logging
@@ -39,23 +38,6 @@ class AdminDashboardView(APIView):
             "user": request.user.username,
             "role": request.user.role
         })
-
-class DashboardSettingsView(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request):
-        settings, created = DashboardSettings.objects.get_or_create(user=request.user)
-        serializer = DashboardSettingsSerializer(settings)
-        return Response(serializer.data)
-
-    def put(self, request):
-        settings, created = DashboardSettings.objects.get_or_create(user=request.user)
-        serializer = DashboardSettingsSerializer(settings, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Manage Users: Retrieve all of the platform
 class ManageUsersView(APIView):

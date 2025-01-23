@@ -4,11 +4,9 @@ from .views import (
     ChangePasswordView, 
     ProfileView, 
     RetrieveUsers,
-    AdminOnlyView,
-    ManagerOnlyView,
-    UserRoleUpdateView,
-    UserCreateView,
-    UserDeleteView
+    AdminDashboardView,
+    ManagerDashboardView,
+    UserManagementView
 )
 
 urlpatterns = [
@@ -18,8 +16,8 @@ urlpatterns = [
     path('retrieve_users/', RetrieveUsers.as_view(), name='retrieve_users'),
  
      # New role-based routes
-    path('admin/dashboard/', AdminOnlyView.as_view(), name='admin_dashboard'),
-    path('manager/dashboard/', ManagerOnlyView.as_view(), name='manager_dashboard'),
+    path('admin/dashboard/', AdminDashboardView.as_view(), name='admin_dashboard'),
+    path('manager/dashboard/', ManagerDashboardView.as_view(), name='manager_dashboard'),
     
     # User management routes
     path('users/', UserManagementView.as_view(), name='user_list_create'),

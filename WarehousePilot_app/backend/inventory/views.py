@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from rest_framework import status
 from django.middleware.csrf import get_token
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from .models import InventoryPicklist, InventoryPicklistItem, Inventory
 from .serializers import OrderSerializer
 from auth_app.models import users
@@ -28,6 +29,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
+class IsAdminOrManager(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.role in ['admin', 'manager']
 
 class InventoryManagementView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -99,10 +104,6 @@ class InventoryManagementView(APIView):
     ''' 
     def get_csrf_token(self, request):
         return JsonResponse({'csrfToken': get_token(request)})
-
-class IsAdminOrManager(BasePermission):
-    def has_permission(self, request, view):
-        return request.user and request.user.role in ['admin', 'manager']
 
 class InventoryView(APIView):
     authentication_classes = [JWTAuthentication]

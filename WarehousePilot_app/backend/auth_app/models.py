@@ -19,7 +19,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(username, email, password, **extra_fields)
 
 class users(AbstractBaseUser, PermissionsMixin):
-     class Roles(models.TextChoices):
+    class Roles(models.TextChoices):
         ADMIN = 'admin', 'Admin'
         MANAGER = 'manager', 'Manager'
         QA = 'qa', 'QA'
@@ -28,9 +28,10 @@ class users(AbstractBaseUser, PermissionsMixin):
     user_id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=20, unique=True)
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=20) (
-        'choices': Roles.choices,
-        'default': Roles.STAFF
+    role = models.CharField(
+        max_length = 20, 
+        choices = Roles.choices,
+        default = Roles.STAFF
     )
     dob = models.DateField()
     first_name = models.CharField(max_length=20)
@@ -46,7 +47,7 @@ class users(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.username
-        
+
     @property
     def is_admin(self):
         return self.role == self.Roles.ADMIN
