@@ -20,7 +20,8 @@ export default function UserForm() {
   const [isEditMode, setIsEditMode] = useState(false);
 
   const typesOfUsers = ["Admin", "Manager", "Staff", "QA"];
-
+  const today = new Date();
+  const minDOB = new Date(today.getFullYear() - 14, today.getMonth(), today.getDate()).toISOString().split('T')[0];
     // Check that the user is an admin (only admins should be able to navigate to this page and add users)
     useEffect(() => {
       const user = localStorage.getItem("user");
@@ -124,7 +125,7 @@ export default function UserForm() {
       });
 
       setShowModal(true);
-      navigate("/admin_dashboard/manage_users");
+      //navigate("/admin_dashboard/manage_users");
     } catch (error) {
       console.error("Submission failed:", error.response?.data || error.message);
       alert(`Couldn't ${isEditMode ? "update" : "add"} user`);
@@ -167,9 +168,9 @@ export default function UserForm() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               )}
-              <InputField label="DOB" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+              <InputField label="DOB" type="date" value={dob} onChange={(e) => setDob(e.target.value)} minValue={minDOB}/>
               <InputField label="Department" value={department} onChange={(e) => setDepartment(e.target.value)} />
-              <Dropdown label="Role" options={typesOfUsers} value={role} onChange={(e) => setRole(e.target.value)} />
+              <Dropdown label="Role" options={typesOfUsers} value={role} required={true} onChange={(e) => setRole(e.target.value)} />
             </div>
 
             <div className="mt-6">
@@ -180,13 +181,13 @@ export default function UserForm() {
                 {isEditMode ? "Update Staff" : "Add Staff"}
               </button>
 
-              {showModal && (
                 <Modal
+                  show={showModal}
+                  onClose={() => setShowModal(false)}
                   header="Success"
                   body={`User has been ${isEditMode ? "updated" : "added"} successfully.`}
                   LinkTo="/admin_dashboard/manage_users"
                 />
-              )}
             </div>
           </div>
         </div>

@@ -1,9 +1,8 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-const Modal = ({ header , body, LinkTo}) => {
-
-
-
+const Modal = ({ show, header , body, LinkTo}) => {
+  // return nothing if Modal is set to hidden
+    if (!show) return null;
 
   return (
     <div
