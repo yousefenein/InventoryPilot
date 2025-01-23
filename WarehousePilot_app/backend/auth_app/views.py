@@ -3,13 +3,22 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth import authenticate
+from rest_framework.permissions import IsAuthenticated, BasePermission
+from django.contrib.auth import authenticate, update_session_auth_hash
 from rest_framework import status
 from django.contrib.auth.hashers import check_password
 from .models import users
 from django.contrib.auth import update_session_auth_hash
 from .serializers import StaffSerializer
+
+# Custom Permissions
+class IsAdminUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_admin
+
+class IsManagerUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_manager
 
 # This is the view for the login endpoint
 class LoginView(APIView):
@@ -87,7 +96,7 @@ class ProfileView(APIView):
         
 class RetrieveUsers(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         try:
@@ -96,3 +105,42 @@ class RetrieveUsers(APIView):
             return Response(serializer.data)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
+# New views for role-based access
+class AdminDashboardView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        return Response({"message": "Admin dashboard access granted"})
+
+class ManagerDashboardView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsManagerUser]
+
+    def get(self, request):
+        return Response({"message": "Manager dashboard access granted"})
+
+class UserManagementView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        serializer = UserCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, user_id):
+        user = get_object_or_404(users, user_id=user_id)
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, user_id):
+        user = get_object_or_404(users, user_id=user_id)
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

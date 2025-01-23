@@ -1,9 +1,14 @@
 from django.urls import path
 
 from . import views
-from .views import InventoryView
+from .views import (
+    InventoryView,
+    InventoryManagementView,
+    AssignOrderView,
+    AssignedPicklistView,
+    PickPicklistItemView
+)
 from auth_app.views import ProfileView
-from inventory.views import AssignOrderView, AssignedPicklistView, PickPicklistItemView
 
 urlpatterns = [
     path("", views.get_inventory, name="get_inventory"),
