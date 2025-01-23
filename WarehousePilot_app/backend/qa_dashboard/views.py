@@ -131,3 +131,35 @@ class ReportQAErrorView(APIView):
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class UpdateQAStatusView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            task_id = request.data.get("manufacturing_task_id")
+            new_status = request.data.get("status")  # Expected to be "In Progress"
+
+            if not task_id or not new_status:
+                return Response({"error": "Missing task_id or status"},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            task = ManufacturingTask.objects.get(manufacturing_task_id=task_id)
+
+            # Ensure the current status is 'Error' before allowing the update
+            if task.status != 'Error':
+                return Response({"error": "Task status must be 'Error' to update."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            task.status = new_status  # Update the status
+            task.save()
+
+            return Response({"message": f"Task status updated to '{new_status}'."},
+                            status=status.HTTP_200_OK)
+
+        except ManufacturingTask.DoesNotExist:
+            return Response({"error": "Task not found."},
+                            status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": f"An error occurred: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
