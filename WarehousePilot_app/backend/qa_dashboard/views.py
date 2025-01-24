@@ -1,17 +1,22 @@
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from auth_app.views import IsAdminUser
+from manager_dashboard.views import IsManagerUser
 from rest_framework import status
 from django.db.models import Q
 
 from manufacturingLists.models import ManufacturingTask, QAErrorReport
 
+class IsQAStaff(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.role in ['qa', 'admin', 'manager']
 
 class QADashboardView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsQAStaff]
 
     def get(self, request):
         return Response({"message": "Hello QA Dashboard! This is a placeholder."})
@@ -19,7 +24,7 @@ class QADashboardView(APIView):
 
 class QAManufacturingTasksView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsQAStaff]
 
     def get(self, request):
         try:
@@ -60,7 +65,7 @@ class QAManufacturingTasksView(APIView):
 
 class UpdateQATaskView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsQAStaff]
 
     def post(self, request):
         try:
@@ -98,7 +103,7 @@ class UpdateQATaskView(APIView):
 
 class ReportQAErrorView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsQAStaff]
 
     def post(self, request):
         try:

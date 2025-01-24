@@ -16,6 +16,8 @@ from django.http import JsonResponse
 from django.db import connection
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from auth_app.views import IsAdminUser
+from manager_dashboard.views import IsManagerUser
 from django.utils import timezone 
 
 from django.shortcuts import get_object_or_404
@@ -25,6 +27,8 @@ from django.utils import timezone
 #generates an inventory picklist and a maufacturing list of an order once the order is "started"
 # Note: print statements have been commented out and can be uncommented for debugging if needed
 class GenerateInventoryAndManufacturingListsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsManagerUser|IsAdminUser]
     def post(self, request):
         #retrieve the order id from the http request
         orderID = request.data.get("orderID")
@@ -194,7 +198,7 @@ class OrdersView(APIView):
 
 class StartOrderView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManagerUser|IsAdminUser]
 
     def post(self, request, order_id):
         try:
@@ -224,7 +228,7 @@ class StartOrderView(APIView):
 
 class InventoryPicklistView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManagerUser|IsAdminUser]
 
     def get(self, request):
         try:
