@@ -13,7 +13,9 @@ export default function UserForm() {
   const [department, setDepartment] = useState("");
   const [role, setRole] = useState("");
   const [dob, setDob] = useState("");
+  const [feedback, setFeedback] = useState("Message");
   const [showModal, setShowModal] = useState(false);
+  const [LinkToPage, setLinkToPage] = useState("");
 
   const navigate = useNavigate();
   const { user_id } = useParams();
@@ -92,7 +94,18 @@ export default function UserForm() {
       navigate("/");
       return;
     }
+    setFeedback(dob + minDOB);
 
+    // Validate information before submitting request
+    // If the user is less than 14 years old, show an error message and dont add the user to the database
+    if(dob > minDOB){
+      setFeedback("The user must be at least 14 years old. Please adjust the birthdate accordingly.");
+      setShowModal(true);
+      //setLinkToPage("/admin_dashboard/add_users");
+      return;
+    }
+
+    // Make the add/edit request
     try {
       const userData = {
         username,
@@ -124,8 +137,10 @@ export default function UserForm() {
         },
       });
 
+      // handle response, feedback, and redirect
+      setFeedback(`User has been ${isEditMode ? "updated" : "added"} successfully. You will now be redirected to the users page.`);
       setShowModal(true);
-      //navigate("/admin_dashboard/manage_users");
+      setLinkToPage("/admin_dashboard/manage_users");
     } catch (error) {
       console.error("Submission failed:", error.response?.data || error.message);
       alert(`Couldn't ${isEditMode ? "update" : "add"} user`);
@@ -185,8 +200,8 @@ export default function UserForm() {
                   show={showModal}
                   onClose={() => setShowModal(false)}
                   header="Success"
-                  body={`User has been ${isEditMode ? "updated" : "added"} successfully.`}
-                  LinkTo="/admin_dashboard/manage_users"
+                  body={feedback}
+                  LinkTo={LinkToPage}
                 />
             </div>
           </div>
