@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import NavBar from "../navbar/App";
 
 import SideBar from "../dashboard_sidebar1/App";
 
@@ -28,13 +29,13 @@ function AccountManagement() {
     fetchUserData();
   }, []);
 
-  return (
-    <div className="flex flex-col lg:flex-row h-screen bg-gray-100">
-      {/* Sidebar */}
-      <SideBar userData={userData} />
-
-      {/* Main Content */}
-      <div className="flex-1 p-6">
+    return (
+      <div>
+        {/* Sidebar */}
+        <SideBar />
+        <NavBar/>
+        {/* Main Content */}
+        <div className="flex-1 p-6">
         <div className="ml-4">
           {/* Header Section */}
           <div className="mb-6">
