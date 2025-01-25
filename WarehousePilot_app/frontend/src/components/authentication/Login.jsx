@@ -5,7 +5,6 @@ import './authentication.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -25,7 +24,6 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-
       const response = await axios.post(`${API_BASE_URL}/auth/login/`, { username, password });
       const { access, user } = response.data;
 

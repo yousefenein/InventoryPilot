@@ -86,7 +86,7 @@ export default function SideBar() {
             <div className="relative flex h-full w-72 flex-1 flex-col p-6">
               <div className="flex items-center gap-2 px-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground">
-                  {/* ICON LOGO className="text-background" /> */}
+                  <CsfIcon className="text-background" />
                 </div>
                 <span className="text-small font-bold uppercase text-foreground">CSF</span>
               </div>
