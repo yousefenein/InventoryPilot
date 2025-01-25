@@ -42,6 +42,8 @@ export default function SideBar() {
       setUser({ name: parsedUser.first_name, role: parsedUser.role });
     }
   }, []);
+  const token = localStorage.getItem("token");
+  console.log("Token from localStorage:", token); // Debugging
 
   return (
     <div style={{ width: '0px',  height: '0px' }}> 
