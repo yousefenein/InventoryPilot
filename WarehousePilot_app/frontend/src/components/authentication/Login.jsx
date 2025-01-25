@@ -25,7 +25,7 @@ function Login() {
     e.preventDefault();
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login/`, { username, password });
-      console.log('Login response:', response.data); // Log the entire response
+      const { access, user } = response.data;
 
       localStorage.setItem('token', access);
       localStorage.setItem('user', JSON.stringify(user));
