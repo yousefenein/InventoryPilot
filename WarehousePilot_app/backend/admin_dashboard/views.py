@@ -41,7 +41,7 @@ class ManageUsersView(APIView):
                 logger.info("Manage Users - Successfully retrieved all user's information.")
             return Response(serializer.data)
         except Exception as e:
-            logger.error("Error: Could not retrieve users from database")
+            logger.error("Could not retrieve users from database")
             return Response({"Error": str(e)}, status=500)
 
 
@@ -56,7 +56,7 @@ class AddUserView(APIView):
             data = request.data
             print(data)
             if users.objects.filter(email=data['email']).exists(): # checks using email - userid instead?
-                logger.error("Error: User with this email already exists")
+                logger.error("User with this email already exists")
                 return Response({"Error": "User with this email already exists"}, status=400)
             else:
                 logger.debug("Creating user")
@@ -74,7 +74,7 @@ class AddUserView(APIView):
                 return logger.info("User created successfully")
               
         except Exception as e:
-            logger.error("Error: Failed to create a new user.")
+            logger.error("Failed to create a new user.")
             return Response({"Error": str(e)}, status=500)
         
 
@@ -124,7 +124,7 @@ class EditUserView(APIView):
             logger.error(f"User with user_id {user_id} not found")
             return Response({"error": "User not found"}, status=404)
         except ValidationError as ve:
-            logger.error(f"Validation error: {str(ve)}")
+            logger.error(f"Validation {str(ve)}")
             return Response({"error": str(ve)}, status=400)
         except Exception as e:
             logger.error(f"Error in EditUserView.put: {str(e)}")

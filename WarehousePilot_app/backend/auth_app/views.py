@@ -17,6 +17,10 @@ from django.contrib.auth.hashers import check_password
 from .models import users
 from django.contrib.auth import update_session_auth_hash
 from .serializers import StaffSerializer
+import logging
+
+# Django logger for backend
+logger = logging.getLogger('WarehousePilot_app')
 
 # This is the view for the login endpoint
 class LoginView(APIView):
@@ -26,14 +30,14 @@ class LoginView(APIView):
             username = request.data.get("username")
             password = request.data.get("password")
 
-            print(f"Username: {username}")
-            print(f"Password: {password}")
+            logger.debug("Login user data - Username: %u", username)
 
             # Django built-in authentication
             user = authenticate(username=username, password=password)
 
             if user is not None:
                 refresh = RefreshToken.for_user(user)
+                logger.info("User {username} successfully logged in")
                 return Response({
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
@@ -48,6 +52,7 @@ class LoginView(APIView):
                     }
                 })
             else:
+                logger.error("User failed to log in with valid credentials")
                 return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 # This is the view for the change password endpoint           
@@ -57,16 +62,19 @@ class ChangePasswordView(APIView):
 
     def post(self, request):
         user = request.user
+        username = request.data.get("username")
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
 
         if not user.check_password(old_password):
+            logger.error(f"User {username}'s old password provided for password reset was incorrect")
             return Response({"detail": "Old password is incorrect"}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(new_password)
         user.save()
         update_session_auth_hash(request, user) # to keep the user logged in after changing the password
 
+        logger.info(f"User {username} successfully changed their password.")
         return Response({"detail": "Password changed successfully"}, status=status.HTTP_200_OK)
 
 # This is the view for the profile endpoint, gets your profile information    
@@ -77,8 +85,8 @@ class ProfileView(APIView):
     def get(self, request):
         try:
             user = request.user
-            print(f"Request user: {user}")  # Debugging
-            print(f"User type: {type(user)}")  # Debugging
+            logger.debug(f"Profile (fetched data) - Request user: {user}")
+            logger.debug(f"Profile (fetched data) - User type: {type(user)}")
 
             user_data = {
                 'username': user.username,
@@ -88,8 +96,10 @@ class ProfileView(APIView):
                 'last_name': getattr(user, 'last_name', 'N/A'),
                 'department': getattr(user, 'department', 'N/A'),
             }
+            logger.info(f"Fetched the profile of the user {user.username}")
             return Response(user_data)
         except Exception as e:
+            logger.error("Failed to retrieve user data in Profile")
             return Response({"error": str(e)}, status=500)
         
 class RetrieveUsers(APIView):
@@ -100,6 +110,9 @@ class RetrieveUsers(APIView):
         try:
             staffData = users.objects.all()
             serializer = StaffSerializer(staffData, many=True)
+            if serializer.data is not None:
+                logger.info(f"Retrieved data for all users (auth)")
             return Response(serializer.data)
         except Exception as e:
+            logger.error("Failed to retrieve all users data from the database (auth)")
             return Response({"error": str(e)}, status=500)
