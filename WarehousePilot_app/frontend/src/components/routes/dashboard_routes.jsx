@@ -13,6 +13,7 @@ import InventoryPickListItem from '../orders/InventoryPickListItem';
 import InventoryAndManufacturingList from '../orders/InventoryAndManufacturingList';
 import ManufacturingListItem from '../orders/ManufacturingListItem';
 import QATasks from '../orders/QAtasks';
+import StaffManufacturingTasks from '../manufacturing/StaffManufacturingTasks';
 
 
 
@@ -38,6 +39,8 @@ export const dashboard_routes = [
   { path: '/inventory_picklist_items/:order_id', element: <InventoryPickListItem /> },
   { path: '/qa_dashboard', element: <QADashboard/> },
   { path: '/manufacturing_list_item/:order_id', element: <ManufacturingListItem /> },
-  { path: '/qa_tasks', element: <QATasks /> }
-
+  { path: '/qa_tasks', element: <QATasks /> },
+  { path: '/manufacturing_list_item/:order_id', element: <ManufacturingListItem /> },
+  { path: '/staff_manufacturing_tasks', element: <StaffManufacturingTasks /> }
 ];
+ 
