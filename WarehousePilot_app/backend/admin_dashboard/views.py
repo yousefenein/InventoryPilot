@@ -16,7 +16,8 @@ from .serializers import StaffSerializer
 from django.core.exceptions import ValidationError
 import logging
 
-logger = logging.getLogger(__name__)
+# Django logger for backend
+logger = logging.getLogger('WarehousePilot_app')
 
 # Create your views here.
 def home(request):
@@ -36,9 +37,13 @@ class ManageUsersView(APIView):
         try:
             staffData = users.objects.all()
             serializer = StaffSerializer(staffData, many=True)
+            if serializer is not None:
+                logger.info("Manage Users - Successfully retrieved all user's information.")
             return Response(serializer.data)
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            logger.error("Error: Could not retrieve users from database")
+            return Response({"Error": str(e)}, status=500)
+
 
 # Adding Users:  Retrieve user input and add to database
 class AddUserView(APIView):
@@ -51,9 +56,10 @@ class AddUserView(APIView):
             data = request.data
             print(data)
             if users.objects.filter(email=data['email']).exists(): # checks using email - userid instead?
-                return Response({"error": "User with this email already exists"}, status=400)
+                logger.error("Error: User with this email already exists")
+                return Response({"Error": "User with this email already exists"}, status=400)
             else:
-                print("Creating user")
+                logger.debug("Creating user")
                 user = users.objects.create_user(
                     username=data['username'],
                     password = data['password'],
@@ -65,10 +71,11 @@ class AddUserView(APIView):
                     dob = data['dob']
 
                 )
-                return Response({"message": "User created successfully"})
+                return logger.info("User created successfully")
               
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            logger.error("Error: Failed to create a new user.")
+            return Response({"Error": str(e)}, status=500)
         
 
 
@@ -147,7 +154,3 @@ class DeleteUserView(APIView):
         except Exception as e:
             logger.error(f"An error occurred while deleting user: {str(e)}")
             return Response({"error": f"An error occurred: {str(e)}"}, status=500)
-        
-        
-        
-        
