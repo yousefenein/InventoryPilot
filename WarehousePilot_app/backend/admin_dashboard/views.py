@@ -42,7 +42,7 @@ class ManageUsersView(APIView):
             return Response(serializer.data)
         except Exception as e:
             logger.error("Could not retrieve users from database")
-            return Response({"Error": str(e)}, status=500)
+            return Response({"error": str(e)}, status=500)
 
 
 # Adding Users:  Retrieve user input and add to database
@@ -57,7 +57,7 @@ class AddUserView(APIView):
             print(data)
             if users.objects.filter(email=data['email']).exists(): # checks using email - userid instead?
                 logger.error("User with this email already exists")
-                return Response({"Error": "User with this email already exists"}, status=400)
+                return Response({"error": "User with this email already exists"}, status=400)
             else:
                 logger.debug("Creating user")
                 user = users.objects.create_user(
@@ -71,11 +71,13 @@ class AddUserView(APIView):
                     dob = data['dob']
 
                 )
-                return logger.info("User created successfully")
+                logger.info("User created successfully")
+                return Response({"message": "User created successfully"})
+
               
         except Exception as e:
             logger.error("Failed to create a new user.")
-            return Response({"Error": str(e)}, status=500)
+            return Response({"error": str(e)}, status=500)
         
 
 
