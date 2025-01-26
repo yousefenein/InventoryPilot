@@ -35,28 +35,45 @@ def one_off_manu_task_generate(self):
     from manufacturingLists.models import ManufacturingLists, ManufacturingListItem, ManufacturingTask
     from parts.models import Part
     from datetime import date
-    from dateutil import relativedelta
+    from dateutil.relativedelta import relativedelta
     logger.info('inside one_off_manu_task_generate')
     today = date.today()
     logger.info(f'today\'s date: '+str(today))
     
     #retrieve the orders that are overdue or have a null due date
     overdueOrders = list(Orders.objects.filter(Q(due_date__lte=today) | Q(due_date=None)).values_list('order_id', flat=True))
-    
+    for o in overdueOrders:
+        logger.info(o.__dict__)
     #retrieve the manufacturing lists associated with any overdue or null due date orders
     overdueManuLists = list(ManufacturingLists.objects.filter(order_id__in=overdueOrders))
-    
+    for l in overdueManuLists:
+        logger.info(l.__dict__)
     #retrieve the manufacturing lists associated with any overdue or null due date orders
     overdueManuListItems = ManufacturingListItem.objects.filter(manufacturing_list_id__in = overdueManuLists)
-    
+    #logger.info(str(overdueManuListItems))
     skuColorsUnique = list(set(overdueManuListItems.values_list('sku_color', flat=True)))
-    manuTasks = []
+    #manuTasks = []
     for s in skuColorsUnique:
-        totalQty = overdueManuListItems.filter(sku_color=Part.objects.get(sku_color=s)).aggregate(totalQTY = Sum('amount'))['totalQTY']
-        manuTasks.append(ManufacturingTask(sku_color = Part.objects.get(sku_color=s), qty = totalQty, due_date = (today + relativedelta(months=1)), status = 'nesting'))
+        logger.info(str(s))
+        matchingManuItems = overdueManuListItems.filter(sku_color=Part.objects.get(sku_color=s))
+        for m in matchingManuItems:
+            logger.info(m.__dict__)
+        totalQty = matchingManuItems.aggregate(totalQTY = Sum('amount'))['totalQTY']
+        dueDate = today + relativedelta(months=1)
+        logger.info(str(dueDate))
+        manuTask = ManufacturingTask.objects.create(sku_color = Part.objects.get(sku_color=s), qty = totalQty, due_date = dueDate, status = 'nesting')
+        logger.info(f'manuTask: '+ manuTask.__dict__)
+        #manuTask = ManufacturingTask(sku_color = Part.objects.get(sku_color=s), qty = totalQty, due_date = dueDate, status = 'nesting')
+        #manuTasks.append(manuTask)
+        #manuTask.save()
+        for m in matchingManuItems:
+            m.manufacturing_task = manuTask
+        ManufacturingListItem.objects.bulk_update(matchingManuItems, ['manufacturing_task'])
+    '''
     for i in manuTasks:
         logger.info(i.__dict__) 
     ManufacturingTask.objects.bulk_create(manuTasks)
+    '''
 
 @app.task(bind=True)
 def create_manuTasks(self):
@@ -96,9 +113,16 @@ def create_manuTasks(self):
     skuColorsUnique = list(set(upcomingManuListItems.values_list('sku_color', flat=True)))
     manuTasks = []
     for s in skuColorsUnique:
+        duedate = today + relativedelta(months=1)
+        matchingManuItems = upcomingManuListItems.filter(sku_color=Part.objects.get(sku_color=s))
         totalQty = upcomingManuListItems.filter(sku_color=Part.objects.get(sku_color=s)).aggregate(totalQTY = Sum('amount'))['totalQTY']
-        manuTasks.append(ManufacturingTask(sku_color = Part.objects.get(sku_color=s), qty = totalQty, due_date = (today + relativedelta(months=1)), status = 'nesting'))
+        #manuTasks.append(ManufacturingTask(sku_color = Part.objects.get(sku_color=s), qty = totalQty, due_date = (today + relativedelta(months=1)), status = 'nesting'))
+        manuTask = ManufacturingTask.objects.create(sku_color = Part.objects.get(sku_color=s), qty = totalQty, due_date = duedate, status = 'nesting')
+        for m in matchingManuItems:
+            m.manufacturing_task = manuTask
+        ManufacturingListItem.objects.bulk_update(matchingManuItems, ['manufacturing_task'])
+    '''
     for i in manuTasks:
         logger.info(i.__dict__) 
     ManufacturingTask.objects.bulk_create(manuTasks)
-    
+   ''' 
