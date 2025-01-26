@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-const Modal = ({ show, header , body, LinkTo, onClose}) => {
+const Modal = ({ show, header , body, LinkTo, onClose, symbol}) => {
     const navigate = useNavigate();
   // return nothing if Modal is set to hidden
     if (!show) return null;
@@ -30,6 +30,7 @@ const Modal = ({ show, header , body, LinkTo, onClose}) => {
                 </svg>
 
                 <div className="my-8 text-center">
+                    {header == "Success" && (
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-14 shrink-0 fill-green-500 inline" viewBox="0 0 512 512">
                         <path
                             d="M383.841 171.838c-7.881-8.31-21.02-8.676-29.343-.775L221.987 296.732l-63.204-64.893c-8.005-8.213-21.13-8.393-29.35-.387-8.213 7.998-8.386 21.137-.388 29.35l77.492 79.561a20.687 20.687 0 0 0 14.869 6.275 20.744 20.744 0 0 0 14.288-5.694l147.373-139.762c8.316-7.888 8.668-21.027.774-29.344z"
@@ -38,6 +39,13 @@ const Modal = ({ show, header , body, LinkTo, onClose}) => {
                             d="M256 0C114.84 0 0 114.84 0 256s114.84 256 256 256 256-114.84 256-256S397.16 0 256 0zm0 470.487c-118.265 0-214.487-96.214-214.487-214.487 0-118.265 96.221-214.487 214.487-214.487 118.272 0 214.487 96.221 214.487 214.487 0 118.272-96.215 214.487-214.487 214.487z"
                             data-original="#000000" />
                     </svg>
+                    )}
+                    {header == "Error" && (
+                    <svg className="w-20 h-20 text-red-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    )}
                     <h4 className="text-xl text-gray-800 font-semibold mt-4">{header}</h4>
                     <p className="text-sm text-gray-500 leading-relaxed mt-4">{body}</p>
                 </div>

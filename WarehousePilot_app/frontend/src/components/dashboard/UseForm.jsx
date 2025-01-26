@@ -16,6 +16,7 @@ export default function UserForm() {
   const [feedback, setFeedback] = useState("Message");
   const [showModal, setShowModal] = useState(false);
   const [LinkToPage, setLinkToPage] = useState("");
+  const [header, setHeader] = useState("");
 
   const navigate = useNavigate();
   const { user_id } = useParams();
@@ -94,12 +95,11 @@ export default function UserForm() {
       navigate("/");
       return;
     }
-    setFeedback(dob + minDOB);
-
     // Validate information before submitting request
     // If the user is less than 14 years old, show an error message and dont add the user to the database
     if(dob > minDOB){
       setFeedback("The user must be at least 14 years old. Please adjust the birthdate accordingly.");
+      setHeader("Error");
       setShowModal(true);
       //setLinkToPage("/admin_dashboard/add_users");
       return;
@@ -139,6 +139,7 @@ export default function UserForm() {
 
       // handle response, feedback, and redirect
       setFeedback(`User has been ${isEditMode ? "updated" : "added"} successfully. You will now be redirected to the users page.`);
+      setHeader("Error");
       setShowModal(true);
       setLinkToPage("/admin_dashboard/manage_users");
     } catch (error) {
@@ -199,7 +200,7 @@ export default function UserForm() {
                 <Modal
                   show={showModal}
                   onClose={() => setShowModal(false)}
-                  header="Success"
+                  header={header}
                   body={feedback}
                   LinkTo={LinkToPage}
                 />
