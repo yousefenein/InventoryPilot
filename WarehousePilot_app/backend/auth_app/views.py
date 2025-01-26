@@ -37,7 +37,7 @@ class LoginView(APIView):
 
             if user is not None:
                 refresh = RefreshToken.for_user(user)
-                logger.info("User {username} successfully logged in")
+                logger.info(f"User {username} successfully logged in")
                 return Response({
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
@@ -111,7 +111,7 @@ class RetrieveUsers(APIView):
             staffData = users.objects.all()
             serializer = StaffSerializer(staffData, many=True)
             if serializer.data is not None:
-                logger.info(f"Retrieved data for all users (auth)")
+                logger.info("Retrieved data for all users (auth)")
             return Response(serializer.data)
         except Exception as e:
             logger.error("Failed to retrieve all users data from the database (auth)")
