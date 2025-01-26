@@ -7,8 +7,7 @@ StaffManufacturingTasksView, ensuring:
 - Non-staff users are denied access.
 - Unauthenticated users are denied access.
 
-Each test covers different scenarios for task retrieval, role-based
-permissions, and proper response formatting.
+
 """
 
 from django.urls import reverse
@@ -100,9 +99,6 @@ class StaffManufacturingTasksViewTest(APITestCase):
         self.assertEqual(task2["sku_color"], "Red")
         self.assertEqual(task2["status"], "cutting")
 
-
-   
-    
 
     def test_non_staff_user_cannot_access_tasks(self):
         # Authenticate as non-staff user
