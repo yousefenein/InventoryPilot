@@ -4,6 +4,15 @@ import { DataGrid } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 
+// logging: push log messages from frontend back to django (backend)
+const logging = async (level, message) => {
+    try {
+        await axios.post('http://127.0.0.1:8000/logging/log/', { level, message });
+    } catch (error) {
+        console.error("Failed to send log to Django", error);
+    }
+};
+
 // Pagination defaults
 const DEFAULT_PAGINATION = {
     page: 0,
@@ -22,9 +31,9 @@ export default function UsersTable({ onStaffCountChange }) {
             });
             setAllUsers(response.data); // Store the raw data
             onStaffCountChange(response.data.length); // Notify parent of staff count
-            console.log('User data has been retrieved successfully');
+            logging('info', 'Users Table - User data has been retrieved successfully');
         } catch (error) {
-            console.error('Getting users failed:', error);
+            logging('error', `Failed to get users in the client - ${error}`);
             alert("Couldn't get users");
         }
     };
@@ -35,10 +44,10 @@ export default function UsersTable({ onStaffCountChange }) {
             const response = await axios.delete(`http://127.0.0.1:8000/admin_dashboard/delete_user/${user_id}/`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
-            alert(response.data.message);
+            //alert(response.data.message);
             fetchData(); // Refresh data after deletion
         } catch (error) {
-            console.error('Failed to delete user:', error);
+            logging('error', `Failed to delete user in client - ${error}`);
             alert("Couldn't delete the user.");
         }
     };
