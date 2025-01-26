@@ -1,3 +1,11 @@
+"""
+
+This file includes:
+- Tests for generating manufacturing and inventory lists (`GenerateListsTests`).
+- Tests for retrieving inventory picklist items (`InventoryPicklistItemsViewTest`).
+
+"""
+
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -109,7 +117,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from inventory.models import  InventoryPicklist, InventoryPicklistItem, users
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import get_user_model
+
 
 
 class InventoryPicklistItemsViewTest(APITestCase):
