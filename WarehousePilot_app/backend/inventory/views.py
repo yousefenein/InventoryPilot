@@ -70,7 +70,7 @@ class InventoryManagementView(APIView):
                 else:
                     item['status'] = 'High'
             logger.info("Items from inventory retrieved from database")
-            return Response({"inventory": inventory_list, "low_stock_items": low_stock_items}, safe=False)
+            return Response({"inventory": inventory_list, "low_stock_items": low_stock_items})
         except Exception as e:
             logger.error("Failed to retrieve items and their status from the inventory (get_inventory)")
             return Response({"error": str(e)}, status=500)
