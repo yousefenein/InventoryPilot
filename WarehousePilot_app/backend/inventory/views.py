@@ -50,11 +50,11 @@ def get_inventory(request):
             qty = item['qty']
             if qty == 0:
                 item['status'] = 'Out of Stock'
-                logger.warning("get_inventory - Item %i is out of stock", item['sku_color'])
+                logger.warning("get_inventory - Item %s is out of stock", item['sku_color'])
             elif qty < 50:
                 item['status'] = 'Low'
                 low_stock_items.append(item)
-                logger.warning("get_inventory - Item %i is in low stock", item['sku_color'])
+                logger.warning("get_inventory - Item %s is in low stock", item['sku_color'])
                 # send_alert(item)
             elif 50 <= qty <= 100:
                 item['status'] = 'Moderate'
@@ -73,7 +73,7 @@ def delete_inventory_items(request):
         data = json.loads(request.body)
         item_ids = data.get('item_ids', [])
         Inventory.objects.filter(inventory_id__in=item_ids).delete()
-        logger.info("Items %i have been deleted successfully", ','.join([str(x) for x in item_ids]))
+        logger.info("Items %s have been deleted successfully", ','.join([str(x) for x in item_ids]))
         return JsonResponse({"message": "Items deleted successfully"}, status=200)
     except Exception as e:
         logger.error("Failed to delete items from the inventory (delete_inventory_items)")
@@ -91,7 +91,7 @@ def add_inventory_item(request):
             warehouse_number=data["warehouse_number"],
             amount_needed=data["amount_needed"],
         )
-        logger.info("Item %i have been successfully added to the inventory", data["sku_color_id"])
+        logger.info("Item %s have been successfully added to the inventory", data["sku_color_id"])
         return JsonResponse({"message": "Item added successfully", "item": new_item.inventory_id}, status=201)
     except Exception as e:
         logger.error("Failed to add inventory item: %s (add_inventory_item)", str(e))
@@ -109,7 +109,7 @@ def add_inventory_item(request):
             warehouse_number=data["warehouse_number"],
             amount_needed=data["amount_needed"],
         )
-        logger.info("Item %i have been successfully added to the inventory", data["sku_color_id"])
+        logger.info("Item %s have been successfully added to the inventory", data["sku_color_id"])
         return JsonResponse({"message": "Item added successfully", "item": new_item.inventory_id}, status=201)
     except Exception as e:
         logger.error("Failed to add inventory item: %s (add_inventory_item)", str(e))
@@ -173,7 +173,7 @@ class AssignOrderView(APIView):
         order.save()
 
         serializer = OrderSerializer(order)
-        logger.info("Employee %e was successfully assigned to order %o", staff_user, order_id)
+        logger.info("Employee %s was successfully assigned to order %s", staff_user, order_id)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class AssignedPicklistView(APIView):
@@ -202,7 +202,7 @@ class AssignedPicklistView(APIView):
                     "assigned_to": picklist.assigned_employee_id.first_name + " " + picklist.assigned_employee_id.last_name if picklist.assigned_employee_id else None
                 })
 
-            logger.info("Employee %e was successfully assigned to picklists %o", current_user, ','.join([str(x.order_id) for x in picklist]))
+            logger.info("Employee %s was successfully assigned to picklists %s", current_user, ','.join([str(x.order_id) for x in picklist]))
             return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -220,7 +220,7 @@ class PickPicklistItemView(APIView):
         try:
             item = InventoryPicklistItem.objects.get(picklist_item_id=picklist_item_id)
         except InventoryPicklistItem.DoesNotExist:
-            logger.error("Item %i was not found", picklist_item_id)
+            logger.error("Item %s was not found", picklist_item_id)
             return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
 
         if request.user.role != 'staff':
@@ -230,5 +230,5 @@ class PickPicklistItemView(APIView):
         item.status = True
         item.save()
 
-        logger.info("Item %i has been successfully picked", picklist_item_id)
+        logger.info("Item %s has been successfully picked", picklist_item_id)
         return Response({"message": "Item picked successfully"}, status=status.HTTP_200_OK)

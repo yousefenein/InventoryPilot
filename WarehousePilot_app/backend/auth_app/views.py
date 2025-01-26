@@ -30,7 +30,7 @@ class LoginView(APIView):
             username = request.data.get("username")
             password = request.data.get("password")
 
-            logger.debug("Login user data - Username: %u", username)
+            logger.debug("Login user data - Username: %s", username)
 
             # Django built-in authentication
             user = authenticate(username=username, password=password)
