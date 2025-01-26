@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 // import Sidebar from "../dashboard_sidebar/Sidebar";
 import Header from "../dashboard_sidebar/Header";
 import UsersTable from "./UsersTable";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-
 import SideBar from "../dashboard_sidebar1/App";
+import { useNavigate } from "react-router-dom";
 
 export default function ManageUsersPage() {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -36,26 +35,6 @@ export default function ManageUsersPage() {
         };
         fetchUserData();
     }, []);
-
-
-    // Check that the user is an admin
-    useEffect(() => {
-        const user = localStorage.getItem("user");
-        if (user) {
-            const parsedUser = JSON.parse(user);
-            if (parsedUser.role != "admin") {
-                // Navigate to correct dashboard
-                if (parsedUser.role == "manager") {
-                    navigate("/manager_dashboard");
-                } else {
-                    navigate("/dashboard");
-                }
-            }
-        } else {
-            alert("Not logged in");
-            navigate("/");
-        }
-    }, [navigate]);
 
     return (
         <div className="h-full">
