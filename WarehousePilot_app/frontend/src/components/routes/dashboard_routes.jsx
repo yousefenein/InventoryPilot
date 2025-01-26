@@ -14,6 +14,7 @@ import InventoryPickListItem from '../orders/InventoryPickListItem';
 import InventoryAndManufacturingList from '../orders/InventoryAndManufacturingList';
 import ManufacturingListItem from '../orders/ManufacturingListItem';
 import QATasks from '../orders/QAtasks';
+import StaffManufacturingTasks from '../manufacturing/StaffManufacturingTasks';
 
 
 export const dashboard_routes = [
@@ -144,3 +145,4 @@ export const dashboard_routes = [
       </>
   ) }
 ];
+ 
