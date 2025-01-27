@@ -6,12 +6,17 @@ This file includes:
 
 """
 
-from django.test import TestCase
+
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from .models import Orders, OrderPart
 from inventory.models import Inventory
 from parts.models import Part
+from rest_framework import status
+from datetime import date  # Import `date` for mock data creation
+from inventory.models import  InventoryPicklist, InventoryPicklistItem
+from auth_app.models import users
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 # Create your tests here.
@@ -112,11 +117,7 @@ class GenerateListsTests(APITestCase):
 
 
 
-from django.urls import reverse
-from rest_framework.test import APITestCase
-from rest_framework import status
-from inventory.models import  InventoryPicklist, InventoryPicklistItem, users
-from rest_framework_simplejwt.tokens import RefreshToken
+
 
 
 
@@ -218,3 +219,104 @@ class InventoryPicklistItemsViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['error'], "No picklist found for the given order")
         print("test_get_inventory_picklist_items_no_picklist passed.")
+        
+        
+        
+
+
+
+
+class InventoryPicklistViewTest(APITestCase):
+    def setUp(self):
+        # Create a mock user
+        self.user = users.objects.create_user(
+            username="testuser",
+            password="password",
+            email="testuser@example.com",
+            role="Employee",
+            dob="1990-01-01",
+            first_name="Test",
+            last_name="User",
+            department="Inventory"
+        )
+
+        # Create mock orders
+        self.order1 = Orders.objects.create(order_id=1, status="In Progress", due_date=date(2025, 2, 15))
+        self.order2 = Orders.objects.create(order_id=2, status="In Progress", due_date=date(2025, 2, 20))
+        self.order3 = Orders.objects.create(order_id=3, status="Pending", due_date=date(2025, 3, 1))  # Not started
+
+        # Create a mock inventory picklist for order1 (partially filled)
+        self.picklist1 = InventoryPicklist.objects.create(order_id=self.order1, assigned_employee_id=self.user, status=True)
+        self.part1 = Part.objects.create(sku_color="Blue")
+        self.item1 = InventoryPicklistItem.objects.create(
+            picklist_id=self.picklist1,
+            location=None,
+            sku_color=self.part1,
+            amount=10,
+            status=False
+        )
+
+        # Create a mock inventory picklist for order2 (completely filled)
+        self.picklist2 = InventoryPicklist.objects.create(order_id=self.order2, assigned_employee_id=self.user, status=True)
+        self.part2 = Part.objects.create(sku_color="Red")
+        self.item2 = InventoryPicklistItem.objects.create(
+            picklist_id=self.picklist2,
+            location=None,
+            sku_color=self.part2,
+            amount=5,
+            status=True
+        )
+
+    def test_get_inventory_picklist_success(self):
+        print("Running: test_get_inventory_picklist_success")
+        # Authenticate as the user
+        self.client.force_authenticate(user=self.user)
+
+        url = reverse('inventory_picklist')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)  # Only `In Progress` orders should be included
+
+        # Verify order1 details (exclude due_date)
+        order1 = response.data[0]
+        self.assertEqual(order1["order_id"], 1)
+        self.assertFalse(order1["already_filled"])  # Partially filled
+        self.assertEqual(order1["assigned_to"], "testuser")
+
+        # Verify order2 details (exclude due_date)
+        order2 = response.data[1]
+        self.assertEqual(order2["order_id"], 2)
+        self.assertTrue(order2["already_filled"])  # Completely filled
+        self.assertEqual(order2["assigned_to"], "testuser")
+
+        print("Passed: test_get_inventory_picklist_success")
+
+    def test_get_inventory_picklist_no_in_progress_orders(self):
+        print("Running: test_get_inventory_picklist_no_in_progress_orders")
+        # Update orders to have no "In Progress" status
+        self.order1.status = "Completed"
+        self.order1.save()
+        self.order2.status = "Completed"
+        self.order2.save()
+
+        # Authenticate as the user
+        self.client.force_authenticate(user=self.user)
+
+        url = reverse('inventory_picklist')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)  # No "In Progress" orders
+
+        print("Passed: test_get_inventory_picklist_no_in_progress_orders")
+
+    def test_unauthenticated_access(self):
+        print("Running: test_unauthenticated_access")
+        # Test without authentication
+        url = reverse('inventory_picklist')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        print("Passed: test_unauthenticated_access")
