@@ -41,7 +41,6 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 # Django logger for backend
 logger = logging.getLogger('WarehousePilot_app')
 
-
 class IsAdminOrManager(BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.role in ['admin', 'manager']
@@ -59,11 +58,11 @@ class InventoryManagementView(APIView):
                 qty = item['qty']
                 if qty == 0:
                     item['status'] = 'Out of Stock'
-                    logger.warning("get_inventory - Item %s is out of stock", item['sku_color'])
+                    logger.info(f"get_inventory - Item {item['sku_color_id']} is out of stock")
                 elif qty < 50:
                     item['status'] = 'Low'
                     low_stock_items.append(item)
-                    logger.warning("get_inventory - Item %s is in low stock", item['sku_color'])
+                    logger.info(f"get_inventory - Item {item['sku_color_id']} is in low stock")
                     # send_alert(item)
                 elif 50 <= qty <= 100:
                     item['status'] = 'Moderate'
