@@ -1,8 +1,8 @@
 "use client";
-
+// import { useState, useEffect } from "react";
 import type {NavbarProps} from "@nextui-org/react";
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import './navbar.css'
 import React from "react";
 import {
   Navbar,
@@ -27,6 +27,26 @@ const menuItems = [
 ];
 
 export default function NavBar(props: NavbarProps) {
+  // const [isMobile, setIsMobile] = useState(window.innerWidth < 770);
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     setIsMobile(window.innerWidth < 770);
+  //   };
+
+  //   window.addEventListener("resize", handleResize);
+
+  //   return () => {
+  //     window.removeEventListener("resize", handleResize);
+  //   };
+  // }, []);
+
+  // if (isMobile) {
+  //   return null; // Return null to hide the navbar on mobile
+  // }
+  
+  
+  
+  
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -37,6 +57,7 @@ export default function NavBar(props: NavbarProps) {
   };
 
   return (
+    <div className="hide-on-mobile">
     <Navbar
       {...props}
       classNames={{
@@ -104,5 +125,6 @@ export default function NavBar(props: NavbarProps) {
       >
       </NavbarMenu>
     </Navbar>
+    </div>
   );
 }
