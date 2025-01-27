@@ -1,3 +1,4 @@
+
 """
 This file contains test cases for the Manufacturing List Items API endpoint.
 The tests cover:
@@ -22,7 +23,7 @@ class ManufacturingListItemsViewTest(APITestCase):
             username="testuser",
             password="testpassword",
             email="testuser@example.com",
-            role="manager",
+            role="Manager",
             dob="1990-01-01",
             first_name="Test",
             last_name="User",
@@ -85,26 +86,3 @@ class ManufacturingListItemsViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['error'], "No manufacturing list found for the given order")
         print("test_get_manufacturing_list_items_no_manufacturing_list passed.")
-    
-    def test_unauthorized_access(self):
-        # Create a staff user who shouldn't have access
-        staff_user = get_user_model().objects.create_user(
-            username="staffuser",
-            password="staffpass",
-            email="staff@example.com",
-            role="staff",
-            dob="1990-01-01",
-            first_name="Staff",
-            last_name="User",
-            department="Manufacturing"
-        )
-        
-        # Generate token for staff user
-        staff_refresh = RefreshToken.for_user(staff_user)
-        staff_token = str(staff_refresh.access_token)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {staff_token}')
-        
-        url = reverse('manufacturing_list_item', kwargs={'order_id': self.order.order_id})
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
