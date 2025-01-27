@@ -11,11 +11,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework import status
 from auth_app.models import users
 from .serializers import StaffSerializer
 from django.core.exceptions import ValidationError
-from django.shortcuts import get_object_or_404
 import logging
 
 # Django logger for backend
@@ -29,24 +27,6 @@ def home(request):
 class IsAdminUser(BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.role == 'admin'
-
-class AdminDashboardView(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def get(self, request):
-        # Log the dashboard access
-        AdminDashboardActivity.objects.create(
-            user=request.user,
-            action="Dashboard Access",
-            details="Accessed admin dashboard"
-        )
-        
-        return Response({
-            "message": "Admin dashboard access granted",
-            "user": request.user.username,
-            "role": request.user.role
-        })
 
 # Manage Users: Retrieve all of the platform
 class ManageUsersView(APIView):
@@ -100,11 +80,15 @@ class AddUserView(APIView):
             return Response({"error": str(e)}, status=500)
         
 
+
 class EditUserView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
+        """
+        Retrieve details of a specific user by user_id.
+        """
         try:
             logger.debug(f"Attempting to fetch user with user_id: {user_id}")
             user = users.objects.get(user_id=user_id)
@@ -122,6 +106,9 @@ class EditUserView(APIView):
             )
 
     def put(self, request, user_id):
+        """
+        Update details of a specific user by user_id.
+        """
         try:
             logger.debug(f"Attempting to update user with user_id: {user_id}")
             user = users.objects.get(user_id=user_id)
@@ -149,6 +136,7 @@ class EditUserView(APIView):
             )
             
             
+
 class DeleteUserView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
