@@ -21,6 +21,9 @@ import timezone from "dayjs/plugin/timezone";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const QATasks = () => {
   const [filterValue, setFilterValue] = useState("");
   const [rows, setRows] = useState([]);
@@ -28,6 +31,9 @@ const QATasks = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
+
+
+
 
   // Fetch QA tasks
   const fetchTasks = async () => {
@@ -39,7 +45,8 @@ const QATasks = () => {
         return;
       }
       const response = await axios.get(
-        "http://127.0.0.1:8000/qa_dashboard/qa_tasks/",
+        `${API_BASE_URL}/qa_dashboard/qa_tasks/`
+,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -75,7 +82,7 @@ const QATasks = () => {
   const handleUpdate = async (taskId, prodQaValue, paintQaValue, finalQaValue) => {
     try {
       await axios.post(
-        "http://127.0.0.1:8000/qa_dashboard/qa_tasks/update/",
+        `${API_BASE_URL}/qa_dashboard/qa_tasks/update/`,
         {
           manufacturing_task_id: taskId,
           prod_qa: prodQaValue,
@@ -105,7 +112,7 @@ const QATasks = () => {
       console.log("Payload being sent to update status:", payload);
   
       const response = await axios.post(
-        "http://127.0.0.1:8000/qa_dashboard/qa_tasks/update_status/",
+        `${API_BASE_URL}/qa_dashboard/qa_tasks/update_status/`,
         payload,
         {
           headers: {
@@ -133,7 +140,7 @@ const QATasks = () => {
 
     try {
       await axios.post(
-        "http://127.0.0.1:8000/qa_dashboard/qa_tasks/report_error/",
+        `${API_BASE_URL}/qa_dashboard/qa_tasks/report_error/`,
         {
           manufacturing_task_id: taskId,
           subject,
