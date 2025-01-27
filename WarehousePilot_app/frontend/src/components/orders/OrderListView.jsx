@@ -242,7 +242,7 @@ const OrderListView = () => {
             <h1 className="text-2xl font-bold mb-6">Orders</h1>
 
             <Button
-           color="primary"
+           className="bg-gray-300"
            variant='flat'
            onClick = { ()=> navigate("/inventory_and_manufacturing_picklist")}
 

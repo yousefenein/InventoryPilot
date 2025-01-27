@@ -119,7 +119,7 @@ function ChangePassword() {
             {success && <p className="text-green-500">{success}</p>}
             <button
               type="submit"
-              className=" w-full px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-700"
+              className=" text-sm w-full px-4 py-2 mt-4 text-white rounded bg-black"
             >
               Change 
             </button>

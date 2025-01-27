@@ -442,7 +442,7 @@ export default function InventoryTable() {
           </Popover>
           <Popover isOpen={isAddItemPopoverOpen} onOpenChange={setIsAddItemPopoverOpen}>
             <PopoverTrigger>
-              <Button color="primary" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
+              <Button className= "bg-gray-300" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
                 Add Item
               </Button>
             </PopoverTrigger>
