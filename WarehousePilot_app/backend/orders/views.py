@@ -25,6 +25,8 @@ from django.http import JsonResponse
 from django.db import connection
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from auth_app.views import IsAdminUser
+from manager_dashboard.views import IsManagerUser
 from django.utils import timezone 
 
 from django.shortcuts import get_object_or_404
@@ -38,6 +40,8 @@ logger = logging.getLogger('WarehousePilot_app')
 #generates an inventory picklist and a maufacturing list of an order once the order is "started"
 # Note: print statements have been commented out and can be uncommented for debugging if needed
 class GenerateInventoryAndManufacturingListsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsManagerUser|IsAdminUser]
     def post(self, request):
         #retrieve the order id from the http request
         orderID = request.data.get("orderID")
@@ -202,7 +206,7 @@ class OrdersView(APIView):
 
 class StartOrderView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManagerUser|IsAdminUser]
 
     def post(self, request, order_id):
         try:
@@ -234,7 +238,7 @@ class StartOrderView(APIView):
 
 class InventoryPicklistView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsManagerUser|IsAdminUser]
 
     def get(self, request):
         try:
@@ -315,7 +319,7 @@ class InventoryPicklistItemsView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         except InventoryPicklist.DoesNotExist:
-            logger.error("Picklist could not be found for order %s (InventoryPicklistItemsView)", picklist.picklist_id)
+            logger.error("Picklist could not be found for order %s (InventoryPicklistItemsView)", order_id)
             return Response(
                 {"error": "No picklist found for the given order"},
                 status=status.HTTP_404_NOT_FOUND
