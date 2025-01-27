@@ -1,4 +1,4 @@
-# InventoryPilot
+# InventoryPilot - https://inventory-pilot.vercel.app/
 
 
 ![Python](https://img.shields.io/badge/Python-blue?style=flat&logo=python)
