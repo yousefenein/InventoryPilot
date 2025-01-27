@@ -3,6 +3,7 @@
 This file includes:
 - Tests for generating manufacturing and inventory lists (`GenerateListsTests`).
 - Tests for retrieving inventory picklist items (`InventoryPicklistItemsViewTest`).
+-Tests for retrieving inventory picklist ( A.K.A orders that have been started )
 
 """
 
@@ -13,7 +14,7 @@ from .models import Orders, OrderPart
 from inventory.models import Inventory
 from parts.models import Part
 from rest_framework import status
-from datetime import date  # Import `date` for mock data creation
+from datetime import date  
 from inventory.models import  InventoryPicklist, InventoryPicklistItem
 from auth_app.models import users
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -124,7 +125,7 @@ class GenerateListsTests(APITestCase):
 class InventoryPicklistItemsViewTest(APITestCase):
 
     def setUp(self):
-        # Create a mock user
+        #  a mock user
         self.user = users.objects.create_user(
             username="testuser",
             password="testpassword",
@@ -136,12 +137,12 @@ class InventoryPicklistItemsViewTest(APITestCase):
             department="Inventory"
         )
 
-        # Generate JWT token for authentication
+        # JWT token for authentication
         refresh = RefreshToken.for_user(self.user)
         self.token = str(refresh.access_token)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token}')
 
-        # Create a mock order
+        #  a mock order
         self.order = Orders.objects.create(
             order_id=1,
             status="Pending",
@@ -149,14 +150,14 @@ class InventoryPicklistItemsViewTest(APITestCase):
             estimated_duration=5
         )
 
-        # Create a mock inventory picklist for the order
+        #  a mock inventory picklist for the order
         self.picklist = InventoryPicklist.objects.create(
             order_id=self.order,
             assigned_employee_id=self.user,
             status=True
         )
 
-        # Create a mock part
+        # a mock part
         self.part = Part.objects.create(
             sku_color="Blue",
             sku="ABC123",
@@ -165,7 +166,7 @@ class InventoryPicklistItemsViewTest(APITestCase):
             weight=1.2
         )
 
-        # Create a mock inventory location
+        #  a mock inventory location
         self.location = Inventory.objects.create(
             location="A1",
             sku_color=self.part,
@@ -174,7 +175,7 @@ class InventoryPicklistItemsViewTest(APITestCase):
             amount_needed=5
         )
 
-        # Create a mock inventory picklist item
+        #  a mock inventory picklist item
         self.picklist_item = InventoryPicklistItem.objects.create(
             picklist_id=self.picklist,
             location=self.location,
@@ -228,7 +229,7 @@ class InventoryPicklistItemsViewTest(APITestCase):
 
 class InventoryPicklistViewTest(APITestCase):
     def setUp(self):
-        # Create a mock user
+        #  a mock user
         self.user = users.objects.create_user(
             username="testuser",
             password="password",
@@ -240,12 +241,12 @@ class InventoryPicklistViewTest(APITestCase):
             department="Inventory"
         )
 
-        # Create mock orders
+        #  mock orders
         self.order1 = Orders.objects.create(order_id=1, status="In Progress", due_date=date(2025, 2, 15))
         self.order2 = Orders.objects.create(order_id=2, status="In Progress", due_date=date(2025, 2, 20))
         self.order3 = Orders.objects.create(order_id=3, status="Pending", due_date=date(2025, 3, 1))  # Not started
 
-        # Create a mock inventory picklist for order1 (partially filled)
+        #  a mock inventory picklist for order1 (partially filled)
         self.picklist1 = InventoryPicklist.objects.create(order_id=self.order1, assigned_employee_id=self.user, status=True)
         self.part1 = Part.objects.create(sku_color="Blue")
         self.item1 = InventoryPicklistItem.objects.create(
@@ -256,7 +257,7 @@ class InventoryPicklistViewTest(APITestCase):
             status=False
         )
 
-        # Create a mock inventory picklist for order2 (completely filled)
+        # a mock inventory picklist for order2 (completely filled)
         self.picklist2 = InventoryPicklist.objects.create(order_id=self.order2, assigned_employee_id=self.user, status=True)
         self.part2 = Part.objects.create(sku_color="Red")
         self.item2 = InventoryPicklistItem.objects.create(
@@ -278,13 +279,13 @@ class InventoryPicklistViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)  # Only `In Progress` orders should be included
 
-        # Verify order1 details (exclude due_date)
+        # Verify order1 details
         order1 = response.data[0]
         self.assertEqual(order1["order_id"], 1)
         self.assertFalse(order1["already_filled"])  # Partially filled
         self.assertEqual(order1["assigned_to"], "testuser")
 
-        # Verify order2 details (exclude due_date)
+        # Verify order2 details 
         order2 = response.data[1]
         self.assertEqual(order2["order_id"], 2)
         self.assertTrue(order2["already_filled"])  # Completely filled
