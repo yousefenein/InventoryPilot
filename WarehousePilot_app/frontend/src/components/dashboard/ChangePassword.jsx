@@ -4,8 +4,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Sidebar from '../dashboard_sidebar/Sidebar';
-import Header from '../dashboard_sidebar/Header';
+// import Sidebar from '../dashboard_sidebar/Sidebar';
+// import Header from '../dashboard_sidebar/Header';
+import SideBar from "../dashboard_sidebar1/App";
+
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -36,9 +38,9 @@ function ChangePassword() {
     fetchUserData();
   }, []);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!isSidebarOpen);
-  };
+  // const toggleSidebar = () => {
+  //   setSidebarOpen(!isSidebarOpen);
+  // };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -66,20 +68,22 @@ function ChangePassword() {
   };
 
   return (
-    <div className="flex">
+    <div>
       {/* Sidebar */}
-      <Sidebar userData={userData} isOpen={isSidebarOpen} />
-
+      <SideBar/>
+      <h1 className="text-3xl font-bold text-center m-6">Change Password</h1> 
       {/* Main Content */}
-      <div className="flex-1 sm:ml-64">
-        {/* Navbar */}
-        <Header userData={userData} toggleSidebar={toggleSidebar} />
+      <div className="flex-1 sm:ml-10 sm:mt-10">
         {/* Page Content */}
-        <main className="p-4 mt-16 bg-gray-100">
-          <h1>Change Password</h1>
-          <form onSubmit={handlePasswordChange} className='max-w-md'>
+        <main className="p-4 mt-16">
+          {/* Centered Title with Consistent Spacing */}
+          
+
+          {/* Form Content */}
+          <div className="flex justify-center">
+          <form onSubmit={handlePasswordChange} className=' w-full max-w-md'>
             <div className="mb-4">
-              <label htmlFor='old-password' className="block text-gray-700">Old Password:</label>
+              <label htmlFor='old-password' className="block text-gray- text-sm">Old Password:</label>
               <input
                 type="password"
                 id='old-password'
@@ -90,7 +94,7 @@ function ChangePassword() {
               />
             </div>
             <div className="mb-4">
-              <label htmlFor='new-password' className="block text-gray-700">New Password:</label>
+              <label htmlFor='new-password' className="block text-gray-700 text-sm">New Password:</label>
               <input
                 type="password"
                 id='new-password'
@@ -101,7 +105,7 @@ function ChangePassword() {
               />
             </div>
             <div className="mb-4">
-              <label htmlFor='confirm-new-password' className="block text-gray-700">Confirm New Password:</label>
+              <label htmlFor='confirm-new-password' className="block text-gray-700 text-sm">Confirm New Password:</label>
               <input
                 type="password"
                 id='confirm-new-password'
@@ -115,11 +119,12 @@ function ChangePassword() {
             {success && <p className="text-green-500">{success}</p>}
             <button
               type="submit"
-              className="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-700"
+              className=" w-full px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-700"
             >
-              Change Password
+              Change 
             </button>
           </form>
+          </div>
         </main>
       </div>
     </div>
