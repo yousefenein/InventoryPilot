@@ -5,6 +5,15 @@ import Dashboard from './Dashboard';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// logging: push log messages from frontend back to django (backend)
+const logging = async (level, message) => {
+  try {
+      await axios.post(`${API_BASE_URL}/logging/log/`, { level, message });
+  } catch (error) {
+      console.error("Failed to send log to Django", error);
+  }
+};
+
 function ManagerDashboard() {
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
@@ -19,10 +28,12 @@ function ManagerDashboard() {
           });
           setUserData(response.data);
         } catch (error) {
+          logging('error', `Failed to fetch user data for Manager Dashboard in the client - ${error}`);
           console.error('Error fetching user data:', error);
           navigate('/'); // Redirect to login on error
         }
       } else {
+        logging('error', 'No token has been found');
         navigate('/'); // Redirect if no token
       }
     };
