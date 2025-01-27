@@ -17,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from rest_framework import status
 from django.middleware.csrf import get_token
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from .models import InventoryPicklist, InventoryPicklistItem, Inventory
 from .serializers import OrderSerializer
 from auth_app.models import users
@@ -37,86 +38,90 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
 # Django logger for backend
 logger = logging.getLogger('WarehousePilot_app')
 
-def get_inventory(request):
-    try:
-        inventory_data = Inventory.objects.all().values()
-        inventory_list = list(inventory_data)
-        low_stock_items = []
-        for item in inventory_list:
-            qty = item['qty']
-            if qty == 0:
-                item['status'] = 'Out of Stock'
-                logger.info(f"get_inventory - Item {item['sku_color_id']} is out of stock")
-            elif qty < 50:
-                item['status'] = 'Low'
-                low_stock_items.append(item)
-                logger.info(f"get_inventory - Item {item['sku_color_id']} is in low stock")
-                # send_alert(item)
-            elif 50 <= qty <= 100:
-                item['status'] = 'Moderate'
-            else:
-                item['status'] = 'High'
-        logger.info("Items from inventory retrieved from database")
-        return JsonResponse({"inventory": inventory_list, "low_stock_items": low_stock_items}, safe=False)
-    except Exception as e:
-        logger.error("Failed to retrieve items and their status from the inventory (get_inventory)")
-        return JsonResponse({"error": str(e)}, status=500)
+class IsAdminOrManager(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.role in ['admin', 'manager']
 
-@csrf_exempt
-@require_POST
-def delete_inventory_items(request):
-    try:
-        data = json.loads(request.body)
-        item_ids = data.get('item_ids', [])
-        Inventory.objects.filter(inventory_id__in=item_ids).delete()
-        logger.info("Items %s have been deleted successfully", ','.join([str(x) for x in item_ids]))
-        return JsonResponse({"message": "Items deleted successfully"}, status=200)
-    except Exception as e:
-        logger.error("Failed to delete items from the inventory (delete_inventory_items)")
-        return JsonResponse({"error": str(e)}, status=500)
+class InventoryManagementView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminOrManager]
+    
+    def get(self, request):
+        try:
+            inventory_data = Inventory.objects.all().values()
+            inventory_list = list(inventory_data)
+            low_stock_items = []
+            for item in inventory_list:
+                qty = item['qty']
+                if qty == 0:
+                    item['status'] = 'Out of Stock'
+                    logger.info(f"get_inventory - Item {item['sku_color_id']} is out of stock")
+                elif qty < 50:
+                    item['status'] = 'Low'
+                    low_stock_items.append(item)
+                    logger.info(f"get_inventory - Item {item['sku_color_id']} is in low stock")
+                    # send_alert(item)
+                elif 50 <= qty <= 100:
+                    item['status'] = 'Moderate'
+                else:
+                    item['status'] = 'High'
+            logger.info("Items from inventory retrieved from database")
+            return Response({"inventory": inventory_list, "low_stock_items": low_stock_items})
+        except Exception as e:
+            logger.error("Failed to retrieve items and their status from the inventory (get_inventory)")
+            return Response({"error": str(e)}, status=500)
 
-@csrf_exempt
-@require_POST
-def add_inventory_item(request):
-    try:
-        data = json.loads(request.body)
-        new_item = Inventory.objects.create(
-            location=data["location"],
-            sku_color_id=data["sku_color_id"],
-            qty=data["qty"],
-            warehouse_number=data["warehouse_number"],
-            amount_needed=data["amount_needed"],
-        )
-        logger.info("Item %s have been successfully added to the inventory", data["sku_color_id"])
-        return JsonResponse({"message": "Item added successfully", "item": new_item.inventory_id}, status=201)
-    except Exception as e:
-        logger.error("Failed to add inventory item: %s (add_inventory_item)", str(e))
-        return JsonResponse({"error": str(e)}, status=500)
+    def delete(self, request):
+        try:
+            data = request.data
+            item_ids = data.get('item_ids', [])
+            Inventory.objects.filter(inventory_id__in=item_ids).delete()
+            logger.info("Items %s have been deleted successfully", ','.join([str(x) for x in item_ids]))
+            return Response({"message": "Items deleted successfully"}, status=200)
+        except Exception as e:
+            logger.error("Failed to delete items from the inventory (delete_inventory_items)")
+            return Response({"error": str(e)}, status=500)
 
-@csrf_exempt
-@require_POST
-def add_inventory_item(request):
-    try:
-        data = json.loads(request.body)
-        new_item = Inventory.objects.create(
-            location=data["location"],
-            sku_color_id=data["sku_color_id"],
-            qty=data["qty"],
-            warehouse_number=data["warehouse_number"],
-            amount_needed=data["amount_needed"],
-        )
-        logger.info("Item %s have been successfully added to the inventory", data["sku_color_id"])
-        return JsonResponse({"message": "Item added successfully", "item": new_item.inventory_id}, status=201)
-    except Exception as e:
-        logger.error("Failed to add inventory item: %s (add_inventory_item)", str(e))
-        return JsonResponse({"error": str(e)}, status=500)
+    
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            new_item = Inventory.objects.create(
+                location=data["location"],
+                sku_color_id=data["sku_color_id"],
+                qty=data["qty"],
+                warehouse_number=data["warehouse_number"],
+                amount_needed=data["amount_needed"],
+            )
+            logger.info("Item %s have been successfully added to the inventory", data["sku_color_id"])
+            return Response({"message": "Item added successfully", "item": new_item.inventory_id}, status=201)
+        except Exception as e:
+            logger.error("Failed to add inventory item: %s (add_inventory_item)", str(e))
+            return Response({"error": str(e)}, status=500)
 
-def get_csrf_token(request):
-    return JsonResponse({'csrfToken': get_token(request)})
+    # Duplicate code
+    ''' @csrf_exempt 
+    @require_POST
+    def post(request):
+        try:
+            data = json.loads(request.body)
+            new_item = Inventory.objects.create(
+                location=data["location"],
+                sku_color_id=data["sku_color_id"],
+                qty=data["qty"],
+                warehouse_number=data["warehouse_number"],
+                amount_needed=data["amount_needed"],
+            )
+            return JsonResponse({"message": "Item added successfully", "item": new_item.inventory_id}, status=201)
+        except Exception as e:
+            logger.error("Failed to add inventory item: %s", str(e))
+            return JsonResponse({"error": str(e)}, status=500)
+    ''' 
+    def get_csrf_token(self, request):
+        return JsonResponse({'csrfToken': get_token(request)})
 
 class InventoryView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -147,7 +152,8 @@ class InventoryView(APIView):
             return Response({"error": str(e)}, status=500)
 
 class AssignOrderView(APIView):
-    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminOrManager]
 
     def post(self, request, order_id):
         logger.debug(f"[DEBUG] order_id from URL: {order_id}")
@@ -159,6 +165,7 @@ class AssignOrderView(APIView):
 
         try:
             order = InventoryPicklist.objects.get(order_id=order_id)
+            
         except InventoryPicklist.DoesNotExist:
             logger.error("Order could not be found (AssignOrderView)")
             return Response({"detail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
