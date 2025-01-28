@@ -12,7 +12,7 @@ import React, { useState, useEffect } from "react";import {
 } from "@nextui-org/react";
 import {Icon} from "@iconify/react";
 
-import {items} from "./sidebar-items";
+import {getSidebarItems} from "./sidebar-items";
 import { CsfIcon } from "./csf";
 
 import Sidebar from "./sidebar";
@@ -104,11 +104,12 @@ export default function SideBar() {
               </div>
 
               <ScrollShadow className="-mr-6 h-full max-h-full py-6 pr-6">
-                <Sidebar defaultSelectedKey="dashboard" items={items} />
+                <Sidebar defaultSelectedKey="dashboard" items={getSidebarItems()} />
               </ScrollShadow>
 
               <Spacer y={8} />
               <div className="mt-auto flex flex-col">
+              {(user?.role === 'admin') && (
               <Button
                   className="justify-start text-default-500 data-[hover=true]:text-foreground"
                   startContent={
@@ -123,6 +124,7 @@ export default function SideBar() {
                 >
                  Users
                 </Button>
+              )}
                 <Button
                   className="justify-start text-default-500 data-[hover=true]:text-foreground"
                   startContent={
