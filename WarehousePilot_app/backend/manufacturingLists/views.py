@@ -11,8 +11,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from manufacturingLists.models import ManufacturingLists
 from .models import ManufacturingListItem, Orders, ManufacturingTask
-from auth_app.views import IsAdminUser
-from manager_dashboard.views import IsManagerUser
+# from auth_app.views import IsAdminUser
+# from manager_dashboard.views import IsManagerUser
 import logging
 
 logger = logging.getLogger('WarehousePilot_app')
@@ -104,7 +104,7 @@ class ManufacturingListItemsView(APIView):
 
 class ManufacturingTaskView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsManagerUser|IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
