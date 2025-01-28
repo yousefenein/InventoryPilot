@@ -10,7 +10,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from manufacturingLists.models import ManufacturingLists
-from .models import ManufacturingListItem, Orders
+from .models import ManufacturingListItem, Orders, ManufacturingTask
 from auth_app.views import IsAdminUser
 from manager_dashboard.views import IsManagerUser
 import logging
@@ -101,3 +101,69 @@ class ManufacturingListItemsView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class ManufacturingTaskView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsManagerUser|IsAdminUser]
+
+    def get(self, request):
+        try:
+            department = request.query_params.get('department', None)
+
+            if department:
+                manufacturing_tasks = ManufacturingTask.objects.filter(status=department)
+            else:
+                manufacturing_tasks = ManufacturingTask.objects.all()
+
+            response_data = []
+            for task in manufacturing_tasks:
+                task_data = {
+                    "manufacturing_task_id": task.manufacturing_task_id,
+                    "sku_color": task.sku_color.sku_color,
+                    "qty": task.qty,
+                    "due_date": task.due_date,
+                    "status": task.status,
+                }
+
+                if department == "nesting":
+                    task_data.update({
+                        "nesting_start_time": task.nesting_start_time,
+                        "nesting_end_time": task.nesting_end_time,
+                        "nesting_employee": task.nesting_employee.username if task.nesting_employee else None,
+                    })
+                elif department == "bending":
+                    task_data.update({
+                        "bending_start_time": task.bending_start_time,
+                        "bending_end_time": task.bending_end_time,
+                        "bending_employee": task.bending_employee.username if task.bending_employee else None,
+                    })
+                elif department == "cutting":
+                    task_data.update({
+                        "cutting_start_time": task.cutting_start_time,
+                        "cutting_end_time": task.cutting_end_time,
+                        "cutting_employee": task.cutting_employee.username if task.cutting_employee else None,
+                    })
+                elif department == "welding":
+                    task_data.update({
+                        "welding_start_time": task.welding_start_time,
+                        "welding_end_time": task.welding_end_time,
+                        "welding_employee": task.welding_employee.username if task.welding_employee else None,
+                    })
+                elif department == "painting":
+                    task_data.update({
+                        "paint_start_time": task.paint_start_time,
+                        "paint_end_time": task.paint_end_time,
+                        "paint_employee": task.paint_employee.username if task.paint_employee else None,
+                    })
+
+                response_data.append(task_data)
+
+            logger.info("Successfully fetched manufacturing tasks for department: %s", department)
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error("Failed to retrieve the manufacturing tasks (ManufacturingTaskView)")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
