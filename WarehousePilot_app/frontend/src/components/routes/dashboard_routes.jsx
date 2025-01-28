@@ -46,7 +46,7 @@ export const dashboard_routes = [
   { path: '/manufacturing_list_item/:order_id', element: <ProtectedRoute element={<ManufacturingListItem />} /> },
   { path: '/qa_tasks', element: <ProtectedRoute element={<QATasks />} /> },
   { path: '/staff_manufacturing_tasks', element: <ProtectedRoute element={<StaffManufacturingTasks />} /> }, 
-  { path: '/manufacturing_tasks', element: <ManuTasksTable /> },
+  { path: '/manufacturing_tasks', element: <ProtectedRoute element={<ManuTasksTable />} /> },
 
 ];
 
