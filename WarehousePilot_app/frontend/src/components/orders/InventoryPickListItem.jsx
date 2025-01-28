@@ -160,7 +160,7 @@ const InventoryPicklistItem = () => {
           },
         }
       );
-      setItems((prev) =>
+      setInventoryItems((prev) =>
         prev.map((it) =>
           it.picklist_item_id === selectedItem.picklist_item_id
             ? { ...it, status: true }
