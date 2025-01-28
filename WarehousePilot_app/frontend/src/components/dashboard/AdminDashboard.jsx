@@ -1,4 +1,4 @@
-// the main page of the admin dashboard. The first thing they see when logging in.
+// the main page of the admin dashboard. The first thing they see when loging in.
 // route: /admin_dashboard
 
 import React, { useEffect, useState } from 'react';
@@ -7,15 +7,6 @@ import axios from 'axios';
 import Dashboard from './Dashboard';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-// logging: push log messages from frontend back to django (backend)
-const logging = async (level, message) => {
-  try {
-      await axios.post(`${API_BASE_URL}/logging/log/`, { level, message });
-  } catch (error) {
-      console.error("Failed to send log to Django", error);
-  }
-};
 
 function AdminDashboard() {
   const [userData, setUserData] = useState(null);
@@ -31,7 +22,6 @@ function AdminDashboard() {
           });
           setUserData(response.data);
         } catch (error) {
-          logging('error', `Failed to fetch user data in the Admin Dashboard page in the client - ${error}`);
           console.error('Error fetching user data:', error);
         }
       }
@@ -41,7 +31,6 @@ function AdminDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    logging('info', 'User has logged out');
     navigate('/');
   };
 

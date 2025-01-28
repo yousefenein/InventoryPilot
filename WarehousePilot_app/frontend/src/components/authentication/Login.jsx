@@ -5,15 +5,6 @@ import './authentication.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// logging: push log messages from frontend back to django (backend)
-const logging = async (level, message) => {
-  try {
-      await axios.post(`${API_BASE_URL}/logging/log/`, { level, message });
-  } catch (error) {
-      console.error("Failed to send log to Django", error);
-  }
-};
-
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -55,7 +46,6 @@ function Login() {
         navigate('/dashboard');
       }
     } catch (error) {
-      logging('error', `Failed to login in the client - ${error}`);
       console.error('Login failed:', error);
       setError('Login failed. Please try again.');
       setShake(true);

@@ -9,14 +9,6 @@ import Header from '../dashboard_sidebar/Header';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// logging: push log messages from frontend back to django (backend)
-const logging = async (level, message) => {
-  try {
-      await axios.post(`${API_BASE_URL}/logging/log/`, { level, message });
-  } catch (error) {
-      console.error("Failed to send log to Django", error);
-  }
-};
 
 function ChangePassword() {
   const [oldPassword, setOldPassword] = useState('');
@@ -38,7 +30,6 @@ function ChangePassword() {
           });
           setUserData(response.data);
         } catch (error) {
-          logging('error', `Failed to fetch user data for Change Password in the client - ${error}`);
           console.error('Error fetching user data:', error);
         }
       }
@@ -53,7 +44,6 @@ function ChangePassword() {
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      logging('error', 'New passwords do not match in Change Password');
       setError('New passwords do not match');
       return;
     }
@@ -67,12 +57,10 @@ function ChangePassword() {
         }, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        logging('info', 'Password has been successfully changed in the client');
 
         setSuccess('Password changed successfully');
         setError('');
       } catch (error) {
-        logging('error', `Failed to change user password in the client - ${error}`);
         setError('Error changing password');
         setSuccess('');
       }
