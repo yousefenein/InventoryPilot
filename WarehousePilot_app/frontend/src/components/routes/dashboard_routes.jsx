@@ -28,7 +28,7 @@ export const dashboard_routes = [
   { path: '/dashboard', element: <ProtectedRoute element={<Dashboard />} /> },
   { path: '/manager_dashboard', element:  <ProtectedRoute element={<ManagerDashboard />} /> },
   { path: '/admin_dashboard', element:  <ProtectedRoute element={<AdminDashboard />} /> },
-  { path: '/admin_dashboard/manage_users', element: <ManageUsersTable /> },
+  { path: '/admin_dashboard/manage_users', element: <ProtectedRoute element={<ManageUsersPage />} /> },
   { path: '/account_management', element: <AccountManagement /> },
   { path: '/profile', element: <Profile /> },
   { path: '/kpi', element: <KpiDashboard /> },
