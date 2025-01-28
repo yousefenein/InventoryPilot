@@ -4,7 +4,6 @@ import {type SidebarItem} from "./sidebar";
 const user = localStorage.getItem('user');
 const parsedUser = user ? JSON.parse(user) : null;
 const userRole = parsedUser ? parsedUser.role : null;
-console.log('user from local storage', parsedUser);
 
 export const items: SidebarItem[] = [
   {

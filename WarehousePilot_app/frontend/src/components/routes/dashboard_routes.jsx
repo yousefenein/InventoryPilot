@@ -16,10 +16,16 @@ import QATasks from '../orders/QAtasks';
 import StaffManufacturingTasks from '../manufacturing/StaffManufacturingTasks';
 import ManuTasksTable from '../manufacturing/ManufacturingTasks/manu-tasks/App';
 
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 
+const ProtectedRoute = ({ element }) => {
+  const isLoggedIn = !!localStorage.getItem('token');
+  return isLoggedIn ? element : <Navigate to="/" />;
+};
 
 export const dashboard_routes = [
-  { path: '/dashboard', element: <Dashboard /> },
+  { path: '/dashboard', element: <ProtectedRoute element={<Dashboard />} /> },
   { path: '/manager_dashboard', element: <ManagerDashboard /> },
   { path: '/admin_dashboard', element: <AdminDashboard /> },
   { path: '/admin_dashboard/manage_users', element: <ManageUsersTable /> },
@@ -46,4 +52,4 @@ export const dashboard_routes = [
   { path: '/manufacturing_tasks', element: <ManuTasksTable /> },
 
 ];
- 
+
