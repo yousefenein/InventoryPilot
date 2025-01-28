@@ -43,9 +43,8 @@ export const dashboard_routes = [
   { path: '/inventory_and_manufacturing_picklist', element: <ProtectedRoute element={<InventoryAndManufacturingList />} /> },
   { path: '/inventory_picklist_items/:order_id', element: <ProtectedRoute element={<InventoryPickListItem />} /> },
   { path: '/qa_dashboard', element: <ProtectedRoute element={<QADashboard />} /> },
-  { path: '/manufacturing_list_item/:order_id', element: <ManufacturingListItem /> },
+  { path: '/manufacturing_list_item/:order_id', element: <ProtectedRoute element={<ManufacturingListItem />} /> },
   { path: '/qa_tasks', element: <QATasks /> },
-  { path: '/manufacturing_list_item/:order_id', element: <ManufacturingListItem /> },
   { path: '/staff_manufacturing_tasks', element: <StaffManufacturingTasks /> }, 
   { path: '/manufacturing_tasks', element: <ManuTasksTable /> },
 
