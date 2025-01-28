@@ -52,7 +52,7 @@ class LoginView(APIView):
                     }
                 })
             else:
-                logger.error("User failed to log in with valid credentials")
+                logger.error(f"User {username} failed to log in with valid credentials")
                 return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 # This is the view for the change password endpoint           
@@ -67,14 +67,14 @@ class ChangePasswordView(APIView):
         new_password = request.data.get('new_password')
 
         if not user.check_password(old_password):
-            logger.error(f"User {username}'s old password provided for password reset was incorrect")
+            logger.error(f"User {user}'s old password provided for password reset was incorrect")
             return Response({"detail": "Old password is incorrect"}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(new_password)
         user.save()
         update_session_auth_hash(request, user) # to keep the user logged in after changing the password
 
-        logger.info(f"User {username} successfully changed their password.")
+        logger.info(f"User {user} successfully changed their password.")
         return Response({"detail": "Password changed successfully"}, status=status.HTTP_200_OK)
 
 # This is the view for the profile endpoint, gets your profile information    
