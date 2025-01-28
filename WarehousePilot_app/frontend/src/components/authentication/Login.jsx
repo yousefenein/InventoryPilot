@@ -26,7 +26,8 @@ function Login() {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login/`, { username, password });
       const { access, user } = response.data;
-
+      
+      
       localStorage.setItem('token', access);
       localStorage.setItem('user', JSON.stringify(user));
       if (rememberMe) {

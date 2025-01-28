@@ -1,25 +1,18 @@
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from auth_app.views import IsAdminUser
-from manager_dashboard.views import IsManagerUser
 from rest_framework import status
 from django.db.models import Q
 from manufacturingLists.models import ManufacturingTask, QAErrorReport
 import logging
 
-class IsQAStaff(BasePermission):
-    def has_permission(self, request, view):
-        return request.user and request.user.role in ['qa', 'admin', 'manager']
-
 logger = logging.getLogger('WarehousePilot_app')
-
 
 class QADashboardView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsQAStaff]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         logger.info("Viewing QA dashboard")
@@ -28,7 +21,7 @@ class QADashboardView(APIView):
 
 class QAManufacturingTasksView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsQAStaff]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -71,7 +64,7 @@ class QAManufacturingTasksView(APIView):
 
 class UpdateQATaskView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsQAStaff]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         try:
@@ -113,7 +106,7 @@ class UpdateQATaskView(APIView):
 
 class ReportQAErrorView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsQAStaff]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         try:
@@ -144,4 +137,40 @@ class ReportQAErrorView(APIView):
         except Exception as e:
             logger.error(f"Error while reporting QA issue: {str(e)}")
             return Response({"error": "An error occurred while reporting the issue."},
+
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UpdateQAStatusView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            task_id = request.data.get("manufacturing_task_id")
+            new_status = request.data.get("status")  # Expected to be "In Progress"
+
+            if not task_id or not new_status:
+                return Response({"error": "Missing task_id or status"},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            task = ManufacturingTask.objects.get(manufacturing_task_id=task_id)
+
+            # Ensure the current status is 'Error' before allowing the update
+            if task.status != 'Error':
+                return Response({"error": "Task status must be 'Error' to update."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            task.status = new_status  # Update the status
+            task.save()
+
+            return Response({"message": f"Task status updated to '{new_status}'."},
+                            status=status.HTTP_200_OK)
+
+        except ManufacturingTask.DoesNotExist:
+            return Response({"error": "Task not found."},
+                            status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": f"An error occurred: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
