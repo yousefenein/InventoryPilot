@@ -1,5 +1,26 @@
 # InventoryPilot - https://inventory-pilot.vercel.app/
 
+## Release Demo
+**https://drive.google.com/file/d/1UAyWNS10-HoNQkFiJOYEpXlHf-HG4FO0/view?usp=sharing**
+
+## Top 5 most important files 
+
+| File path with clickable GitHub link | Purpose | 
+|--------------------------------------|----------|
+| [orders.views.py](https://github.com/Irisvella/InventoryPilot/blob/main/WarehousePilot_app/backend/orders/views.py) | Core feature logic of generating inventory pick list and manufacturing list | 
+| [inventory.views.py](https://github.com/Irisvella/InventoryPilot/blob/main/WarehousePilot_app/backend/inventory/views.py) | Core feature logic of assigning an order picklist to a staff member |
+| [backend.celery.py](https://github.com/Irisvella/InventoryPilot/blob/main/WarehousePilot_app/backend/backend/celery.py) | Core feature logic of generating manufacturing list schedule |
+| [inventory-stock/App.tsx](https://github.com/Irisvella/InventoryPilot/blob/main/WarehousePilot_app/frontend/src/components/inventory-stock/App.tsx) | Displays the warehouse inventory stock |
+| [InventoryPickListItem.jsx](https://github.com/Irisvella/InventoryPilot/blob/main/WarehousePilot_app/frontend/src/components/orders/InventoryPickListItem.jsx) | Displays the main UI picker staffs will use | 
+
+## Top 5 most important tests 
+| File path with clickable GitHub link | Purpose | 
+|-|-|
+|[orders.tests.py](https://github.com/Irisvella/InventoryPilot/blob/main/WarehousePilot_app/backend/orders/tests.py) | Test for manufacturing list and inventory pick list generation backend logic | 
+|[inventory.tests.py](https://github.com/Irisvella/InventoryPilot/blob/main/WarehousePilot_app/backend/inventory/tests.py) | Test for inventory stock levels manipulation | 
+|[admin_dashboard.tests.py](https://github.com/Irisvella/InventoryPilot/blob/main/WarehousePilot_app/backend/admin_dashboard/tests.py) | Test for user creation,user info manipulation, and user role management  | 
+|[auth_app.tests.py](https://github.com/Irisvella/InventoryPilot/blob/main/WarehousePilot_app/backend/auth_app/tests.py) | Test for authentication of users and authentication related functions  | 
+|[UI testing](https://github.com/Irisvella/InventoryPilot/issues/195) | UI Testing for the frontend  | 
 
 ![Python](https://img.shields.io/badge/Python-blue?style=flat&logo=python)
 ![Django](https://img.shields.io/badge/Django-green?style=flat&logo=django)
@@ -21,7 +42,7 @@
 | Name                     | ID         | GitHub ID             | Email                        |
 |--------------------------|------------|-----------------------|------------------------------|
 | Andy Sun                | 40192040   | Irisvella             | Andysunham@gmail.com         |
-| Christa abou-Arraje     | 40226631   | christa-ux            | christa.arraj@gmail.com      |
+| Christa Abou-Arraje     | 40226631   | christa-ux            | christa.arraj@gmail.com      |
 | Fatoumata Binta Barry   | 40213443   | Fatoumatabintabarry   | bintabarry2002@yahoo.ca      |
 | Flora Avakian           | 40158192   | flo351                | flora.avakian@yahoo.ca       |
 | Inas Fawzi              | 40208675   | inas-fawzi            | inasfawzi24@gmail.com        |
@@ -77,6 +98,9 @@ cd frontend
 To download front-end dependencies: nextUI, reactJS, TailwindCSS, chartJS, heroicon, vite)
 ```
 npm install 
+```
+```
+add the .env.development file to connect to the backend 
 ```
 ```
 npm run dev

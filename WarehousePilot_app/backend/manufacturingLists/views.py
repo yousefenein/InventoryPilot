@@ -17,10 +17,9 @@ import logging
 
 logger = logging.getLogger('WarehousePilot_app')
 
-
 class ManufacturingListView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsManagerUser|IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -47,7 +46,7 @@ class ManufacturingListView(APIView):
 
 class ManufacturingListItemsView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsManagerUser|IsAdminUser]
+    permission_classes = [IsAuthenticated]
     
     def get(self, request, order_id):
         try:
