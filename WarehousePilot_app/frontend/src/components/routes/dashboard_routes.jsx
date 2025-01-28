@@ -32,7 +32,7 @@ export const dashboard_routes = [
   { path: '/account_management', element: <ProtectedRoute element={<AccountManagement />} /> },
   { path: '/profile', element: <ProtectedRoute element={<Profile />} /> },
   { path: '/kpi', element: <ProtectedRoute element={<KpiDashboard />} /> },
-  { path: '/change_password', element: <ChangePassword /> },
+  { path: '/change_password', element: <ProtectedRoute element={<ChangePassword />} /> },
   { path: '/inventory-stock', element: <InventoryTable /> },
   { path: '/admin_dashboard/add_users', element: <AddUsersDashboard />},
   { path: '/navbar', element: <NavBar /> },
