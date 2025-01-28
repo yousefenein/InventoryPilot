@@ -36,7 +36,7 @@ export const dashboard_routes = [
   { path: '/inventory-stock', element: <ProtectedRoute element={<InventoryTable />} /> },
   { path: '/admin_dashboard/add_users', element: <ProtectedRoute element={<AddUsersDashboard />} /> },
   { path: '/admin_dashboard/edit_user/:user_id', element: <ProtectedRoute element={<AddUsersDashboard />} /> },
-  { path: '/orders', element: <OrderListView /> },
+  { path: '/orders', element: <ProtectedRoute element={<OrderListView />} /> },
   { path: '/inventory_pick_list', element: <InventoyPickList /> },
   { path: '/staff_dashboard', element: <StaffDashboard /> },
   { path: '/assigned_picklist', element: <AssignedPickList /> },
