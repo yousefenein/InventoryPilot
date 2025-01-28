@@ -61,6 +61,13 @@ export const items: SidebarItem[] = [
     icon: "solar:clipboard-list-outline",
     title: "My Assigned Picklist",
   },
+  {
+    key: "manufacturing_tasks",
+    href: "/manufacturing_tasks",
+    icon: "heroicons-outline:cog",
+    title: "Manufacturing Tasks",
+  }
+
 ];
 
 
