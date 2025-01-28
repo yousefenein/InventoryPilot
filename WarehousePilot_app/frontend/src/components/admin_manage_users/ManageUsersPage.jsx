@@ -8,14 +8,6 @@ import Button from "@mui/material/Button";
 import SideBar from "../dashboard_sidebar1/App";
 import { useNavigate } from "react-router-dom";
 
-// logging: push log messages from frontend back to django (backend)
-const logging = async (level, message) => {
-    try {
-        await axios.post('http://127.0.0.1:8000/logging/log/', { level, message });
-    } catch (error) {
-        console.error("Failed to send log to Django", error);
-    }
-};
 
 export default function ManageUsersPage() {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -38,7 +30,6 @@ export default function ManageUsersPage() {
                     });
                     setUserData(response.data);
                 } catch (error) {
-                    logging('error', `Failed to fetch user data in the client - ${error}`);
                     console.error('Error fetching user data:', error);
                 }
             }

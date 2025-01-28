@@ -36,7 +36,7 @@ class ManufacturingListView(APIView):
                 for m_list in manufacturing_lists
             ]
 
-            logger.info("Successfully fetched the manufacturing lists %s", ','.join([str(x.manufacturing_list_id) for x in manufacturing_lists]))
+            logger.info("Successfully fetched the manufacturing lists %s", ', '.join([str(x.manufacturing_list_id) for x in manufacturing_lists]))
             return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:

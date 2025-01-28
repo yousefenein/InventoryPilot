@@ -4,14 +4,6 @@ import { DataGrid } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 
-// logging: push log messages from frontend back to django (backend)
-const logging = async (level, message) => {
-    try {
-        await axios.post('http://127.0.0.1:8000/logging/log/', { level, message });
-    } catch (error) {
-        console.error("Failed to send log to Django", error);
-    }
-};
 
 // Pagination defaults
 const DEFAULT_PAGINATION = {
@@ -31,9 +23,7 @@ export default function UsersTable({ onStaffCountChange }) {
             });
             setAllUsers(response.data); // Store the raw data
             onStaffCountChange(response.data.length); // Notify parent of staff count
-            logging('info', 'Users Table - User data has been retrieved successfully');
         } catch (error) {
-            logging('error', `Failed to get users in the client - ${error}`);
             alert("Couldn't get users");
         }
     };
