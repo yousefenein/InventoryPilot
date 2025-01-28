@@ -14,6 +14,7 @@ import InventoryAndManufacturingList from '../orders/InventoryAndManufacturingLi
 import ManufacturingListItem from '../orders/ManufacturingListItem';
 import QATasks from '../orders/QAtasks';
 import StaffManufacturingTasks from '../manufacturing/StaffManufacturingTasks';
+import ManuTasksTable from '../manufacturing/ManufacturingTasks/manu-tasks/App';
 
 
 
@@ -41,6 +42,8 @@ export const dashboard_routes = [
   { path: '/manufacturing_list_item/:order_id', element: <ManufacturingListItem /> },
   { path: '/qa_tasks', element: <QATasks /> },
   { path: '/manufacturing_list_item/:order_id', element: <ManufacturingListItem /> },
-  { path: '/staff_manufacturing_tasks', element: <StaffManufacturingTasks /> }
+  { path: '/staff_manufacturing_tasks', element: <StaffManufacturingTasks /> }, 
+  { path: '/manufacturing_tasks', element: <ManuTasksTable /> },
+
 ];
  
