@@ -138,12 +138,13 @@ class AssignOrderView(APIView):
         if not user_id:
             #logger.error("User ID is required to assign order (AssignOrderView)")
             return Response({"detail": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
         if request.user.role not in ['admin', 'manager']:
             #logger.error("Unauthorized user - only staff users can access picklist picking")
             return Response({"error": "Not do not have permission to assign an order."}, status=403)
 
         try:
-            order = InventoryPicklist.objects.get(order_id=order_id)
+            order = InventoryPicklist.objects.get(order_id=str(order_id))
         except InventoryPicklist.DoesNotExist:
             #logger.error("Order could not be found (AssignOrderView)")
             return Response({"detail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -158,7 +159,7 @@ class AssignOrderView(APIView):
         order.save()
 
         serializer = OrderSerializer(order)
-        #logger.info("Employee %s was successfully assigned to order %s", staff_user, order_id)
+        logger.info("Employee %s was successfully assigned to order %s", order.assigned_employee_id, order_id)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class AssignedPicklistView(APIView):
@@ -187,11 +188,11 @@ class AssignedPicklistView(APIView):
                     "assigned_to": picklist.assigned_employee_id.first_name + " " + picklist.assigned_employee_id.last_name if picklist.assigned_employee_id else None
                 })
 
-            #logger.info("Employee %s was successfully assigned to picklists %s", current_user, ','.join([str(x.order_id) for x in picklist]))
+            logger.info("Employee %s was assigned to picklists %s", current_user, ', '.join([str(x.order_id.order_id) for x in assigned_picklists]))
             return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            #logger.error("Failed to assign picklist(s) to an employee (AssignedPicklistView)")
+            logger.error("Failed to fetch assigned picklist(s) to an employee (AssignedPicklistView)")
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

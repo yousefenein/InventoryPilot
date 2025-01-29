@@ -95,7 +95,7 @@ class UpdateQATaskView(APIView):
                             status=status.HTTP_200_OK)
 
         except ManufacturingTask.DoesNotExist:
-            logger.error("Manufacturing task could not be found (UpdateQATaskView)")
+            logger.error("Manufacturing task %s could not be found (UpdateQATaskView)", task_id)
             return Response({"error": "Task not found."},
                             status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -137,7 +137,6 @@ class ReportQAErrorView(APIView):
         except Exception as e:
             logger.error(f"Error while reporting QA issue: {str(e)}")
             return Response({"error": "An error occurred while reporting the issue."},
-
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -151,6 +150,7 @@ class UpdateQAStatusView(APIView):
             new_status = request.data.get("status")  # Expected to be "In Progress"
 
             if not task_id or not new_status:
+                logger.error("Missing task_id or status from update QA status (UpdateQAStatusView)")
                 return Response({"error": "Missing task_id or status"},
                                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -158,19 +158,23 @@ class UpdateQAStatusView(APIView):
 
             # Ensure the current status is 'Error' before allowing the update
             if task.status != 'Error':
+                logger.error("Task status must be 'Error' to update (UpdateQAStatusView)")
                 return Response({"error": "Task status must be 'Error' to update."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
             task.status = new_status  # Update the status
             task.save()
 
+            logger.info("Task status has been updated to %s", new_status)
             return Response({"message": f"Task status updated to '{new_status}'."},
                             status=status.HTTP_200_OK)
 
         except ManufacturingTask.DoesNotExist:
+            logger.error("Manufacturing task does not exist (UpdateQAStatusView)")
             return Response({"error": "Task not found."},
                             status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error("Failed to update manufacturing task status (UpdateQAStatusView)")
             return Response({"error": f"An error occurred: {str(e)}"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
