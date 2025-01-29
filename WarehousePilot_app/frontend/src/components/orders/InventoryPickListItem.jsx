@@ -20,6 +20,9 @@ import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+
+
+
 const InventoryPicklistItem = () => {
   const { order_id } = useParams();
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -189,7 +192,7 @@ const InventoryPicklistItem = () => {
   }, [page, filteredManufacturingItems]);
 
   // ... (keep all the imports and component code the same until the return statement)
-
+  const [isHovered, setIsHovered] = useState(false);
   return (
     <div className="flex h-full">
       <SideBar isOpen={isSidebarOpen} />
@@ -217,7 +220,17 @@ const InventoryPicklistItem = () => {
             />
 
             <Button
-              color="primary"
+           style={{
+            color: '#b91c1c',
+            padding: '8px 16px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease',
+          
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+            
               variant="light"
               onPress={() => {
                 if (userRole === "admin" || userRole === "manager") {

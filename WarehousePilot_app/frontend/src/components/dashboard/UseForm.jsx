@@ -141,12 +141,13 @@ export default function UserForm() {
 
       // handle response, feedback, and redirect
       setFeedback(`User has been ${isEditMode ? "updated" : "added"} successfully. You will now be redirected to the users page.`);
-      setHeader("Error");
+      setHeader("Success");
       setShowModal(true);
       setLinkToPage("/admin_dashboard/manage_users");
     } catch (error) {
       console.error("Submission failed:", error.response?.data || error.message);
       alert(`Couldn't ${isEditMode ? "update" : "add"} user`);
+      
     }
   };
 

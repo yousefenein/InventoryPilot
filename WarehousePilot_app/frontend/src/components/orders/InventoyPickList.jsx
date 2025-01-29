@@ -205,7 +205,7 @@ const InventoryPickList = () => {
       <h6 className="text-md font-bold">Few examples to test the different cases of orders being picked</h6>
       <p>order have both inventory picklist and manufacturinglist 90171, 89851 ,89672</p>
       <p>order have both inventory picklist and no  manufacturinglist 80555 </p>
-      <p>order have none 89345 </p>
+      <p className="mb-4">order have none 89345 </p>
 
       {/* Error message */}
       {error && (
@@ -227,9 +227,9 @@ const InventoryPickList = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex justify-center items-center h-64 text-sm">
           Loading...
-          <Spinner size="lg" />
+          <Spinner size="lg" color="default" className="ms-5"/>
           
         </div>
       ) : (
@@ -252,14 +252,22 @@ const InventoryPickList = () => {
                   <TableCell>{item.assigned_to || "Unassigned"}</TableCell>
                   <TableCell>
                     <Button
-                      color="primary"
+                      style={{
+                        backgroundColor: '#b91c1c',
+                        color: 'white',
+                        // opacity: 0.8,
+                      }}
                       size="sm"
                       onPress={() => handleViewOrderDetails(item.order_id)}
                     >
                       Pick Order
                     </Button>
                     <Button
-                      color="primary"
+                      style={{
+                        backgroundColor: '#b91c1c',
+                        color: 'white',
+                        // opacity: 0.8,
+                      }}
                       size="sm"
                       onPress={() => handleOpenAssignModal(item.order_id)}
                       className="ml-2"
@@ -277,11 +285,16 @@ const InventoryPickList = () => {
               Page {page} of {totalPages}
             </span>
             <Pagination
-              total={totalPages}
-              initialPage={1}
-              current={page}
-              onChange={(newPage) => setPage(newPage)}
-            />
+                                total={totalPages}
+                                initialPage={1}
+                                current={page}
+                                onChange={(newPage) => setPage(newPage)}
+                                color="default"
+                                classNames={{
+                                  item: "bg-white text-black",
+                                  cursor: "bg-black text-white",
+                                }}
+                              />
           </div>
         </>
       )}

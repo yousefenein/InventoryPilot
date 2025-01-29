@@ -296,16 +296,21 @@ const QATasks = () => {
 
                 </Table>
                 <div className="flex justify-between items-center mt-4">
-                  <span>
-                    Page {page} of {totalPages}
-                  </span>
-                  <Pagination
-                    total={totalPages}
-                    page={page}
-                    initialPage={1}
-                    onChange={(newPage) => setPage(newPage)}
-                  />
-                </div>
+  <span>
+    Page {page} of {totalPages}
+  </span>
+  <Pagination
+    total={totalPages}
+    page={page}
+    initialPage={1}
+    onChange={(newPage) => setPage(newPage)}
+    color="default"
+    classNames={{
+      item: "bg-white text-black",
+      cursor: "bg-black text-white",
+    }}
+  />
+</div>
               </>
             )}
           </div>

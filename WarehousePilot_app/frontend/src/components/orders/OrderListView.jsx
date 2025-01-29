@@ -374,6 +374,11 @@ const OrderListView = () => {
                     initialPage={1}
                     current={page}
                     onChange={(newPage) => setPage(newPage)}
+                    color="default"
+                    classNames={{
+                      item: "bg-white text-black",
+                      cursor: "bg-black text-white",
+                    }}
                   />
                 </div>
               </>
