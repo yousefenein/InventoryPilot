@@ -76,6 +76,7 @@ export const columns = [
 export const getVisibleColumns = (): ColumnsKey[] => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const department = user.department;
+  const role = user.role;
 
   const baseColumns: ColumnsKey[] = [
     "manufacturing_task_id",
@@ -84,6 +85,17 @@ export const getVisibleColumns = (): ColumnsKey[] => {
     "due_date",
     "status",
   ];
+
+  if (role === "admin") {
+    return [
+      ...baseColumns,
+      "nesting_start_time", "nesting_end_time", "nesting_employee",
+      "bending_start_time", "bending_end_time", "bending_employee",
+      "cutting_start_time", "cutting_end_time", "cutting_employee",
+      "welding_start_time", "welding_end_time", "welding_employee",
+      "paint_start_time", "paint_end_time", "paint_employee"
+    ];
+  }
 
   switch (department) {
     case "nesting":
@@ -104,16 +116,19 @@ export const getVisibleColumns = (): ColumnsKey[] => {
 export const fetchManufacturingTasks = async (): Promise<ManufacturingTask[]> => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const department = user.department;
+  const role = user.role;
 
-  const response = await fetch(`${API_BASE_URL}/manufacturingLists/manufacturing_tasks/?department=${department}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    }
-  );
+  const url = role === "admin" 
+    ? `${API_BASE_URL}/manufacturingLists/manufacturing_tasks/`
+    : `${API_BASE_URL}/manufacturingLists/manufacturing_tasks/?department=${department}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
   if (!response.ok) {
     throw new Error("Failed to fetch manufacturing tasks");
   }
