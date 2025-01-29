@@ -1,4 +1,4 @@
-// the main page of the admin dashboard. The first thing they see when logging in.
+// the main page of the admin dashboard. The first thing they see when loging in.
 // route: /admin_dashboard
 
 import React, { useEffect, useState } from 'react';
