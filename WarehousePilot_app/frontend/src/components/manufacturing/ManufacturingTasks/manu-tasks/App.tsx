@@ -1,8 +1,8 @@
 "use client";
 
-import SideBar from "../dashboard_sidebar1/App"; 
+import SideBar from "../../../dashboard_sidebar1/App"; 
 import type {Selection, SortDescriptor} from "@nextui-org/react";
-import type {ColumnsKey, Inventory, StatusOptions} from "./data";
+import type {ColumnsKey, ManufacturingTask} from "./data";
 import type {Key} from "@react-types/shared";
 
 import {
@@ -22,11 +22,7 @@ import {
   Divider,
   Tooltip,
   useButton,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
   Chip,
-  Badge,
 } from "@nextui-org/react";
 import {SearchIcon} from "@nextui-org/shared-icons";
 import React, {useMemo, useRef, useCallback, useState, useEffect} from "react";
@@ -43,46 +39,39 @@ import {ArrowUpIcon} from "./arrow-up";
 
 import {useMemoizedCallback} from "./use-memoized-callback";
 
-import {columns, INITIAL_VISIBLE_COLUMNS, fetchInventoryData, statusColorMap, deleteInventoryItems} from "./data";
-import NotifCard from "../notifications/notifications-card/App";
-import { AddItemForm } from "./add-item-form";
+import {columns, getVisibleColumns, fetchManufacturingTasks} from "./data";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import NavBar from "../navbar/App";
+import NavBar from "../../../navbar/App";
+import "./styles.css";
 
-export default function InventoryTable() {
+export default function ManuTasksTable() {
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
-  const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(INITIAL_VISIBLE_COLUMNS));
+  const [visibleColumns, setVisibleColumns] = useState<Selection>(new Set(getVisibleColumns()));
   const [rowsPerPage] = useState(10);
   const [page, setPage] = useState(1);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-    column: "inventory_id",
+    column: "manufacturing_task_id",
     direction: "ascending",
   });
-  const [inventory, setInventory] = useState<Inventory[]>([]);
+  const [tasks, setTasks] = useState<ManufacturingTask[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unreadNotifications, setUnreadNotifications] = useState(() => {
-    const savedStatus = localStorage.getItem("unreadNotifications");
-    return savedStatus ? JSON.parse(savedStatus) : true;
-  }); 
-  const [isAddItemPopoverOpen, setIsAddItemPopoverOpen] = useState(false);
-  const [isDeletePopoverOpen, setIsDeletePopoverOpen] = useState(false);
 
   useEffect(() => {
-    const loadInventory = async () => {
+    const loadTasks = async () => {
       try {
-        const data = await fetchInventoryData();
-        setInventory(data);
+        const data = await fetchManufacturingTasks();
+        setTasks(data);
       } catch (error) {
-        console.error("Failed to fetch inventory data", error);
+        console.error("Failed to fetch manufacturing tasks", error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadInventory();
+    loadTasks();
   }, []);
 
   const headerColumns = useMemo(() => {
@@ -103,27 +92,27 @@ export default function InventoryTable() {
   }, [visibleColumns, sortDescriptor]);
 
   const filteredItems = useMemo(() => {
-    let filteredInventory = [...inventory];
+    let filteredTasks = [...tasks];
 
     if (filterValue) {
-      filteredInventory = filteredInventory.filter((item) =>
-        item.sku_color_id.toLowerCase().includes(filterValue.toLowerCase()),
+      filteredTasks = filteredTasks.filter((item) =>
+        item.sku_color.toLowerCase().includes(filterValue.toLowerCase()),
       );
     }
 
-    return filteredInventory;
-  }, [filterValue, inventory]);
+    return filteredTasks;
+  }, [filterValue, tasks]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
 
   const sortedItems = useMemo(() => {
-    return [...filteredItems].sort((a: Inventory, b: Inventory) => {
-      const col = sortDescriptor.column as keyof Inventory;
+    return [...filteredItems].sort((a: ManufacturingTask, b: ManufacturingTask) => {
+      const col = sortDescriptor.column as keyof ManufacturingTask;
 
       const first = a[col];
       const second = b[col];
 
-      const cmp = first < second ? -1 : first > second ? 1 : 0;
+      const cmp = (first ?? '') < (second ?? '') ? -1 : (first ?? '') > (second ?? '') ? 1 : 0;
 
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
@@ -142,7 +131,7 @@ export default function InventoryTable() {
 
     if (filterValue) {
       filteredItems.forEach((item) => {
-        const stringId = String(item.inventory_id);
+        const stringId = String(item.manufacturing_task_id);
 
         if ((selectedKeys as Set<string>).has(stringId)) {
           resultKeys.add(stringId);
@@ -162,22 +151,19 @@ export default function InventoryTable() {
   const {getButtonProps: getEditProps} = useButton({ref: editRef});
   const {getButtonProps: getDeleteProps} = useButton({ref: deleteRef});
 
-  const renderCell = useMemoizedCallback((item: Inventory, columnKey: React.Key) => {
+  const renderCell = useMemoizedCallback((item: ManufacturingTask, columnKey: React.Key) => {
     const itemKey = columnKey as ColumnsKey;
 
-    const cellValue = item[itemKey as keyof Inventory] as string;
+    const cellValue = item[itemKey as keyof ManufacturingTask] as string;
 
     switch (itemKey) {
-      case "inventory_id":
-      case "sku_color_id":
+      case "manufacturing_task_id":
+      case "sku_color":
         return <CopyText>{cellValue}</CopyText>;
-      case "location":
       case "qty":
-      case "warehouse_number":
-      case "amount_needed":
-        return <div className="text-default-foreground">{cellValue}</div>;
+      case "due_date":
       case "status":
-        return <div className="flex items-center gap-2">{statusColorMap[cellValue as StatusOptions]} {cellValue}</div>;
+        return <div className="text-default-foreground">{cellValue}</div>;
       default:
         return cellValue;
     }
@@ -207,7 +193,7 @@ export default function InventoryTable() {
   const onSelectionChange = useMemoizedCallback((keys: Selection) => {
     if (keys === "all") {
       if (filterValue) {
-        const resultKeys = new Set(filteredItems.map((item) => String(item.inventory_id)));
+        const resultKeys = new Set(filteredItems.map((item) => String(item.manufacturing_task_id)));
 
         setSelectedKeys(resultKeys);
       } else {
@@ -223,11 +209,11 @@ export default function InventoryTable() {
       });
       const selectedValue =
         selectedKeys === "all"
-          ? new Set(filteredItems.map((item) => String(item.inventory_id)))
+          ? new Set(filteredItems.map((item) => String(item.manufacturing_task_id)))
           : selectedKeys;
 
       selectedValue.forEach((v) => {
-        if (filteredItems.some((item) => String(item.inventory_id) === v)) {
+        if (filteredItems.some((item) => String(item.manufacturing_task_id) === v)) {
           return;
         }
         resultKeys.add(v);
@@ -236,48 +222,56 @@ export default function InventoryTable() {
     }
   });
 
-  const handleNotificationsRead = () => {
-    setUnreadNotifications(false);
-    localStorage.setItem("unreadNotifications", JSON.stringify(false)); // Save to local storage
-  };
-
   const exportData = () => {
     let selectedItems;
 
     if (filterSelectedKeys === "all") {
-      selectedItems = inventory;
+      selectedItems = tasks;
     } else {
-      selectedItems = inventory.filter(item => filterSelectedKeys.has(String(item.inventory_id)));
+      selectedItems = tasks.filter(item => filterSelectedKeys.has(String(item.manufacturing_task_id)));
     }
     
     const csvContent = [
-      ["Inventory ID", "SKU Color ID", "Location", "Quantity", "Warehouse Number", "Amount Needed", "Status"],
+      ["Task ID", "SKU Color", "Quantity", "Due Date", "Status", "Nesting Start Time", "Nesting End Time", "Nesting Employee", "Bending Start Time", "Bending End Time", "Bending Employee", "Cutting Start Time", "Cutting End Time", "Cutting Employee", "Welding Start Time", "Welding End Time", "Welding Employee", "Paint Start Time", "Paint End Time", "Paint Employee"],
       ...selectedItems.map(item => [
-        item.inventory_id,
-        item.sku_color_id,
-        item.location,
+        item.manufacturing_task_id,
+        item.sku_color,
         item.qty,
-        item.warehouse_number,
-        item.amount_needed,
-        item.status
+        item.due_date,
+        item.status,
+        item.nesting_start_time || "",
+        item.nesting_end_time || "",
+        item.nesting_employee || "",
+        item.bending_start_time || "",
+        item.bending_end_time || "",
+        item.bending_employee || "",
+        item.cutting_start_time || "",
+        item.cutting_end_time || "",
+        item.cutting_employee || "",
+        item.welding_start_time || "",
+        item.welding_end_time || "",
+        item.welding_employee || "",
+        item.paint_start_time || "",
+        item.paint_end_time || "",
+        item.paint_employee || ""
       ])
     ].map(e => e.join(",")).join("\n");
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, 'inventory_data.csv');
+    saveAs(blob, 'manufacturing_tasks.csv');
   };
 
-  const deleteSelectedItems = async () => {
-    try {
-      const itemIds = Array.from(filterSelectedKeys).map((key) => Number(key));
-      await deleteInventoryItems(itemIds);
-      const updatedInventory = await fetchInventoryData();
-      setInventory(updatedInventory);
-      setSelectedKeys(new Set());
-    } catch (error) {
-      console.error("Failed to delete selected items", error);
-    }
-  };
+  // const deleteSelectedItems = async () => {
+  //   try {
+  //     const itemIds = Array.from(filterSelectedKeys).map((key) => Number(key));
+  //     await deleteInventoryItems(itemIds);
+  //     const updatedInventory = await fetchInventoryData();
+  //     setInventory(updatedInventory);
+  //     setSelectedKeys(new Set());
+  //   } catch (error) {
+  //     console.error("Failed to delete selected items", error);
+  //   }
+  // };
 
   const handleSortChange = (column: ColumnsKey) => {
     setSortDescriptor((prevSortDescriptor) => ({
@@ -288,18 +282,18 @@ export default function InventoryTable() {
     }));
   };
 
-  const confirmDelete = () => {
+  // const confirmDelete = () => {
     
-    if (window.confirm("Are you sure you want to delete the selected items?")) {
-      handleDeleteConfirm();
-    }
-  };
+  //   if (window.confirm("Are you sure you want to delete the selected items?")) {
+  //     handleDeleteConfirm();
+  //   }
+  // };
 
-  const handleDeleteConfirm = async () => {
-    setIsDeletePopoverOpen(false);
-    await deleteSelectedItems();
-    toast.success("Items deleted successfully!");
-  };
+  // const handleDeleteConfirm = async () => {
+  //   setIsDeletePopoverOpen(false);
+  //   await deleteSelectedItems();
+  //   toast.success("Items deleted successfully!");
+  // };
 
   const topContent = useMemo(() => {
     return (
@@ -309,7 +303,7 @@ export default function InventoryTable() {
             <Input
               className="min-w-[200px]"
               endContent={<SearchIcon className="text-default-400" width={16} />}
-              placeholder="Search by SKU Color ID"
+              placeholder="Search by SKU Color"
               size="sm"
               value={filterValue}
               onValueChange={onSearchChange}
@@ -397,7 +391,7 @@ export default function InventoryTable() {
               </DropdownTrigger>
               <DropdownMenu aria-label="Selected Actions">
                 <DropdownItem key="export-data" onPress={exportData}>Export Data</DropdownItem>
-                <DropdownItem key="delete-items" onPress={confirmDelete}>Delete Items</DropdownItem>
+                {/* <DropdownItem key="delete-items" onPress={confirmDelete}>Delete Items</DropdownItem> */}
               </DropdownMenu>
             </Dropdown>
           )}
@@ -413,55 +407,23 @@ export default function InventoryTable() {
     onSearchChange,
     setVisibleColumns,
     exportData,
-    confirmDelete
+    // confirmDelete
   ]);
 
   const topBar = useMemo(() => {
     return (
       <div className="mb-[18px] flex items-center justify-between" style={{ marginTop: "40px" }}>
-        <div className="flex w-[226px] items-center gap-2">
+        <div className="flex items-center gap-2">
           <h1 className="text-2xl font-[700] leading-[32px]">
-            <b>Inventory</b>
+            <b>Manufacturing Tasks</b>
           </h1>
           <Chip className="hidden items-center text-default-500 sm:flex" size="sm" variant="flat">
-            {inventory.length}
+            {tasks.length}
           </Chip>
-        </div>
-        <div className="flex items-center gap-6">
-          <Popover>
-            <PopoverTrigger>
-              <Button isIconOnly variant="flat">
-              <Badge
-  style={{ backgroundColor: "#b91c1c" }} // Custom red color
-  content=" "
-  shape="circle"
-  isInvisible={!unreadNotifications}
->
-  <Icon icon="solar:bell-outline" width={24} />
-</Badge>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <NotifCard onMarkAllAsRead={handleNotificationsRead} />
-            </PopoverContent>
-          </Popover>
-          <Popover isOpen={isAddItemPopoverOpen} onOpenChange={setIsAddItemPopoverOpen}>
-            <PopoverTrigger>
-              <Button className= "bg-gray-300" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
-                Add Item
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <AddItemForm onAddItem={(newItem) => {
-                setInventory((prevInventory) => [...prevInventory, newItem]);
-                setIsAddItemPopoverOpen(false);
-              }} onCancel={() => setIsAddItemPopoverOpen(false)} />
-            </PopoverContent>
-          </Popover>
         </div>
       </div>
     );
-  }, [inventory.length, unreadNotifications, isAddItemPopoverOpen]);
+  }, [tasks.length]);
 
   const bottomContent = useMemo(() => {
     return (
@@ -470,15 +432,11 @@ export default function InventoryTable() {
           isCompact
           showControls
           showShadow
-        classNames={{
-            item: "bg-white text-black",
-            cursor: "bg-black text-white",
-                    }}
+          color="primary"
           page={page}
           total={pages}
           onChange={setPage}
         />
-      
         <div className="flex items-center justify-end gap-6 ml-auto">
           <span className="text-small text-default-400">
             {filterSelectedKeys === "all"
@@ -539,7 +497,7 @@ export default function InventoryTable() {
           </TableHeader>
           <TableBody emptyContent={"No items found"} items={paginatedItems}>
             {(item) => (
-              <TableRow key={item.inventory_id}>
+              <TableRow key={item.manufacturing_task_id}>
                 {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
               </TableRow>
             )}

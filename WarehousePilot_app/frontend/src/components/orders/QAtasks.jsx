@@ -272,7 +272,7 @@ const QATasks = () => {
                 }
               }}
             >
-              Error Fixed
+              Error Reported
             </Button>
           )}
         </div>

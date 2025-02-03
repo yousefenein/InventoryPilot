@@ -1,4 +1,4 @@
-# InventoryPilot
+# InventoryPilot - https://inventory-pilot.vercel.app/
 
 ## Release Demo
 **https://drive.google.com/file/d/1UAyWNS10-HoNQkFiJOYEpXlHf-HG4FO0/view?usp=sharing**

@@ -10,6 +10,7 @@ import logging
 
 logger = logging.getLogger('WarehousePilot_app')
 
+
 class QADashboardView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -20,23 +21,27 @@ class QADashboardView(APIView):
 
 
 class QAManufacturingTasksView(APIView):
+    """
+    Fetches manufacturing tasks assigned to the QA user.
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
             user = request.user
-            logger.debug(f"User type: {type(user)}")  # Debugging
+            logger.debug(f"User type: {type(user)}")
             logger.debug(f"User attributes: {dir(user)}")
             logger.debug(f"User role: {getattr(user, 'role', 'No role attribute found')}")
             logger.debug(f"User ID: {user.user_id}")
 
-            # Check if the user is indeed QA
+            # Check if the user is QA
             if not hasattr(user, 'role') or getattr(user, 'role', '').lower() != 'qa':
                 logger.error("Unauthorized access - User is not a QA employee (QAManufacturingTasksView)")
                 return Response({"error": "Unauthorized: User is not a QA staff member."},
                                 status=status.HTTP_403_FORBIDDEN)
 
+            # Get tasks where the user is assigned as production QA or paint QA
             tasks = ManufacturingTask.objects.filter(
                 Q(prod_qa_employee_id=user.user_id) |
                 Q(paint_qa_employee_id=user.user_id)
@@ -56,13 +61,18 @@ class QAManufacturingTasksView(APIView):
 
             logger.info("Successfully retrieved all tasks associated with QA staff member %s", user.user_id)
             return Response(response_data, status=status.HTTP_200_OK)
+
         except Exception as e:
-            logger.error("Failed to retrieve task associated with QA staff member %s", user.user_id)
+            logger.error("Failed to retrieve task associated with QA staff member %s. Error: %s", user.user_id, str(e))
             return Response({"error": "An unexpected error occurred."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class UpdateQATaskView(APIView):
+    """
+    Allows a QA user to update the QA status of a manufacturing task
+    (prod_qa or paint_qa to 'Completed' or 'Pending').
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -82,7 +92,7 @@ class UpdateQATaskView(APIView):
             if paint_qa in ["Completed", "Pending"]:
                 task.paint_qa = (paint_qa == "Completed")
 
-            # If both QA are completed, set status to Completed; otherwise In Progress
+            # If both QA steps are completed, set status to Completed; otherwise In Progress
             if task.prod_qa and task.paint_qa:
                 task.status = 'Completed'
             else:
@@ -95,16 +105,19 @@ class UpdateQATaskView(APIView):
                             status=status.HTTP_200_OK)
 
         except ManufacturingTask.DoesNotExist:
-            logger.error("Manufacturing task could not be found (UpdateQATaskView)")
+            logger.error("Manufacturing task %s could not be found (UpdateQATaskView)", task_id)
             return Response({"error": "Task not found."},
                             status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            logger.error("Failed to update status of manufacturing task %s (UpdateQATaskView)", task_id)
+            logger.error("Failed to update status of manufacturing task %s (UpdateQATaskView): %s", task_id, str(e))
             return Response({"error": f"An error occurred: {str(e)}"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ReportQAErrorView(APIView):
+    """
+    Allows a QA user to report a QA error for a manufacturing task (sets task.status to 'Error').
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -137,11 +150,13 @@ class ReportQAErrorView(APIView):
         except Exception as e:
             logger.error(f"Error while reporting QA issue: {str(e)}")
             return Response({"error": "An error occurred while reporting the issue."},
-
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class UpdateQAStatusView(APIView):
+    """
+    Allows a QA user to update a task from 'Error' back to 'In Progress' (or another status).
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -151,6 +166,7 @@ class UpdateQAStatusView(APIView):
             new_status = request.data.get("status")  # Expected to be "In Progress"
 
             if not task_id or not new_status:
+                logger.error("Missing task_id or status from update QA status (UpdateQAStatusView)")
                 return Response({"error": "Missing task_id or status"},
                                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -158,19 +174,69 @@ class UpdateQAStatusView(APIView):
 
             # Ensure the current status is 'Error' before allowing the update
             if task.status != 'Error':
+                logger.error("Task status must be 'Error' to update (UpdateQAStatusView)")
                 return Response({"error": "Task status must be 'Error' to update."},
                                 status=status.HTTP_400_BAD_REQUEST)
 
             task.status = new_status  # Update the status
             task.save()
 
+            logger.info("Task status has been updated to %s", new_status)
             return Response({"message": f"Task status updated to '{new_status}'."},
                             status=status.HTTP_200_OK)
 
         except ManufacturingTask.DoesNotExist:
+            logger.error("Manufacturing task does not exist (UpdateQAStatusView)")
             return Response({"error": "Task not found."},
                             status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error("Failed to update manufacturing task status (UpdateQAStatusView): %s", str(e))
             return Response({"error": f"An error occurred: {str(e)}"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class QAErrorListView(APIView):
+    """
+    Retrieves a list of all QAErrorReport entries (and related ManufacturingTask info).
+    Accessible by QA staff and managers.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            user = request.user
+            user_role = getattr(user, 'role', '').lower()
+
+            # Allow both QA and Manager
+            if user_role not in ['qa', 'manager']:
+                logger.error("Unauthorized access - User is neither QA nor Manager (QAErrorListView)")
+                return Response(
+                    {"error": "Unauthorized: User must be QA or a Manager."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            # Retrieve all QA error reports
+            errors = QAErrorReport.objects.select_related('manufacturing_task', 'reported_by').all()
+
+            response_data = []
+            for error in errors:
+                response_data.append({
+                    "id": error.id,
+                    "subject": error.subject,
+                    "comment": error.comment,
+                    "created_at": error.created_at.isoformat(),
+                    "manufacturing_task_id": error.manufacturing_task.manufacturing_task_id,
+                    "task_status": error.manufacturing_task.status,
+                    "sku_color_id": getattr(error.manufacturing_task, 'sku_color_id', None),
+                    "reported_by": getattr(error.reported_by, 'username', 'N/A'),
+                })
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Failed to retrieve QA error reports: {str(e)}")
+            return Response(
+                {"error": "An unexpected error occurred while fetching QA error reports."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

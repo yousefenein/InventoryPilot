@@ -36,13 +36,13 @@ function Login() {
         localStorage.removeItem('rememberedUsername');
       }
       if (user.role === 'admin') {
-        navigate('/admin_dashboard');
+        navigate('/admin_dashboard/manage_users');
       } else if (user.role === 'manager') {
-        navigate('/manager_dashboard');
+        navigate('/kpi');
       } else if (user.role === 'staff') {
-        navigate('/staff_dashboard');
+        navigate('/assigned_picklist');
       } else if (user.role === 'qa') {
-        navigate('/qa_dashboard');
+        navigate('/qa_tasks');
       } else {
         navigate('/dashboard');
       }
