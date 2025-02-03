@@ -327,7 +327,7 @@ const OrderListView = () => {
                           <span
                             className={`px-2 py-1 rounded ${
                               item.status === "In Progress"
-                                ? "bg-blue-100 text-blue-800"
+                                ? "bg-red-200 text-red-800"
                                 : ""
                             }`}
                           >
@@ -345,11 +345,15 @@ const OrderListView = () => {
                         </TableCell>
                         <TableCell>
                           <Button
-                            color={
-                              item.status === "In Progress"
-                                ? "success"
-                                : "primary"
-                            }
+                            // color={
+                            //   item.status === "In Progress"
+                            //     ? "default": "#b91c1c" 
+                            //  }
+                            style={{
+                              backgroundColor: item.status === "In Progress" ? "#D1D5DB" : "#b91c1c", // Light black (#D1D5DB) and custom red (#b91c1c)
+                              color: item.status === "In Progress" ? "#000000" : "#FFFFFF", // Black text for light black, white text for red
+                            }}
+                             
                             size="sm"
                             isDisabled={
                               item.status === "In Progress" ||

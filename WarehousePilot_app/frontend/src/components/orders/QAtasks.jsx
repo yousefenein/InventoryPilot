@@ -230,7 +230,7 @@ const QATasks = () => {
       </TableCell>
       <TableCell>
         <Checkbox
-          color="success"
+          color="primary"
           isSelected={item.prod_qa === "Completed"}
           onValueChange={(isSelected) => {
             const newProdQa = isSelected ? "Completed" : "Pending";
@@ -240,7 +240,7 @@ const QATasks = () => {
       </TableCell>
       <TableCell>
         <Checkbox
-          color="success"
+          color="primary"
           isSelected={item.paint_qa === "Completed"}
           onValueChange={(isSelected) => {
             const newPaintQa = isSelected ? "Completed" : "Pending";
@@ -262,7 +262,7 @@ const QATasks = () => {
             <Button
               size="sm"
               variant="flat"
-              color="success"
+              className="bg-gray-300"
               onClick={() => {
                 const isConfirmed = window.confirm(
                   "Are you sure the error has been fixed?"
@@ -280,7 +280,7 @@ const QATasks = () => {
       <TableCell>{item.status}</TableCell>
       <TableCell>
         <Checkbox
-          color="success"
+          color="primary"
           isSelected={item.prod_qa === "Completed" && item.paint_qa === "Completed"}
           isDisabled={item.status !== "Completed"}
           onValueChange={(isSelected) => {
