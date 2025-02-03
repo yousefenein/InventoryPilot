@@ -17,6 +17,7 @@ import SideBar from "../dashboard_sidebar1/App";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+// import './QAtasks.css'
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -230,7 +231,7 @@ const QATasks = () => {
       </TableCell>
       <TableCell>
         <Checkbox
-          color="primary"
+          className="black-checkbox"
           isSelected={item.prod_qa === "Completed"}
           onValueChange={(isSelected) => {
             const newProdQa = isSelected ? "Completed" : "Pending";
@@ -240,7 +241,9 @@ const QATasks = () => {
       </TableCell>
       <TableCell>
         <Checkbox
-          color="primary"
+       
+           className="black-checkbox"
+           
           isSelected={item.paint_qa === "Completed"}
           onValueChange={(isSelected) => {
             const newPaintQa = isSelected ? "Completed" : "Pending";
@@ -253,7 +256,7 @@ const QATasks = () => {
           <Button
             size="sm"
             variant="flat"
-            color="danger"
+           className="bg-red-200 text-red-800"
             onClick={() => handleReportError(item.manufacturing_id)}
           >
             Report Error
@@ -280,7 +283,7 @@ const QATasks = () => {
       <TableCell>{item.status}</TableCell>
       <TableCell>
         <Checkbox
-          color="primary"
+            className="black-checkbox"
           isSelected={item.prod_qa === "Completed" && item.paint_qa === "Completed"}
           isDisabled={item.status !== "Completed"}
           onValueChange={(isSelected) => {

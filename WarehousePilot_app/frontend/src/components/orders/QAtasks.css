@@ -1,0 +1,13 @@
+.black-checkbox .nextui-checkbox-square {
+  background-color: black !important;
+  border-color: black !important;
+}
+
+.black-checkbox .nextui-checkbox-square[data-state="checked"] {
+  background-color: black !important;
+  border-color: black !important;
+}
+
+.black-checkbox .nextui-checkbox-square[data-state="checked"]::after {
+  border-color: white !important;
+}
