@@ -240,3 +240,42 @@ class QAErrorListView(APIView):
                 {"error": "An unexpected error occurred while fetching QA error reports."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class ResolveQAErrorView(APIView):
+    """
+    Allows a Manager to 'resolve' an error by removing it from the QAErrorReport table.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user = request.user
+            user_role = getattr(user, 'role', '').lower()
+            
+            # Only Managers can remove errors
+            if user_role != 'manager':
+                logger.error("Unauthorized access - Only managers can resolve QA errors.")
+                return Response({"error": "Unauthorized: Only managers can resolve QA errors."},
+                                status=status.HTTP_403_FORBIDDEN)
+
+            error_id = request.data.get("error_id")
+            if not error_id:
+                return Response({"error": "Missing error_id in request."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            # Fetch the error report and delete it
+            error_report = QAErrorReport.objects.get(id=error_id)
+            error_report.delete()
+
+            logger.info(f"QA error report {error_id} resolved and removed by manager {user.username}.")
+            return Response({"message": "Error resolved and removed."}, status=status.HTTP_200_OK)
+        
+        except QAErrorReport.DoesNotExist:
+            logger.error(f"QAErrorReport with id {error_id} does not exist.")
+            return Response({"error": "QA Error Report not found."},
+                            status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Failed to resolve QA Error: {str(e)}")
+            return Response({"error": f"An error occurred: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
