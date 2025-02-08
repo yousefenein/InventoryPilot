@@ -46,7 +46,7 @@ const KPIDashboard = ({ userData }) => {
             <h2 className="text-xl font-semibold">Picking Accuracy</h2>
             <p className="text-3xl font-bold">200k</p>
             <p className="text-blue-500">+5%</p>
-         
+         <OrderPickingAccuracy/>
           </div>
           {/* <div className="bg-white p-4 shadow rounded-lg">
             <h2 className="text-xl font-semibold">Sessions</h2>
