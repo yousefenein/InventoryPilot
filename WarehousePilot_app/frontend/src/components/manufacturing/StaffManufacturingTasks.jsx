@@ -212,6 +212,10 @@ const StaffManufacturingTasks = () => {
                     initialPage={1}
                     current={page}
                     onChange={(newPage) => setPage(newPage)}
+                    classNames={{
+                      item: "bg-white text-black",
+                      cursor: "bg-black text-white",
+                    }}
                   />
                 </div>
               </>

@@ -432,10 +432,13 @@ export default function ManuTasksTable() {
           isCompact
           showControls
           showShadow
-          color="primary"
           page={page}
           total={pages}
           onChange={setPage}
+          classNames={{
+            item: "bg-white text-black",
+            cursor: "bg-black text-white",
+          }}
         />
         <div className="flex items-center justify-end gap-6 ml-auto">
           <span className="text-small text-default-400">

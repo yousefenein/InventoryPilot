@@ -33,10 +33,7 @@ const QATasks = () => {
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
 
-
-
-
-  // Fetch QA tasks
+  // Fetch  QA tasks from the backend.
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -46,8 +43,7 @@ const QATasks = () => {
         return;
       }
       const response = await axios.get(
-        `${API_BASE_URL}/qa_dashboard/qa_tasks/`
-,
+        `${API_BASE_URL}/qa_dashboard/qa_tasks/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -58,13 +54,13 @@ const QATasks = () => {
       setRows(
         response.data.map((row, index) => ({
           id: index + 1,
-          manufacturing_id: row.manufacturing_task_id,
+          manufacturing_task_id: row.manufacturing_task_id,
           qty: row.qty,
-          status: row.status?.trim(),
+          status: row.status.toLowerCase(), // e.g. "in progress", "completed", "error"
           sku_color: row.sku_color_id,
           due_date: row.due_date || "N/A",
-          prod_qa: row.prod_qa,
-          paint_qa: row.paint_qa,
+          prod_qa: row.prod_qa, // "completed" or "pending"
+          paint_qa: row.paint_qa, // "completed" or "pending"
           final_qa: row.final_qa,
         }))
       );
@@ -80,7 +76,9 @@ const QATasks = () => {
     fetchTasks();
   }, []);
 
-  const handleUpdate = async (taskId, prodQaValue, paintQaValue, finalQaValue) => {
+  // Update Production & Paint QA statuses.
+  
+  const handleUpdate = async (taskId, prodQaValue, paintQaValue) => {
     try {
       await axios.post(
         `${API_BASE_URL}/qa_dashboard/qa_tasks/update/`,
@@ -88,7 +86,6 @@ const QATasks = () => {
           manufacturing_task_id: taskId,
           prod_qa: prodQaValue,
           paint_qa: paintQaValue,
-          final_qa: finalQaValue,
         },
         {
           headers: {
@@ -107,12 +104,9 @@ const QATasks = () => {
     try {
       const payload = {
         manufacturing_task_id: taskId,
-        status: "In Progress",
+        status: "in progress", // When error is fixed, status is reset to "in progress".
       };
-  
-      console.log("Payload being sent to update status:", payload);
-  
-      const response = await axios.post(
+      await axios.post(
         `${API_BASE_URL}/qa_dashboard/qa_tasks/update_status/`,
         payload,
         {
@@ -122,23 +116,19 @@ const QATasks = () => {
           },
         }
       );
-  
-      console.log("API response:", response.data);
-      fetchTasks(); // Refresh the table data
-      alert("Error status updated to 'In Progress'");
+      fetchTasks();
+      alert("Error status updated to 'in progress'");
     } catch (error) {
       console.error("Error updating status:", error.response?.data || error.message);
       alert("Failed to update the error status");
     }
   };
-  
 
   const handleReportError = async (taskId) => {
     const subject = prompt("Enter the subject of the error:", "Defect Found");
     if (subject == null) return;
     const comment = prompt("Enter additional details:", "Describe the issue...");
     if (comment == null) return;
-
     try {
       await axios.post(
         `${API_BASE_URL}/qa_dashboard/qa_tasks/report_error/`,
@@ -162,6 +152,31 @@ const QATasks = () => {
     }
   };
 
+
+  const handleFinalQACheck = async (taskId) => {
+    const confirmed = window.confirm("Are you sure you want to send this task to Pick & Pack?");
+    if (confirmed) {
+      try {
+        await axios.post(
+          `${API_BASE_URL}/qa_dashboard/send_to_pick_and_pack/`,
+          { manufacturing_task_id: taskId },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        alert("Task marked as completed (Final QA done).");
+        fetchTasks();
+      } catch (error) {
+        console.error("Error sending task to Final QA:", error.response?.data || error.message);
+        alert("Failed to mark task as completed");
+      }
+    }
+  };
+
+  // Filter rows by search text.
   const filteredRows = useMemo(() => {
     if (!filterValue.trim()) return rows;
     const searchTerm = filterValue.toLowerCase();
@@ -208,7 +223,7 @@ const QATasks = () => {
               <>
                 <Table aria-label="QA tasks" className="min-w-full">
                   <TableHeader>
-                    <TableColumn>Manu ID</TableColumn>
+                    <TableColumn>Task ID</TableColumn>
                     <TableColumn>Qty</TableColumn>
                     <TableColumn>SKU ID</TableColumn>
                     <TableColumn>Due Date</TableColumn>
@@ -218,102 +233,87 @@ const QATasks = () => {
                     <TableColumn>Status</TableColumn>
                     <TableColumn>Final QA</TableColumn>
                   </TableHeader>
-                  <TableBody items={paginatedRows}>
-  {(item) => (
-    <TableRow key={item.id}>
-      <TableCell>{item.manufacturing_id}</TableCell>
-      <TableCell>{item.qty}</TableCell>
-      <TableCell>{item.sku_color}</TableCell>
-      <TableCell>
-        {item.due_date !== "N/A"
-          ? dayjs(item.due_date).format("YYYY-MM-DD")
-          : "N/A"}
-      </TableCell>
-      <TableCell>
-        <Checkbox
-          className="black-checkbox"
-          isSelected={item.prod_qa === "Completed"}
-          onValueChange={(isSelected) => {
-            const newProdQa = isSelected ? "Completed" : "Pending";
-            handleUpdate(item.manufacturing_id, newProdQa, item.paint_qa, item.final_qa);
-          }}
-        />
-      </TableCell>
-      <TableCell>
-        <Checkbox
-       
-           className="black-checkbox"
-           
-          isSelected={item.paint_qa === "Completed"}
-          onValueChange={(isSelected) => {
-            const newPaintQa = isSelected ? "Completed" : "Pending";
-            handleUpdate(item.manufacturing_id, item.prod_qa, newPaintQa, item.final_qa);
-          }}
-        />
-      </TableCell>
-      <TableCell>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="flat"
-           className="bg-red-200 text-red-800"
-            onClick={() => handleReportError(item.manufacturing_id)}
-          >
-            Report Error
-          </Button>
-          {item.status === "Error" && (
-            <Button
-              size="sm"
-              variant="flat"
-              className="bg-gray-300"
-              onClick={() => {
-                const isConfirmed = window.confirm(
-                  "Are you sure the error has been fixed?"
-                );
-                if (isConfirmed) {
-                  handleErrorFixed(item.manufacturing_id);
-                }
-              }}
-            >
-              Error Reported
-            </Button>
-          )}
-        </div>
-      </TableCell>
-      <TableCell>{item.status}</TableCell>
-      <TableCell>
-        <Checkbox
-            className="black-checkbox"
-          isSelected={item.prod_qa === "Completed" && item.paint_qa === "Completed"}
-          isDisabled={item.status !== "Completed"}
-          onValueChange={(isSelected) => {
-            const newFinalQa = isSelected ? "Completed" : "Pending";
-            handleUpdate(item.manufacturing_id, item.prod_qa, item.paint_qa, newFinalQa);
-          }}
-        />
-      </TableCell>
-    </TableRow>
-  )}
-</TableBody>
-
-
+                  <TableBody>
+                    {paginatedRows.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.manufacturing_task_id}</TableCell>
+                        <TableCell>{item.qty}</TableCell>
+                        <TableCell>{item.sku_color}</TableCell>
+                        <TableCell>
+                          {item.due_date !== "N/A"
+                            ? dayjs(item.due_date).format("YYYY-MM-DD")
+                            : "N/A"}
+                        </TableCell>
+                        <TableCell>
+                          <Checkbox
+                            color="success"
+                            isSelected={item.prod_qa === "completed"}
+                            onValueChange={(isSelected) => {
+                              const newProdQa = isSelected ? "completed" : "pending";
+                              handleUpdate(item.manufacturing_task_id, newProdQa, item.paint_qa);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Checkbox
+                            color="success"
+                            isSelected={item.paint_qa === "completed"}
+                            onValueChange={(isSelected) => {
+                              const newPaintQa = isSelected ? "completed" : "pending";
+                              handleUpdate(item.manufacturing_task_id, item.prod_qa, newPaintQa);
+                            }}
+                          />
+                        </TableCell>
+                        
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="flat"
+                              color="danger"
+                              onClick={() => handleReportError(item.manufacturing_task_id)}
+                            >
+                              Report Error
+                            </Button>
+                            {item.status === "error" && (
+                              <Button
+                                size="sm"
+                                variant="flat"
+                                color="success"
+                                onClick={() => handleErrorFixed(item.manufacturing_task_id)}
+                              >
+                              Error Reported
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{item.status}</TableCell>
+                        <TableCell>
+                          <Checkbox
+                            color="success"
+                            isSelected={item.status === "pick and pack"}
+                            onValueChange={(isSelected) => {
+                              if (isSelected) {
+                                handleFinalQACheck(item.manufacturing_task_id);
+                              }
+                            }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
                 </Table>
                 <div className="flex justify-between items-center mt-4">
-  <span>
-    Page {page} of {totalPages}
-  </span>
-  <Pagination
-    total={totalPages}
-    page={page}
-    initialPage={1}
-    onChange={(newPage) => setPage(newPage)}
-    color="default"
-    classNames={{
-      item: "bg-white text-black",
-      cursor: "bg-black text-white",
-    }}
-  />
-</div>
+                  <span>
+                    Page {page} of {totalPages}
+                  </span>
+                  <Pagination
+                    total={totalPages}
+                    initialPage={1}
+                    current={page}
+                    onChange={(newPage) => setPage(newPage)}
+                  />
+                </div>
               </>
             )}
           </div>

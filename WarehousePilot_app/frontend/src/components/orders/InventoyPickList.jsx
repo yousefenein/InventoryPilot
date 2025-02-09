@@ -343,7 +343,7 @@ const InventoryPickList = () => {
               <Button onPress={handleCloseModal} color="default">
                 Cancel
               </Button>
-              <Button onPress={handleConfirmAssign} color="primary">
+              <Button onPress={handleConfirmAssign} style={{ backgroundColor: '#b91c1c', color:'white'}} >
                 Confirm
               </Button>
             </div>

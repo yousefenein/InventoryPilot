@@ -1,11 +1,3 @@
-
-
-// the data comes from the "inventory_inventorypicklistitem" table.
-// Table: "inventory_inventorypicklistitem"
-// Columns: Use "status" (true for accurate picks, false for inaccurate picks).
-// Backend logic: Query the "inventory_inventorypicklistitem" table to calculate the count of accurate picks (status = true) 
-// and the total number of picks. Subtract accurate picks from total picks to get inaccurate picks.
-
 import React, { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import axios from 'axios';
@@ -21,17 +13,19 @@ const OrderPickingAccuracy = () => {
   ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [accuracyPercentage, setAccuracyPercentage] = useState(0); 
+  const [targetAccuracy, setTargetAccuracy] = useState(99); // State for target accuracy
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('token'); // Retrieve token
-        const response = await axios.get(`${API_BASE_URL}/api/order-picking-accuracy/`, {
+        const response = await axios.get(`${API_BASE_URL}/kpi_dashboard/order-picking-accuracy/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const result = response.data; // Use response.data for axios
-
+console.log(result)
         // Update the data state
         setData([
           { name: "Accurate Picks", value: result.accurate_picks },
@@ -49,8 +43,8 @@ const OrderPickingAccuracy = () => {
   }, []);
 
   // Calculate the accuracy percentage
-  const totalPicks = data[0].value + data[1].value;
-  const accuracyPercentage = totalPicks > 0 ? ((data[0].value / totalPicks) * 100).toFixed(2) : 0;
+  // const totalPicks = data[0].value + data[1].value;
+  // const accuracyPercentage = totalPicks > 0 ? ((data[0].value / totalPicks) * 100).toFixed(2) : 0;
 
   return (
     <div className="bg-white p-4">
@@ -82,7 +76,8 @@ const OrderPickingAccuracy = () => {
 
           {/* Current data and target */}
           <p className="text-center mt-2 text-gray-600">
-            Current: <span className="text-green-600">{accuracyPercentage}%</span>, Target: 99%
+            Current: <span className="text-green-600">{accuracyPercentage}%</span>, Target:{" "}
+            <span className="text-blue-600">{targetAccuracy}%</span>
           </p>
         </>
       )}
