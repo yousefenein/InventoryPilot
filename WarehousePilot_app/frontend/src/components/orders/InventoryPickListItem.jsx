@@ -11,8 +11,9 @@ import {
   Button,
   Modal,
   ModalContent,
-} from "@nextui-org/react";
-import { SearchIcon } from "@nextui-org/shared-icons";
+  Tab,
+} from "@heroui/react";
+import { SearchIcon } from "@heroui/shared-icons";
 import { useNavigate, useParams } from "react-router-dom";
 import SideBar from "../dashboard_sidebar1/App";
 import axios from "axios";
@@ -190,6 +191,10 @@ const InventoryPicklistItem = () => {
 
   // ... (keep all the imports and component code the same until the return statement)
 
+  const handleLabelClick = (picklistItemId) => {
+    navigate(`/label/${picklistItemId}`);
+  };
+
   return (
     <div className="flex h-full">
       <SideBar isOpen={isSidebarOpen} />
@@ -256,6 +261,7 @@ const InventoryPicklistItem = () => {
                         <TableColumn>Quantity</TableColumn>
                         <TableColumn>Status</TableColumn>
                         <TableColumn>Action</TableColumn>
+                        <TableColumn>Label</TableColumn>
                       </TableHeader>
                       <TableBody>
                         {paginatedInventoryItems.map((item) => (
@@ -276,6 +282,14 @@ const InventoryPicklistItem = () => {
                                   onChange={() => openPickModal(item)}
                                 />
                               )}
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                               color="primary"
+                               size="sm"
+                                onPress={() => handleLabelClick(item.picklist_item_id)}>
+                                View Label
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
