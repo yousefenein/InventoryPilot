@@ -209,7 +209,7 @@ class PickPicklistItemView(APIView):
             #logger.error("Item %s was not found", picklist_item_id)
             return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        if request.user.role != 'staff':
+        if request.user.role == 'qa':
             #logger.error("Unauthorized user - only staff users can access picklist picking")
             return Response({"error": "Not allowed. You need login as a staff "}, status=403)
 
