@@ -9,7 +9,6 @@ const LabelMaker = () => {
   const [loading, setLoading] = useState(true);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-
   useEffect(() => {
     async function fetchLabelData() {
       try {
@@ -51,6 +50,10 @@ const LabelMaker = () => {
     return <div>No label data found.</div>;
   }
 
+  const decodedImageUrl = labelData.SKU_COLOR_IMAGE
+    ? decodeURIComponent(labelData.SKU_COLOR_IMAGE).replace(/^\/+/, "")
+    : null;
+    
   return (
     <div style={{ border: "1px solid #ccc", padding: "16px", maxWidth: "400px" }}>
       <h2 style={{ marginBottom: "1rem" }}>Label Maker</h2>
@@ -59,7 +62,9 @@ const LabelMaker = () => {
       <p><strong>ORDER NUMBER:</strong> {labelData.ORDER_NUMBER || "ORDER NB"}</p>
       <p><strong>QTY PER BOX:</strong> {labelData.QTY_PER_BOX || "QTY PER BOX"}</p>
       <p><strong>CRATE SIZE:</strong> {labelData.CRATE_SIZE || "CRATE SIZE"}</p>
-      <p><strong>PART IMAGE:</strong> {labelData.SKU_COLOR_IMAGE || "PART IMAGE"} </p>
+      <p><strong>PART IMAGE:</strong> {decodedImageUrl ?(
+        <img src={decodedImageUrl} alt={decodedImageUrl} style={{ maxWidth: "100%" }} />
+      ): ("PART IMAGE")} </p>
       <p><strong>BARCODE:</strong> BARCODE HERE </p>
     </div>
   );
