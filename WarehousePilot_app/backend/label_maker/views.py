@@ -3,9 +3,11 @@ import json
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-
+import logging
 from inventory.models import InventoryPicklistItem
 from parts.models import Part 
+
+logger = logging.getLogger("WarehousePilot_app")
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -17,6 +19,7 @@ def get_label_data(request, picklist_item_id):
     However, these fields are not always present in the current DB. 
     """
     try:
+        logger.info(f"Fetching label data for picklist_item_id: {picklist_item_id}")
         item = (
             InventoryPicklistItem.objects
             .select_related('sku_color', 'picklist_id__order_id')
@@ -34,11 +37,13 @@ def get_label_data(request, picklist_item_id):
             "BARCODE": None,
             # Additional fields to be added: qty per case, case size, SKU_COLOR image, barcode
         }
-
+        logger.info(f"Successfully fetched label data for picklist_item_id: {picklist_item_id}")
         return JsonResponse(label_data, status=200)
 
     except InventoryPicklistItem.DoesNotExist:
+        logger.error(f"Picklist item not found for picklist_item_id: {picklist_item_id}")
         return JsonResponse({"error": "Picklist item not found"}, status=404)
     except Exception as e:
+        logger.error(f"Picklist item not found for picklist_item_id: {picklist_item_id}")
         return JsonResponse({"error": str(e)}, status=500)
 
