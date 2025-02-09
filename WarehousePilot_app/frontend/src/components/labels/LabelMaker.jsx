@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom"; 
+import {Card, CardHeader, CardBody, CardFooter} from "@heroui/card";
+import {Divider} from "@heroui/divider";
 
 const LabelMaker = () => {
   const { picklist_item_id } = useParams(); 
@@ -55,18 +57,46 @@ const LabelMaker = () => {
     : null;
     
   return (
-    <div style={{ border: "1px solid #ccc", padding: "16px", maxWidth: "400px" }}>
-      <h2 style={{ marginBottom: "1rem" }}>Label Maker</h2>
-      <p><strong>SKU COLOR:</strong> {labelData.SKU_COLOR}</p>
-      <p><strong>QTY:</strong> {labelData.QTY || "QTY"}</p>
-      <p><strong>ORDER NUMBER:</strong> {labelData.ORDER_NUMBER || "ORDER NB"}</p>
-      <p><strong>QTY PER BOX:</strong> {labelData.QTY_PER_BOX || "QTY PER BOX"}</p>
-      <p><strong>CRATE SIZE:</strong> {labelData.CRATE_SIZE || "CRATE SIZE"}</p>
-      <p><strong>PART IMAGE:</strong> {decodedImageUrl ?(
-        <img src={decodedImageUrl} alt={decodedImageUrl} style={{ maxWidth: "100%" }} />
-      ): ("PART IMAGE")} </p>
-      <p><strong>BARCODE:</strong> BARCODE HERE </p>
-    </div>
+    <Card className="max-w-[500px] h-[400px]">
+      <CardHeader className="flex justify-center items-center">
+        <p className="text-5xl font-bold text-center"> {labelData.SKU_COLOR || "SKU_COLOR"} </p>
+      </CardHeader>
+      <Divider />
+      <CardBody className="flex flex-1">
+
+      <div className="grid grid-cols-2 gap-4 items-start w-full h-full">
+        {/* Left column */}
+        <div className="border-r border-gray-300 pr-4 flex flex-col space-y-2 text-xl h-full flex-grow">
+          <div>
+            <strong>ORDER NUMBER:</strong> {labelData.ORDER_NUMBER || "ORDER NB"}
+          </div>
+          <div>
+            <strong>QTY:</strong> {labelData.QTY || "QTY"}
+          </div>
+          <div>
+            <strong>QTY PER BOX:</strong> {labelData.QTY_PER_BOX || "QTY PER BOX"}
+          </div>
+          <div>
+            <strong>CRATE SIZE:</strong> {labelData.CRATE_SIZE || "CRATE SIZE"}
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div className="pl-4 flex items-center justify-center h-full">
+          <img
+            src={decodedImageUrl}
+            alt="SKU_COLOR_IMAGE"
+            className="max-h-64 object-contain"
+          />
+        </div>
+      </div>
+      
+      </CardBody>
+      <Divider />
+      <CardFooter className="flex justify-center items-center">
+        <p className="text-center items-center"> BARCODE HERE</p>
+      </CardFooter>
+    </Card>
   );
 }
 

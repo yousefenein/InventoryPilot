@@ -32,7 +32,7 @@ def get_label_data(request, picklist_item_id):
             "QTY": item.amount,
             "ORDER_NUMBER": getattr(item.picklist_id.order_id, "order_id", None),
             "QTY_PER_BOX": getattr(part, "qty_per_box", None),
-            "CRATE_SIZE": getattr(part, "crate_size", None),
+            "CRATE_SIZE": getattr(part, "crate_size", None), # this can somehow return a number or a word... 
             "SKU_COLOR_IMAGE":part.image.url if part.image else None,
             "BARCODE": None,
             # Additional fields to be added: qty per case, case size, SKU_COLOR image, barcode
