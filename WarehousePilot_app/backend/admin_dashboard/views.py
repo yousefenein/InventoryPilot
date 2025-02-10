@@ -53,7 +53,6 @@ class AddUserView(APIView):
         try:
             # Checking if user exists before inserting
             data = request.data
-            print(data)
             if users.objects.filter(email=data['email']).exists(): # checks using email - userid instead?
                 logger.error("User with this email already exists")
                 return Response({"error": "User with this email already exists"}, status=400)

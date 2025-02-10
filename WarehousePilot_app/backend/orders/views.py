@@ -103,7 +103,7 @@ class GenerateInventoryAndManufacturingListsView(APIView):
             #bulk create all the inventory picklist items in the database
             InventoryPicklistItem.objects.bulk_create(inventoryPicklistItems)
             #'''
-            logger.debug("All Picklist Items: %s", ', '.join([str(x) for x in InventoryPicklistItem.objects.filter(picklist_id=inventoryPicklist)]))
+            #logger.debug("All Picklist Items: %s", ', '.join([str(x) for x in InventoryPicklistItem.objects.filter(picklist_id=inventoryPicklist)])) inventoryPicklist is referred outside the scope of the if block
             #'''
             if len(manuListItems) > 0:
                 logger.debug("**Creating manufacturing list 1st if block")
@@ -217,7 +217,7 @@ class StartOrderView(APIView):
             order.save()
 
             # Return success response with the updated order data
-            logger.info("Successfully started an order")
+            logger.info(f"Successfully started order {order_id}")
             return JsonResponse({
                 'status': 'success',  # Overall success of the action
                 'order_id': order.order_id,
@@ -227,7 +227,7 @@ class StartOrderView(APIView):
 
         except Exception as e:
             # In case of any error, return error details
-            logger.error("Failed to start an order (StartOrderView)")
+            logger.error(f"Failed to start order {order_id} (StartOrderView)")
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
         
 
@@ -309,13 +309,15 @@ class InventoryPicklistItemsView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
 
         except Orders.DoesNotExist:
-            logger.error("Order could not be found (InventoryPicklistItemsView)")
+            logger.error(f"Order {order_id} could not be found (InventoryPicklistItemsView)")
             return Response(
                 {"error": "Order not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
         except InventoryPicklist.DoesNotExist:
-            
+
+            logger.error("Picklist could not be found for order %s (InventoryPicklistItemsView)", order_id)
+
             return Response(
                 {"error": "No picklist found for the given order"},
                 status=status.HTTP_404_NOT_FOUND
