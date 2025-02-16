@@ -155,7 +155,6 @@ const QATasks = () => {
       alert("Failed to report error");
     }
   };
-  
 
   const handleFinalQACheck = async (taskId) => {
     const confirmed = window.confirm("Are you sure you want to send this task to Pick & Pack?");
@@ -178,6 +177,15 @@ const QATasks = () => {
         alert("Failed to mark task as completed");
       }
     }
+  };
+
+  // Function to clear all filters
+  const clearFilters = () => {
+    setFilterValue("");
+    setProdQaFilter("all");
+    setPaintQaFilter("all");
+    setStatusFilter("all");
+    setDueDateFilter("");
   };
 
   // Filter rows by search text and additional functional filters.
@@ -230,7 +238,8 @@ const QATasks = () => {
                 {error}
               </div>
             )}
-            <div className="flex flex-wrap gap-4 mb-6">
+            {/* Filter row with clear filters button */}
+            <div className="flex flex-wrap items-center gap-4 mb-6">
               <Input
                 size="md"
                 placeholder="Search tasks"
@@ -273,6 +282,13 @@ const QATasks = () => {
                 onChange={(e) => setDueDateFilter(e.target.value)}
                 className="p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
               />
+              <Button
+                size="sm"
+                onClick={clearFilters}
+                className="rounded bg-blue-100 text-blue-700 hover:bg-blue-200"
+              >
+                Clear Filters
+              </Button>
             </div>
             {loading ? (
               <div className="flex justify-center items-center h-64 text-gray-600 text-xl">
