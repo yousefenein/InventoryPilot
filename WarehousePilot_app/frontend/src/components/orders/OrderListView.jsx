@@ -25,7 +25,7 @@ import { Chip } from "@nextui-org/react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-
+import NavBar from "../navbar/App";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Extend dayjs with UTC and timezone
@@ -254,10 +254,13 @@ const OrderListView = () => {
   };
   //style={{backgroundColor: "#F2F4F6"}}
   return (
-    <div className="flex h-full">
+    <div className="h-full">
+      
       {" "}
       /
+       <NavBar />
       <SideBar />
+      
       <div className="flex-1">
         <div className="mt-16 p-8">
           <div className="flex flex-col gap-6">
