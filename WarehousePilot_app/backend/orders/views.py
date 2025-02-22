@@ -174,9 +174,9 @@ class GenerateInventoryAndManufacturingListsView(APIView):
         
         logger.debug(f"manufacturing list object: {manuList}")
         if manuList != None:
-            logger.error("All Manufacturing List Items: %s", '\n'.join([str(x.__dict__) for x in ManufacturingListItem.objects.filter(manufacturing_list_id = manuList)]))
+            logger.info("All Manufacturing List Items: %s", '\n'.join([str(x.__dict__) for x in ManufacturingListItem.objects.filter(manufacturing_list_id = manuList)]))
         #'''
-        logger.error("All Inventory Pick List Items: %s", '\n'.join([str(x.__dict__) for x in InventoryPicklistItem.objects.filter(picklist_id = (InventoryPicklist.objects.get(order_id = order))) ]))
+        logger.info("All Inventory Pick List Items: %s", '\n'.join([str(x.__dict__) for x in InventoryPicklistItem.objects.filter(picklist_id = (InventoryPicklist.objects.get(order_id = order))) ]))
             
         logger.info("Successfully generated the inventory picklist and manufacturing for order %s", orderID)
         return Response({'detail':'inventory picklist and manufacturing list generation successful'}, status=status.HTTP_200_OK)
