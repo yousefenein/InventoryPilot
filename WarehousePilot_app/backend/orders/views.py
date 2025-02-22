@@ -19,6 +19,7 @@ from parts.models import Part
 from manufacturingLists.models import ManufacturingLists, ManufacturingListItem
 from django.db.models import Sum
 from django.db.models import Q
+from django.db.models import F
 from rest_framework import status
 
 from django.http import JsonResponse
@@ -58,7 +59,7 @@ class GenerateInventoryAndManufacturingListsView(APIView):
         logger.debug("Unique Order Parts SKU COLORS: %s", ', '.join([str(x) for x in orderPartSkuColor]))
         #'''
         #get all the objects in inventory that have a quantity greater than 0, amount needed equal to 0 and match the sku_colors of the parts in the order
-        inventory = Inventory.objects.filter(sku_color__in=orderPartSkuColor, qty__gt = 0, amount_needed = 0)
+        inventory = Inventory.objects.filter(sku_color__in=orderPartSkuColor, qty__gt = 0, amount_needed__lt = F('qty'))
         #'''
         logger.debug("Matching parts in inventory with a quantity greater than 0: %s", ', '.join([str(x) for x in inventory]))
         logger.debug("Inventory count: %s", inventory.count())
