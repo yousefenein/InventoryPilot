@@ -98,9 +98,21 @@ class GenerateInventoryAndManufacturingListsView(APIView):
                     for x in Inventory.objects.filter(sku_color=s):
                         x.amount_needed=manuListItemQty
                         x.save()
-
+                
                 #add the picklist item with the appropriate amount to the list of inventory picklist items
-                inventoryPicklistItems.append(InventoryPicklistItem(picklist_id = inventoryPicklist, sku_color=Part.objects.get(sku_color=s), amount = picklistQty, status = False))
+                matchingInventoryItems = Inventory.objects.filter(sku_color=Part.objects.get(sku_color=s)).order_by('qty')
+                index = 0
+                while picklistQty > 0 and index < matchingInventoryItems.count():
+                    inventoryLocationQty = matchingInventoryItems[index].qty
+                    if picklistQty <= inventoryLocationQty:
+                        inventoryPicklistItems.append(InventoryPicklistItem(picklist_id = inventoryPicklist, sku_color=Part.objects.get(sku_color=s), amount = picklistQty, status = False, location = matchingInventoryItems[index]))
+                        matchingInventoryItems[index].__setattr__('amount_needed', picklistQty)    
+                    else:
+                        inventoryPicklistItems.append(InventoryPicklistItem(picklist_id = inventoryPicklist, sku_color=Part.objects.get(sku_color=s), amount = inventoryLocationQty, status = False, location = matchingInventoryItems[index]))
+                        matchingInventoryItems[index].__setattr__('amount_needed', inventoryLocationQty)
+                    picklistQty = picklistQty - inventoryLocationQty
+                    index += 1
+                
             #bulk create all the inventory picklist items in the database
             InventoryPicklistItem.objects.bulk_create(inventoryPicklistItems)
             #'''
