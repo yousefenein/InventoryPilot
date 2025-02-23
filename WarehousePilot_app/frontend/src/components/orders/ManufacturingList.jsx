@@ -160,6 +160,7 @@ const ManufacturingList = () => {
               initialPage={1}
               current={page}
               onChange={(newPage) => setPage(newPage)}
+             
             />
           </div>
         </>

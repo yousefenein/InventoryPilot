@@ -107,14 +107,14 @@ function Login() {
                 />
                 <span className="ml-2 text-lg">Remember me</span>
               </label>
-              <a href="#" className="text-lg text-blue-600 hover:underline forgot-password">
+              <a href="#" className=" text-gray-500 text-lg text-gray-300 hover:underline forgot-password">
                 I forgot my password
               </a>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 text-lg font-medium"
+              className="w-full py-3 px-4 bg-black  text-white rounded-lg transition-colors duration-200 text-lg font-medium"
             >
               Sign In
             </button>
