@@ -23,7 +23,7 @@ const AccountManagement = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        setUserData(response.data);  // Set the fetched user data
+        setUserData(response.data);  
         setLoading(false);
       } catch (error) {
         console.error("Error fetching user data:", error);
