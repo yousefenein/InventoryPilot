@@ -237,19 +237,20 @@ const OrderListView = () => {
         <div className="mt-16 p-8">
           <div className="flex flex-col gap-6">
 
-          <div className="flex flex-row gap-11">
-            
-            <h1 className="text-2xl font-bold mb-6">Orders</h1>
+          <div className="flex flex-row justify-between items-center">
+  <h1 className="text-2xl font-bold mb-6">Orders</h1>
 
-            <Button
-           className="bg-gray-300"
-           variant='flat'
-           onClick = { ()=> navigate("/inventory_and_manufacturing_picklist")}
-
-           >
-            Inventory and Manufacturing List
-          </Button>
-            </div>
+  <Button
+    style={{
+      backgroundColor: '#000',
+      color: 'white',
+    }}
+    variant='flat'
+    onClick={() => navigate("/inventory_and_manufacturing_picklist")}
+  >
+    Inventory and Manufacturing List
+  </Button>
+</div>
             {/* Success message for starting the order */}
             {successOrderStart && (
               <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
@@ -280,12 +281,15 @@ const OrderListView = () => {
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
                 <span>{error}</span>
-                <button
+                <Button
                   onClick={() => setError(null)}
-                  className="bg-transparent text-red-700 hover:text-red-900 font-semibold px-2"
+                  style={{
+                    backgroundColor: '#b91c1c',
+                    color: 'white',
+                  }}
                 >
-                  ×
-                </button>
+                  
+                </Button>
               </div>
             )}
 
@@ -327,7 +331,7 @@ const OrderListView = () => {
                           <span
                             className={`px-2 py-1 rounded ${
                               item.status === "In Progress"
-                                ? "bg-red-200 text-red-800"
+                                ? " text-red-800"
                                 : ""
                             }`}
                           >
