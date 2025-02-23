@@ -106,7 +106,9 @@ class GenerateInventoryAndManufacturingListsView(APIView):
                     inventoryLocationQty = matchingInventoryItems[index].qty
                     if picklistQty <= inventoryLocationQty:
                         inventoryPicklistItems.append(InventoryPicklistItem(picklist_id = inventoryPicklist, sku_color=Part.objects.get(sku_color=s), amount = picklistQty, status = False, location = matchingInventoryItems[index]))
-                        matchingInventoryItems[index].__setattr__('amount_needed', picklistQty)    
+                        amount_needed = matchingInventoryItems[index].__getattribute__('amount_needed')
+                        amount_needed = amount_needed + picklistQty
+                        matchingInventoryItems[index].__setattr__('amount_needed', amount_needed)    
                     else:
                         inventoryPicklistItems.append(InventoryPicklistItem(picklist_id = inventoryPicklist, sku_color=Part.objects.get(sku_color=s), amount = inventoryLocationQty, status = False, location = matchingInventoryItems[index]))
                         matchingInventoryItems[index].__setattr__('amount_needed', inventoryLocationQty)
