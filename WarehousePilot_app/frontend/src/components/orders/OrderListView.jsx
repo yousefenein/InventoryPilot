@@ -254,17 +254,17 @@ const OrderListView = () => {
   };
   //style={{backgroundColor: "#F2F4F6"}}
   return (
-    <div style={{ marginTop: "-80px" }}>
+    <div className="  h-full" style={{ marginTop: "-80px" }}>
       
       {" "}
       
       <NavBar />
       <SideBar />
       
-      <div className="flex-1 p-6 mt-8" style={{ padding: "40px" }}>
-        <div className="mt-4 p-8">
+      <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto" >
+        <div className="flex flex-col flex-1">
           <div className="flex flex-col ">
-            <div className="flex flex-row gap-11">
+            <div className="flex flex-row gap-11 mt-10">
               <h1 className="text-2xl font-bold mb-6">Orders</h1>
             </div>
             {/* Success message for starting the order */}
@@ -306,32 +306,30 @@ const OrderListView = () => {
               </div>
             )}
 
-            {/* Search Input */}
-            <div className="mb-6 flex items-center gap-2">
-              <Input
-                size="md"
-                placeholder="Search by order ID"
-                value={filterValue}
-                onChange={(e) => {
-                  console.log("New filter value:", e.target.value); // Debugging log
-                  setFilterValue(e.target.value);
-                }}
-                endContent={
-                  <SearchIcon className="text-default-400" width={16} />
-                }
-                className="w-72"
-              />
-              <Chip
-                color="primary"
-                variant="shadow"
-                radius="medium"
-                size="lg"
-                onClick={() =>
-                  navigate("/inventory_and_manufacturing_picklist")
-                }
-              >
-                Inventory and Manufacturing List
-              </Chip>
+           {/* Search Input */}
+<div className="mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-2 w-full">
+  <Input
+    size="md"
+    placeholder="Search by order ID"
+    value={filterValue}
+    onChange={(e) => {
+      console.log("New filter value:", e.target.value); // Debugging log
+      setFilterValue(e.target.value);
+    }}
+    endContent={<SearchIcon className="text-default-400" width={16} />}
+    className="w-full sm:w-72"
+  />
+  <Chip
+    color="primary"
+    variant="shadow"
+    radius="medium"
+    size="lg"
+    onClick={() => navigate("/inventory_and_manufacturing_picklist")}
+    className="w-full sm:w-auto text-center"
+  >
+    Inventory and Manufacturing List
+  </Chip>
+
 
 
             </div>

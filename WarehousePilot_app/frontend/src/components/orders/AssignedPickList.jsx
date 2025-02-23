@@ -94,10 +94,10 @@ const AssignedPickList = () => {
   };
 
   return (
-    <div style={{ marginTop: "-80px" }}>
+    <div style={{ marginTop: "-50px" }}>
         <NavBar />
         <SideBar /> {/* Add the SideBar component here */}
-        <div className="flex-1 p-6" style={{ padding: "40px" }}>
+        <div className="flex-1 p-6" style={{ padding: "20px" }}>
       <div className="flex-1">
         <div className="mt-16 p-8">
           <h1 className="text-2xl font-bold mb-6">My Assigned Pick List</h1>

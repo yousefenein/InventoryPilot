@@ -19,13 +19,13 @@ const KPIDashboard = ({ userData }) => {
     <div style={{ marginTop: "-80px", backgroundColor:'#F4F4F5' }}>
     <NavBar />
     <SideBar /> {/* Add the SideBar component here */}
-    <div className="flex-1 p-6 mt-8" style={{ padding: "40px" }}>
+    {/* <div className="flex-1 flex flex-col " > */}
       {/* Main Content
       <div className="flex-1 flex flex-col"> */}
         {/* KPI Dashboard Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 flex flex-col p-6 mt-8">
           {/* Title */}
-          <h1 className="text-xl font-bold text-center mb-6">KPI Dashboard</h1>
+          <h1 className=" mt-12 sm:text-xl font-bold text-center mb-6">KPI Dashboard</h1>
 
           {/* Cards Container */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -37,7 +37,7 @@ const KPIDashboard = ({ userData }) => {
             <StockLevels />
           </div>
         </main>
-      </div>
+      {/* </div> */}
     // </div>
   );
 };
