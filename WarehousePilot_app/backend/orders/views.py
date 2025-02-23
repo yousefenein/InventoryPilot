@@ -207,6 +207,12 @@ class StartOrderView(APIView):
     def post(self, request, order_id):
         try:
             order = get_object_or_404(Orders, order_id=order_id)
+            
+            # Ensure the default status is "Not Started" if it is NULL
+            if order.status is None:
+                order.status = "Not Started"
+                order.save()
+
 
             if order.status == 'In Progress':
                 return JsonResponse({'status': 'error', 'message': 'Order is already in progress'}, status=400)
