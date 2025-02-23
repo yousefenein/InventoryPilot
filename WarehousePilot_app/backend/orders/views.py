@@ -19,6 +19,7 @@ from parts.models import Part
 from manufacturingLists.models import ManufacturingLists, ManufacturingListItem
 from django.db.models import Sum
 from django.db.models import Q
+from django.db.models import F
 from rest_framework import status
 
 from django.http import JsonResponse
@@ -57,7 +58,7 @@ class GenerateInventoryAndManufacturingListsView(APIView):
         logger.debug("Unique Order Parts SKU COLORS: %s", ', '.join([str(x) for x in orderPartSkuColor]))
         #'''
         #get all the objects in inventory that have a quantity greater than 0, amount needed equal to 0 and match the sku_colors of the parts in the order
-        inventory = Inventory.objects.filter(sku_color__in=orderPartSkuColor, qty__gt = 0, amount_needed = 0)
+        inventory = Inventory.objects.filter(sku_color__in=orderPartSkuColor, qty__gt = 0, amount_needed__lt = F('qty'))
         #'''
         logger.debug("Matching parts in inventory with a quantity greater than 0: %s", ', '.join([str(x) for x in inventory]))
         logger.debug("Inventory count: %s", inventory.count())
@@ -96,9 +97,23 @@ class GenerateInventoryAndManufacturingListsView(APIView):
                     for x in Inventory.objects.filter(sku_color=s):
                         x.amount_needed=manuListItemQty
                         x.save()
-
+                
                 #add the picklist item with the appropriate amount to the list of inventory picklist items
-                inventoryPicklistItems.append(InventoryPicklistItem(picklist_id = inventoryPicklist, sku_color=Part.objects.get(sku_color=s), amount = picklistQty, status = False))
+                matchingInventoryItems = Inventory.objects.filter(sku_color=Part.objects.get(sku_color=s)).order_by('qty')
+                index = 0
+                while picklistQty > 0 and index < matchingInventoryItems.count():
+                    inventoryLocationQty = matchingInventoryItems[index].qty
+                    if picklistQty <= inventoryLocationQty:
+                        inventoryPicklistItems.append(InventoryPicklistItem(picklist_id = inventoryPicklist, sku_color=Part.objects.get(sku_color=s), amount = picklistQty, status = False, location = matchingInventoryItems[index]))
+                        amount_needed = matchingInventoryItems[index].__getattribute__('amount_needed')
+                        amount_needed = amount_needed + picklistQty
+                        matchingInventoryItems[index].__setattr__('amount_needed', amount_needed)    
+                    else:
+                        inventoryPicklistItems.append(InventoryPicklistItem(picklist_id = inventoryPicklist, sku_color=Part.objects.get(sku_color=s), amount = inventoryLocationQty, status = False, location = matchingInventoryItems[index]))
+                        matchingInventoryItems[index].__setattr__('amount_needed', inventoryLocationQty)
+                    picklistQty = picklistQty - inventoryLocationQty
+                    index += 1
+                
             #bulk create all the inventory picklist items in the database
             InventoryPicklistItem.objects.bulk_create(inventoryPicklistItems)
             #'''
@@ -157,13 +172,13 @@ class GenerateInventoryAndManufacturingListsView(APIView):
         except ManufacturingLists.DoesNotExist:
             manuList = None
             logger.error("Manufacturing list for order %s does not exist (GenerateInventoryAndManufacturingListsView)", orderID)
-            return Response({'error':'manufacturing list does not exist'}, status=status.HTTP_404_NOT_FOUND)
         
         logger.debug(f"manufacturing list object: {manuList}")
         if manuList != None:
-            logger.debug("All Manufacturing List Items: %s", ', '.join([str(x) for x in ManufacturingListItem.objects.filter(manufacturing_list_id = manuList)]))
+            logger.info("All Manufacturing List Items: %s", '\n'.join([str(x.__dict__) for x in ManufacturingListItem.objects.filter(manufacturing_list_id = manuList)]))
         #'''
-
+        logger.info("All Inventory Pick List Items: %s", '\n'.join([str(x.__dict__) for x in InventoryPicklistItem.objects.filter(picklist_id = (InventoryPicklist.objects.get(order_id = order))) ]))
+            
         logger.info("Successfully generated the inventory picklist and manufacturing for order %s", orderID)
         return Response({'detail':'inventory picklist and manufacturing list generation successful'}, status=status.HTTP_200_OK)
 
