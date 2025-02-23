@@ -254,40 +254,18 @@ const OrderListView = () => {
   };
   //style={{backgroundColor: "#F2F4F6"}}
   return (
-    <div className="h-full">
+    <div style={{ marginTop: "-80px" }}>
       
       {" "}
-      /
-       <NavBar />
+      
+      <NavBar />
       <SideBar />
       
-      <div className="flex-1">
-        <div className="mt-16 p-8">
-          <div className="flex flex-col gap-6">
+      <div className="flex-1 p-6 mt-8" style={{ padding: "40px" }}>
+        <div className="mt-4 p-8">
+          <div className="flex flex-col ">
             <div className="flex flex-row gap-11">
               <h1 className="text-2xl font-bold mb-6">Orders</h1>
-
-              {/* <Button
-                radius="full"
-                color="primary"
-                variant="flat"
-                onClick={() =>
-                  navigate("/inventory_and_manufacturing_picklist")
-                }
-              >
-                Inventory and Manufacturing List
-              </Button> */}
-              {/* <Chip
-                color="primary"
-                variant="shadow"
-                radius="large"
-                size="lg"
-                onClick={() =>
-                  navigate("/inventory_and_manufacturing_picklist")
-                }
-              >
-                Inventory and Manufacturing List
-              </Chip> */}
             </div>
             {/* Success message for starting the order */}
             {successOrderStart && (

@@ -56,11 +56,11 @@ export default function NavBar(props: NavbarProps) {
         {/* Conditionally Rendered Navbar Items */}
         <NavbarItem>
           <Link className="text-default-500" href="/dashboard" size="sm">
-            Home
+            Dashboard
           </Link>
         </NavbarItem>
 
-        {(userRole === "admin" || userRole === "manager") && (
+        {(userRole === "admin") && (
           <>
             <NavbarItem>
               <Link className="text-default-500" href="/kpi" size="sm">
@@ -84,13 +84,48 @@ export default function NavBar(props: NavbarProps) {
             </NavbarItem>
           </>
         )}
+         {(userRole === "manager")&& (
+          <>
+          
+            <NavbarItem>
+              <Link className="text-default-500" href="/kpi" size="sm">
+                KPI
+              </Link>
+            </NavbarItem>
+            <NavbarItem>
+              <Link className="text-default-500" href="/orders" size="sm">
+                Orders
+              </Link>
+            </NavbarItem>
+            <NavbarItem>
+              <Link className="text-default-500" href="/inventory-stock" size="sm">
+                Inventory
+              </Link>
+            </NavbarItem>
+            <NavbarItem>
+              <Link className="text-default-500" href="/manufacturing_tasks" size="sm">
+              QA error reports 
+              </Link>
+            </NavbarItem>
+            <NavbarItem>
+              <Link className="text-default-500" href="/manufacturing_tasks" size="sm">
+              Manufacturing Tasks
+              </Link>
+            </NavbarItem>
+            
+          </>
+        )}
 
         {userRole === "staff" && (
-          <NavbarItem>
+          <><NavbarItem>
             <Link className="text-default-500" href="/staff_manufacturing_tasks" size="sm">
-              My Tasks
+              Assigned Tasks
             </Link>
-          </NavbarItem>
+          </NavbarItem><NavbarItem>
+              <Link className="text-default-500" href="/assigned_picklist" size="sm">
+                Assigned Picklist
+              </Link>
+            </NavbarItem></>
         )}
 
         {userRole === "qa" && (

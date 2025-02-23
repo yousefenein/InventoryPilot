@@ -427,6 +427,7 @@ export default function ManuTasksTable() {
 
   const bottomContent = useMemo(() => {
     return (
+      
       <div className="flex flex-col justify-between gap-2 px-2 py-2 sm:flex-row">
         <Pagination
           isCompact
