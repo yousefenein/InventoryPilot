@@ -1,3 +1,13 @@
+"""
+This file contains test cases for user management functionalities 
+The tests cover:
+- Managing users: Admins can retrieve the list of all users while non-admins are restricted.
+- Adding users: Tests for successful user creation, handling duplicate emails, missing fields, and unauthenticated requests.
+- Editing users: Tests for retrieving and updating user details, including invalid data and non-existent users.
+- Deleting users: Tests for successful deletion, handling of non-existent users, and unauthenticated attempts.
+
+"""
+
 from django.test import TestCase
 from rest_framework.test import APIClient, APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken

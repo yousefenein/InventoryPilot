@@ -490,7 +490,7 @@ export default function InventoryTable() {
   }, [filterSelectedKeys, page, pages, filteredItems.length, onPreviousPage, onNextPage]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="loading-container">Loading... This may take a minute</div>;
   }
 
   return (

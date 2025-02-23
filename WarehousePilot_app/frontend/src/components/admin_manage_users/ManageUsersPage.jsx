@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 // import Sidebar from "../dashboard_sidebar/Sidebar";
 import Header from "../dashboard_sidebar/Header";
 import UsersTable from "./UsersTable";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-
 import SideBar from "../dashboard_sidebar1/App";
+import { useNavigate } from "react-router-dom";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function ManageUsersPage() {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -25,7 +26,7 @@ export default function ManageUsersPage() {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    const response = await axios.get('http://127.0.0.1:8000/auth/profile/', {
+                    const response = await axios.get(`${API_BASE_URL}/auth/profile/`, {
                         headers: { Authorization: `Bearer ${token}` },
                     });
                     setUserData(response.data);
@@ -36,26 +37,6 @@ export default function ManageUsersPage() {
         };
         fetchUserData();
     }, []);
-
-
-    // Check that the user is an admin
-    useEffect(() => {
-        const user = localStorage.getItem("user");
-        if (user) {
-            const parsedUser = JSON.parse(user);
-            if (parsedUser.role != "admin") {
-                // Navigate to correct dashboard
-                if (parsedUser.role == "manager") {
-                    navigate("/manager_dashboard");
-                } else {
-                    navigate("/dashboard");
-                }
-            }
-        } else {
-            alert("Not logged in");
-            navigate("/");
-        }
-    }, [navigate]);
 
     return (
         <div className="h-full">

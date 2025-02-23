@@ -9,6 +9,7 @@ import Header from '../dashboard_sidebar/Header';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+
 function ChangePassword() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -56,6 +57,7 @@ function ChangePassword() {
         }, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         setSuccess('Password changed successfully');
         setError('');
       } catch (error) {

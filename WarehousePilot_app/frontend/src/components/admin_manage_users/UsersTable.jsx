@@ -4,6 +4,8 @@ import { DataGrid } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 // Pagination defaults
 const DEFAULT_PAGINATION = {
     page: 0,
@@ -17,14 +19,12 @@ export default function UsersTable({ onStaffCountChange }) {
     // Function to fetch user data from the backend API
     const fetchData = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:8000/admin_dashboard/manage_users', {
+            const response = await axios.get(`${API_BASE_URL}/admin_dashboard/manage_users`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             setAllUsers(response.data); // Store the raw data
             onStaffCountChange(response.data.length); // Notify parent of staff count
-            console.log('User data has been retrieved successfully');
         } catch (error) {
-            console.error('Getting users failed:', error);
             alert("Couldn't get users");
         }
     };
@@ -32,13 +32,13 @@ export default function UsersTable({ onStaffCountChange }) {
     // Handle delete action
     const deleteUser = async (user_id) => {
         try {
-            const response = await axios.delete(`http://127.0.0.1:8000/admin_dashboard/delete_user/${user_id}/`, {
+            const response = await axios.delete(`${API_BASE_URL}/admin_dashboard/delete_user/${user_id}/`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
-            alert(response.data.message);
+            //alert(response.data.message);
             fetchData(); // Refresh data after deletion
         } catch (error) {
-            console.error('Failed to delete user:', error);
+            logging('error', `Failed to delete user in client - ${error}`);
             alert("Couldn't delete the user.");
         }
     };

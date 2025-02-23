@@ -1,3 +1,14 @@
+# This file defines views for inventory and order management.
+
+# get_inventory: Fetches inventory data and categorizes items by stock levels.
+# delete_inventory_items: Deletes inventory items based on provided item IDs.
+# add_inventory_item: Adds a new item to the inventory.
+# get_csrf_token: Returns a CSRF token for frontend use.
+# InventoryView: Retrieves inventory data via a raw SQL query.
+# AssignOrderView: Assigns an order to a staff member by user_id.
+# AssignedPicklistView: Fetches picklists assigned to the current user that are in progress.
+# PickPicklistItemView: Updates the status of a picklist item to 'picked' by a staff member.
+
 import logging
 from django.http import JsonResponse
 from django.core.mail import send_mail
@@ -10,8 +21,6 @@ from .models import InventoryPicklist, InventoryPicklistItem, Inventory
 from .serializers import OrderSerializer
 from auth_app.models import users
 
-
-logger = logging.getLogger(__name__)
 
 # def send_alert(item):
 #     send_mail(
@@ -29,6 +38,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+# Django logger for backend
+logger = logging.getLogger('WarehousePilot_app')
 
 def get_inventory(request):
     try:
@@ -39,16 +50,20 @@ def get_inventory(request):
             qty = item['qty']
             if qty == 0:
                 item['status'] = 'Out of Stock'
+                #logger.info(f"get_inventory - Item {item['sku_color_id']} is out of stock")
             elif qty < 50:
                 item['status'] = 'Low'
                 low_stock_items.append(item)
+                #logger.info(f"get_inventory - Item {item['sku_color_id']} is in low stock")
                 # send_alert(item)
             elif 50 <= qty <= 100:
                 item['status'] = 'Moderate'
             else:
                 item['status'] = 'High'
+        #logger.info("Items from inventory retrieved from database")
         return JsonResponse({"inventory": inventory_list, "low_stock_items": low_stock_items}, safe=False)
     except Exception as e:
+        #logger.error("Failed to retrieve items and their status from the inventory (get_inventory)")
         return JsonResponse({"error": str(e)}, status=500)
 
 @csrf_exempt
@@ -58,8 +73,10 @@ def delete_inventory_items(request):
         data = json.loads(request.body)
         item_ids = data.get('item_ids', [])
         Inventory.objects.filter(inventory_id__in=item_ids).delete()
+        #logger.info("Items %s have been deleted successfully", ','.join([str(x) for x in item_ids]))
         return JsonResponse({"message": "Items deleted successfully"}, status=200)
     except Exception as e:
+        #logger.error("Failed to delete items from the inventory (delete_inventory_items)")
         return JsonResponse({"error": str(e)}, status=500)
 
 @csrf_exempt
@@ -74,26 +91,10 @@ def add_inventory_item(request):
             warehouse_number=data["warehouse_number"],
             amount_needed=data["amount_needed"],
         )
+        #logger.info("Item %s have been successfully added to the inventory", data["sku_color_id"])
         return JsonResponse({"message": "Item added successfully", "item": new_item.inventory_id}, status=201)
     except Exception as e:
-        logger.error("Failed to add inventory item: %s", str(e))
-        return JsonResponse({"error": str(e)}, status=500)
-
-@csrf_exempt
-@require_POST
-def add_inventory_item(request):
-    try:
-        data = json.loads(request.body)
-        new_item = Inventory.objects.create(
-            location=data["location"],
-            sku_color_id=data["sku_color_id"],
-            qty=data["qty"],
-            warehouse_number=data["warehouse_number"],
-            amount_needed=data["amount_needed"],
-        )
-        return JsonResponse({"message": "Item added successfully", "item": new_item.inventory_id}, status=201)
-    except Exception as e:
-        logger.error("Failed to add inventory item: %s", str(e))
+        #logger.error("Failed to add inventory item: %s (add_inventory_item)", str(e))
         return JsonResponse({"error": str(e)}, status=500)
 
 def get_csrf_token(request):
@@ -121,34 +122,44 @@ class InventoryView(APIView):
                 "warehouse_number": row[3],
             } for row in result]
             
+            logger.info("Successfully retrieved all items from the inventory")
             return Response(inventory_data)
         except Exception as e:
+            logger.error("Failed to retrieve items from the inventory (InventoryView)")
             return Response({"error": str(e)}, status=500)
 
 class AssignOrderView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, order_id):
-        print(f"[DEBUG] order_id from URL: {order_id}")
+        #logger.debug(f"[DEBUG] order_id from URL: {order_id}")
         user_id = request.data.get('user_id')
-        print(f"[DEBUG] user_id from body: {user_id}")
+        #logger.debug(f"[DEBUG] user_id from body: {user_id}")
         if not user_id:
+            #logger.error("User ID is required to assign order (AssignOrderView)")
             return Response({"detail": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
+        if request.user.role not in ['admin', 'manager']:
+            #logger.error("Unauthorized user - only staff users can access picklist picking")
+            return Response({"error": "Not do not have permission to assign an order."}, status=403)
+
         try:
-            order = InventoryPicklist.objects.get(order_id=order_id)
+            order = InventoryPicklist.objects.get(order_id=str(order_id))
         except InventoryPicklist.DoesNotExist:
+            #logger.error("Order could not be found (AssignOrderView)")
             return Response({"detail": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
         try:
             staff_user = users.objects.get(user_id=user_id, role='staff')
         except users.DoesNotExist:
+            #logger.error("Staff user could not be found (AssignOrderView)")
             return Response({"detail": "Staff user not found"}, status=status.HTTP_404_NOT_FOUND)
 
         order.assigned_employee_id = staff_user
         order.save()
 
         serializer = OrderSerializer(order)
+        logger.info("Employee %s was successfully assigned to order %s", order.assigned_employee_id, order_id)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class AssignedPicklistView(APIView):
@@ -177,9 +188,11 @@ class AssignedPicklistView(APIView):
                     "assigned_to": picklist.assigned_employee_id.first_name + " " + picklist.assigned_employee_id.last_name if picklist.assigned_employee_id else None
                 })
 
+            logger.info("Employee %s was assigned to picklists %s", current_user, ', '.join([str(x.order_id.order_id) for x in assigned_picklists]))
             return Response(response_data, status=status.HTTP_200_OK)
 
         except Exception as e:
+            logger.error("Failed to fetch assigned picklist(s) to an employee (AssignedPicklistView)")
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -193,12 +206,15 @@ class PickPicklistItemView(APIView):
         try:
             item = InventoryPicklistItem.objects.get(picklist_item_id=picklist_item_id)
         except InventoryPicklistItem.DoesNotExist:
+            #logger.error("Item %s was not found", picklist_item_id)
             return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        if request.user.role != 'staff':
+        if request.user.role == 'qa':
+            #logger.error("Unauthorized user - only staff users can access picklist picking")
             return Response({"error": "Not allowed. You need login as a staff "}, status=403)
 
         item.status = True
         item.save()
 
+        #logger.info("Item %s has been successfully picked", picklist_item_id)
         return Response({"message": "Item picked successfully"}, status=status.HTTP_200_OK)

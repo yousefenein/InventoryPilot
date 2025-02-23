@@ -12,7 +12,7 @@ import React, { useState, useEffect } from "react";import {
 } from "@nextui-org/react";
 import {Icon} from "@iconify/react";
 
-import {items} from "./sidebar-items";
+import {getSidebarItems} from "./sidebar-items";
 import { CsfIcon } from "./csf";
 
 import Sidebar from "./sidebar";
@@ -42,6 +42,8 @@ export default function SideBar() {
       setUser({ name: parsedUser.first_name, role: parsedUser.role });
     }
   }, []);
+  const token = localStorage.getItem("token");
+  console.log("Token from localStorage:", token); // Debugging
 
   return (
     <div style={{ width: '0px',  height: '0px' }}> 
@@ -84,7 +86,7 @@ export default function SideBar() {
             <div className="relative flex h-full w-72 flex-1 flex-col p-6">
               <div className="flex items-center gap-2 px-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground">
-                  {/* ICON LOGO className="text-background" /> */}
+                  <CsfIcon className="text-background" />
                 </div>
                 <span className="text-small font-bold uppercase text-foreground">CSF</span>
               </div>
@@ -102,11 +104,12 @@ export default function SideBar() {
               </div>
 
               <ScrollShadow className="-mr-6 h-full max-h-full py-6 pr-6">
-                <Sidebar defaultSelectedKey="dashboard" items={items} />
+                <Sidebar defaultSelectedKey="dashboard" items={getSidebarItems()} />
               </ScrollShadow>
 
               <Spacer y={8} />
               <div className="mt-auto flex flex-col">
+              {(user?.role === 'admin') && (
               <Button
                   className="justify-start text-default-500 data-[hover=true]:text-foreground"
                   startContent={
@@ -121,6 +124,7 @@ export default function SideBar() {
                 >
                  Users
                 </Button>
+              )}
                 <Button
                   className="justify-start text-default-500 data-[hover=true]:text-foreground"
                   startContent={
