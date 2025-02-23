@@ -207,6 +207,12 @@ class StartOrderView(APIView):
     def post(self, request, order_id):
         try:
             order = get_object_or_404(Orders, order_id=order_id)
+            
+            # Ensure the default status is "Not Started" if it is NULL
+            if order.status is None:
+                order.status = "Not Started"
+                order.save()
+
 
             if order.status == 'In Progress':
                 return JsonResponse({'status': 'error', 'message': 'Order is already in progress'}, status=400)
@@ -315,7 +321,9 @@ class InventoryPicklistItemsView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         except InventoryPicklist.DoesNotExist:
+
             logger.error("Picklist could not be found for order %s (InventoryPicklistItemsView)", order_id)
+
             return Response(
                 {"error": "No picklist found for the given order"},
                 status=status.HTTP_404_NOT_FOUND
