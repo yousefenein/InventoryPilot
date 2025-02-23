@@ -31,7 +31,7 @@ class QADashboardViewsTest(APITestCase):
             password="password",
             email="qa@example.com",
             role="qa",
-            dob="1990-01-01",
+            date_of_hire="1990-01-01",
             first_name="QA",
             last_name="User",
             department="QA"
@@ -41,7 +41,7 @@ class QADashboardViewsTest(APITestCase):
             password="password",
             email="manager@example.com",
             role="manager",
-            dob="1990-01-01",
+            date_of_hire="1990-01-01",
             first_name="Manager",
             last_name="User",
             department="Management"
@@ -51,7 +51,7 @@ class QADashboardViewsTest(APITestCase):
             password="password",
             email="other@example.com",
             role="employee",
-            dob="1990-01-01",
+            date_of_hire="1990-01-01",
             first_name="Other",
             last_name="User",
             department="Sales"
