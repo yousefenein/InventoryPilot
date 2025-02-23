@@ -17,7 +17,7 @@ const AccountManagement = () => {
               role: "",
               firstName: "",
               lastName: "",
-              department: "",
+              department: " ",
             });
           }, 500)
         );
