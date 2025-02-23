@@ -29,7 +29,7 @@ function AccountManagement() {
   }, []);
 
     return (
-      <div>
+        <div className="flex h-full">
         {/* Sidebar */}
         <SideBar />
         <NavBar/>
