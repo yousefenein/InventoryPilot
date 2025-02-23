@@ -79,7 +79,7 @@ function ChangePassword() {
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Change Password</h1>
             <p className="text-gray-500 text-base">
-              Enter your current password and set a new one below.
+              Please enter your current password and set a new one below.
             </p>
           </div>
 
