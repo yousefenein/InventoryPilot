@@ -230,6 +230,11 @@ const QAErrorListView = () => {
                     page={page}
                     initialPage={1}
                     onChange={(newPage) => setPage(newPage)}
+                    color="default"
+                    classNames={{
+                      item: "bg-white text-black",
+                      cursor: "bg-black text-white",
+                    }}
                   />
                 </div>
               </>

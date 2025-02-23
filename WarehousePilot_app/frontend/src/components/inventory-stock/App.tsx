@@ -431,9 +431,14 @@ export default function InventoryTable() {
           <Popover>
             <PopoverTrigger>
               <Button isIconOnly variant="flat">
-                <Badge color="danger" content=" " shape="circle" isInvisible={!unreadNotifications}>
-                  <Icon icon="solar:bell-outline" width={24} />
-                </Badge>
+              <Badge
+  style={{ backgroundColor: "#b91c1c" }} // Custom red color
+  content=" "
+  shape="circle"
+  isInvisible={!unreadNotifications}
+>
+  <Icon icon="solar:bell-outline" width={24} />
+</Badge>
               </Button>
             </PopoverTrigger>
             <PopoverContent>
@@ -442,7 +447,7 @@ export default function InventoryTable() {
           </Popover>
           <Popover isOpen={isAddItemPopoverOpen} onOpenChange={setIsAddItemPopoverOpen}>
             <PopoverTrigger>
-              <Button color="primary" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
+              <Button className= "bg-gray-300" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
                 Add Item
               </Button>
             </PopoverTrigger>
@@ -465,11 +470,15 @@ export default function InventoryTable() {
           isCompact
           showControls
           showShadow
-          color="primary"
+        classNames={{
+            item: "bg-white text-black",
+            cursor: "bg-black text-white",
+                    }}
           page={page}
           total={pages}
           onChange={setPage}
         />
+      
         <div className="flex items-center justify-end gap-6 ml-auto">
           <span className="text-small text-default-400">
             {filterSelectedKeys === "all"

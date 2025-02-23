@@ -21,6 +21,9 @@ import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+
+
+
 const InventoryPicklistItem = () => {
   const { order_id } = useParams();
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -191,9 +194,12 @@ const InventoryPicklistItem = () => {
 
   // ... (keep all the imports and component code the same until the return statement)
 
+  // const [isHovered, setIsHovered] = useState(false);
+
   const handleLabelClick = (picklistItemId) => {
     navigate(`/label/${picklistItemId}`);
   };
+
 
   return (
     <div className="flex h-full">
@@ -222,6 +228,18 @@ const InventoryPicklistItem = () => {
             />
 
             <Button
+           style={{
+            color: '#b91c1c',
+            padding: '8px 16px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease',
+          
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+            
+              // variant="light"
               color="default"
               variant="faded"
               onPress={() => {

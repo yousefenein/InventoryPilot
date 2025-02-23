@@ -86,7 +86,7 @@ function AccountManagement() {
           <div className="mt-6 flex justify-center lg:justify-start">
             <button
               type="button"
-              className="px-6 py-3 text-white bg-blue-600 rounded-lg shadow hover:bg-blue-700 transition duration-300"
+              className="px-6 py-3 text-white bg-black rounded-lg shadow transition duration-300"
               onClick={() => navigate("/change_password")}
             >
               Change Password

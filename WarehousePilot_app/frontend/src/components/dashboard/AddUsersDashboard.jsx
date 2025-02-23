@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Sidebar from "../dashboard_sidebar/Sidebar";
-import Header from "../dashboard_sidebar/Header";
+import SideBar from "../dashboard_sidebar1/App";
+// import Header from "../dashboard_sidebar/Header";
 import UserForm from "./UseForm";
 
 
@@ -12,17 +12,17 @@ const AddUsersDashboard = ({ userData }) => {
   };
 
   return (
-    <div className="flex">
+    <div>
       {/* Sidebar */}
-      <Sidebar userData={userData} isOpen={isSidebarOpen} />
+      <SideBar />
 
       {/* Main Content */}
-      <div className="flex-1 sm:ml-64">
+      
         {/* Header */}
-        <Header userData={userData} toggleSidebar={toggleSidebar} />
+        {/* <Header userData={userData} toggleSidebar={toggleSidebar} /> */}
 
         {/* KPI Dashboard Content */}
-        <main className="p-6 bg-gray-100 h-screen my-6">
+        <main className="p-6 h-screen my-6">
          
 
           
@@ -30,7 +30,7 @@ const AddUsersDashboard = ({ userData }) => {
          
         </main>
       </div>
-    </div>
+    
   );
 };
 
