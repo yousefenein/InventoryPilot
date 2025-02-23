@@ -7,7 +7,7 @@ import React, { useState } from "react";
 // import OrderFulfillmentRate from "./OrderFulfillmentRate";
 // import StockLevelsPreview from "./StockLevelsPreview";
 import SideBar from "../dashboard_sidebar1/App";
-
+import NavBar from "../navbar/App";
 const KPIDashboard = ({ userData }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 

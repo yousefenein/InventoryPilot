@@ -239,7 +239,9 @@ const InventoryPicklistItem = () => {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
             
-              variant="light"
+              // variant="light"
+              color="default"
+              variant="faded"
               onPress={() => {
                 if (userRole === "admin" || userRole === "manager") {
                   navigate("/inventory_and_manufacturing_picklist");
