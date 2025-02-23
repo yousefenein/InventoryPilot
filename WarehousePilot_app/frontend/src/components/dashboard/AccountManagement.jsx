@@ -38,14 +38,13 @@ function AccountManagement() {
         <div className="ml-4">
           {/* Header Section */}
           <div className="mb-4">
-  <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mt-2 lg:mt-4 mb-2">
-    Account Management
-  </h1>
-  <p className="text-base lg:text-lg text-gray-600">
-    This is the overview page where you can view your account details.
-  </p>
-</div>
-
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mt-2 lg:mt-4 mb-2">
+                Account Management
+            </h1>
+            <p className="text-base lg:text-lg text-gray-600">
+            This is the overview page where you can view your account details.
+            </p>
+        </div>
 
           {/* Information Section */}
           {userData ? (
