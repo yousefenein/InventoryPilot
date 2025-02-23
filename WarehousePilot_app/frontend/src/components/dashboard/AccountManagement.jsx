@@ -29,7 +29,7 @@ function AccountManagement() {
   }, []);
 
     return (
-        <div className="flex h-full">
+      <div>
         {/* Sidebar */}
         <SideBar />
         <NavBar/>
@@ -42,9 +42,11 @@ function AccountManagement() {
                 Account Management
             </h1>
             <p className="text-base lg:text-lg text-gray-600">
-            This is the overview page where you can view your account details.
+                This is the overview page where you can view your account details.
             </p>
         </div>
+
+
 
           {/* Information Section */}
           {userData ? (
