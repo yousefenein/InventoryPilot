@@ -52,6 +52,17 @@ return [
     title: "QA Tasks",
   },] : [])
   ,
+  ...(userRole === "qa" || userRole === "manager"
+  ? [
+      {
+        key: "qa_error_reports",
+        href: "/qa_error_list_view",
+        icon: "heroicons-outline:exclamation-circle", // ⚠️ New Exclamation Circle Icon
+        title: "QA Error Reports",
+      },
+    ]
+  : []),
+
   ...(userRole === 'staff' ? [{
     key: "assigned_picklist",
     href: "/assigned_picklist",

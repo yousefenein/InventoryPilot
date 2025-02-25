@@ -15,6 +15,8 @@ import ManufacturingListItem from '../orders/ManufacturingListItem';
 import QATasks from '../orders/QAtasks';
 import StaffManufacturingTasks from '../manufacturing/StaffManufacturingTasks';
 import ManuTasksTable from '../manufacturing/ManufacturingTasks/manu-tasks/App';
+import QAErrorListView from '../orders/QAErrorListview';
+import CTPOTable from '../kpis/CTPO/CTPO_main';
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
@@ -47,6 +49,8 @@ export const dashboard_routes = [
   { path: '/qa_tasks', element: <ProtectedRoute element={<QATasks />} /> },
   { path: '/staff_manufacturing_tasks', element: <ProtectedRoute element={<StaffManufacturingTasks />} /> }, 
   { path: '/manufacturing_tasks', element: <ProtectedRoute element={<ManuTasksTable />} /> },
-
+  { path: '/qa_error_list_view', element: <ProtectedRoute element={<QAErrorListView />} /> },
+  {path: '/CTPO', element: <ProtectedRoute element={<CTPOTable />} />},
+  
 ];
 

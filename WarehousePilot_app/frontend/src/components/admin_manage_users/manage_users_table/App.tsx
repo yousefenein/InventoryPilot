@@ -500,7 +500,7 @@ export default function ManageUsersTable() {
           </Chip>
         </div>
         <Button
-          color="primary"
+          className="bg-black  text-white"
           endContent={<Icon icon="solar:add-circle-bold" width={20} />}
           onPress={() => navigate('/admin_dashboard/add_users')}
         >
@@ -517,7 +517,10 @@ export default function ManageUsersTable() {
           isCompact
           showControls
           showShadow
-          color="primary"
+          classNames={{
+            item: "bg-white text-black",
+            cursor: "bg-black text-white",
+                    }}
           page={page}
           total={pages}
           onChange={setPage}

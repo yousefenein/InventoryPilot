@@ -1,14 +1,10 @@
-// route: change_password
-// Checks old password and takes a new one. Changes the password in the database.
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Sidebar from '../dashboard_sidebar/Sidebar';
-import Header from '../dashboard_sidebar/Header';
+import SideBar from "../dashboard_sidebar1/App";
+import NavBar from "../navbar/App";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 
 function ChangePassword() {
   const [oldPassword, setOldPassword] = useState('');
@@ -16,8 +12,6 @@ function ChangePassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [userData, setUserData] = useState(null);
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,10 +19,9 @@ function ChangePassword() {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await axios.get(`${API_BASE_URL}/auth/profile/`, {
+          await axios.get(`${API_BASE_URL}/auth/profile/`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          setUserData(response.data);
         } catch (error) {
           console.error('Error fetching user data:', error);
         }
@@ -37,92 +30,122 @@ function ChangePassword() {
     fetchUserData();
   }, []);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!isSidebarOpen);
-  };
-
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
+      setError('New passwords do not match.');
       return;
     }
 
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const response = await axios.post(`${API_BASE_URL}/auth/change_password/`, {
-          old_password: oldPassword,
-          new_password: newPassword,
-        }, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.post(
+          `${API_BASE_URL}/auth/change_password/`,
+          {
+            old_password: oldPassword,
+            new_password: newPassword,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-        setSuccess('Password changed successfully');
+        setSuccess('Password changed successfully.');
         setError('');
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
       } catch (error) {
-        setError('Error changing password');
+        setError('Error changing password. Please try again.');
         setSuccess('');
       }
     }
   };
 
   return (
-    <div className="flex">
+    <div className="flex h-full">
       {/* Sidebar */}
-      <Sidebar userData={userData} isOpen={isSidebarOpen} />
+      <SideBar />
 
       {/* Main Content */}
-      <div className="flex-1 sm:ml-64">
+      <div className="flex-1">
         {/* Navbar */}
-        <Header userData={userData} toggleSidebar={toggleSidebar} />
+        <NavBar />
+
         {/* Page Content */}
-        <main className="p-4 mt-16 bg-gray-100">
-          <h1>Change Password</h1>
-          <form onSubmit={handlePasswordChange} className='max-w-md'>
-            <div className="mb-4">
-              <label htmlFor='old-password' className="block text-gray-700">Old Password:</label>
+        <div className="p-8 mt-2 ml-2 max-w-2xl">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Change Password</h1>
+            <p className="text-gray-500 text-base">
+              Please enter your current password and set a new one below.
+            </p>
+          </div>
+
+          {/* Form Section */}
+          <form onSubmit={handlePasswordChange} className="w-full">
+            {/* Old Password */}
+            <div className="mb-5">
+              <label htmlFor="old-password" className="block text-gray-700 font-medium mb-2">
+                Old Password:
+              </label>
               <input
                 type="password"
-                id='old-password'
+                id="old-password"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter your old password"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-            <div className="mb-4">
-              <label htmlFor='new-password' className="block text-gray-700">New Password:</label>
+
+            {/* New Password */}
+            <div className="mb-5">
+              <label htmlFor="new-password" className="block text-gray-700 font-medium mb-2">
+                New Password:
+              </label>
               <input
                 type="password"
-                id='new-password'
+                id="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter new password"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-            <div className="mb-4">
-              <label htmlFor='confirm-new-password' className="block text-gray-700">Confirm New Password:</label>
+
+            {/* Confirm New Password */}
+            <div className="mb-5">
+              <label htmlFor="confirm-new-password" className="block text-gray-700 font-medium mb-2">
+                Confirm New Password:
+              </label>
               <input
                 type="password"
-                id='confirm-new-password'
+                id="confirm-new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Re-enter new password"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-            {error && <p className="text-red-500">{error}</p>}
-            {success && <p className="text-green-500">{success}</p>}
+
+            {/* Feedback Messages */}
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
+
+            {/* Submit Button */}
             <button
               type="submit"
-              className="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-700"
+              className="w-full py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition duration-200"
             >
               Change Password
             </button>
           </form>
-        </main>
+        </div>
       </div>
     </div>
   );

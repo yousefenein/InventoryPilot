@@ -19,7 +19,6 @@ import logging
 # Django logger for backend
 logger = logging.getLogger('WarehousePilot_app')
 
-# Create your views here.
 def home(request):
     return HttpResponse("Hello, World!")
 
@@ -67,7 +66,7 @@ class AddUserView(APIView):
                     first_name=data['first_name'],
                     last_name=data['last_name'],
                     department=data['department'],
-                    dob = data['dob']
+                    date_of_hire = data['date_of_hire']
 
                 )
                 logger.info("User created successfully")

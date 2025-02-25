@@ -14,7 +14,7 @@ export default function UserForm() {
   const [password, setPassword] = useState("");
   const [department, setDepartment] = useState("");
   const [role, setRole] = useState("");
-  const [dob, setDob] = useState("");
+  const [date_of_hire, setDateOfHire] = useState("");
   const [feedback, setFeedback] = useState("Message");
   const [showModal, setShowModal] = useState(false);
   const [LinkToPage, setLinkToPage] = useState("");
@@ -26,7 +26,7 @@ export default function UserForm() {
 
   const typesOfUsers = ["Admin", "Manager", "Staff", "QA"];
   const today = new Date();
-  const minDOB = new Date(today.getFullYear() - 14, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+  // const minDate = new Date(today.getFullYear() - 14, today.getMonth(), today.getDate()).toISOString().split('T')[0];
     // Check that the user is an admin (only admins should be able to navigate to this page and add users)
     useEffect(() => {
       const user = localStorage.getItem("user");
@@ -70,7 +70,7 @@ export default function UserForm() {
             setEmail(userData.email || "");
             setDepartment(userData.department || "");
             setRole(userData.role || "");
-            setDob(userData.dob ? userData.dob.split("T")[0] : "");
+            setDateOfHire(userData.date_of_hire ? userData.date_of_hire.split("T")[0] : "");
           }
         } catch (error) {
           console.error("Failed to fetch user data:", error.response?.data || error.message);
@@ -91,23 +91,21 @@ export default function UserForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
-
+  
     if (!token) {
       alert("No token found. Please log in again.");
       navigate("/");
       return;
     }
-    // Validate information before submitting request
-    // If the user is less than 14 years old, show an error message and dont add the user to the database
-    if(dob > minDOB){
-      setFeedback("The user must be at least 14 years old. Please adjust the birthdate accordingly.");
-      setHeader("Error");
+  
+    // Validate date of hire (user must be at least 14 years old)
+    if (date_of_hire > today) {
+      setFeedback("The staff's hire date cannot be in the future. Please adjust the date of hire accordingly.");
+      setHeader("Error"); // Set the header to "Error" for invalid date of hire
       setShowModal(true);
-      //setLinkToPage("/admin_dashboard/add_users");
       return;
     }
-
-    // Make the add/edit request
+  
     try {
       const userData = {
         username,
@@ -116,19 +114,19 @@ export default function UserForm() {
         email,
         department,
         role,
-        dob,
+        date_of_hire,
       };
-
+  
       if (!isEditMode) {
-        userData.password = password;
+        userData.password = password; // Add password for new users
       }
-
+  
       const url = isEditMode
         ? `${API_BASE_URL}/admin_dashboard/edit_user/${user_id}/`
         : `${API_BASE_URL}/admin_dashboard/add_user/`;
-
+  
       const method = isEditMode ? "put" : "post";
-
+  
       const response = await axios({
         method,
         url,
@@ -138,18 +136,21 @@ export default function UserForm() {
           "Content-Type": "application/json",
         },
       });
-
-      // handle response, feedback, and redirect
+  
+      // On success, set feedback and header to "Success"
       setFeedback(`User has been ${isEditMode ? "updated" : "added"} successfully. You will now be redirected to the users page.`);
-      setHeader("Error");
+      setHeader("Success"); // Success message
       setShowModal(true);
       setLinkToPage("/admin_dashboard/manage_users");
     } catch (error) {
+      // On error, set feedback and header to "Error"
       console.error("Submission failed:", error.response?.data || error.message);
-      alert(`Couldn't ${isEditMode ? "update" : "add"} user`);
+      setFeedback(`Failed to ${isEditMode ? "update" : "add"} user. Please try again.`);
+      setHeader("Error");
+      setShowModal(true);
     }
   };
-
+  
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
       <div className="flex flex-col lg:flex-row gap-6">
@@ -186,7 +187,7 @@ export default function UserForm() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               )}
-              <InputField label="DOB" type="date" value={dob} onChange={(e) => setDob(e.target.value)} minValue={minDOB}/>
+              <InputField label="Date Of Hire" type="date" value={date_of_hire} onChange={(e) => setDateOfHire(e.target.value)} minValue={today}/>
               <InputField label="Department" value={department} onChange={(e) => setDepartment(e.target.value)} />
               <Dropdown label="Role" options={typesOfUsers} value={role} required={true} onChange={(e) => setRole(e.target.value)} />
             </div>

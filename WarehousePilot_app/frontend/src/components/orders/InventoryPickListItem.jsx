@@ -11,6 +11,7 @@ import {
   Button,
   Modal,
   ModalContent,
+  Tab,
 } from "@nextui-org/react";
 import { SearchIcon } from "@nextui-org/shared-icons";
 import { useNavigate, useParams } from "react-router-dom";
@@ -19,6 +20,9 @@ import axios from "axios";
 
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+
+
 
 const InventoryPicklistItem = () => {
   const { order_id } = useParams();
@@ -190,6 +194,13 @@ const InventoryPicklistItem = () => {
 
   // ... (keep all the imports and component code the same until the return statement)
 
+  // const [isHovered, setIsHovered] = useState(false);
+
+  const handleLabelClick = (picklistItemId) => {
+    navigate(`/label/${picklistItemId}`);
+  };
+
+
   return (
     <div className="flex h-full">
       <SideBar isOpen={isSidebarOpen} />
@@ -217,8 +228,20 @@ const InventoryPicklistItem = () => {
             />
 
             <Button
-              color="primary"
-              variant="light"
+           style={{
+            color: '#b91c1c',
+            padding: '8px 16px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease',
+          
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+            
+              // variant="light"
+              color="default"
+              variant="faded"
               onPress={() => {
                 if (userRole === "admin" || userRole === "manager") {
                   navigate("/inventory_and_manufacturing_picklist");
@@ -256,6 +279,7 @@ const InventoryPicklistItem = () => {
                         <TableColumn>Quantity</TableColumn>
                         <TableColumn>Status</TableColumn>
                         <TableColumn>Action</TableColumn>
+                        <TableColumn>Label</TableColumn>
                       </TableHeader>
                       <TableBody>
                         {paginatedInventoryItems.map((item) => (
@@ -276,6 +300,14 @@ const InventoryPicklistItem = () => {
                                   onChange={() => openPickModal(item)}
                                 />
                               )}
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                               color="primary"
+                               size="sm"
+                                onPress={() => handleLabelClick(item.picklist_item_id)}>
+                                View Label
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
