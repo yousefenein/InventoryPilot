@@ -20,6 +20,7 @@ from django.middleware.csrf import get_token
 from .models import InventoryPicklist, InventoryPicklistItem, Inventory
 from .serializers import OrderSerializer
 from auth_app.models import users
+from django.utils import timezone
 
 
 # def send_alert(item):
@@ -209,12 +210,16 @@ class PickPicklistItemView(APIView):
             #logger.error("Item %s was not found", picklist_item_id)
             return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        # If your role check remains the same:
         if request.user.role == 'qa':
-            #logger.error("Unauthorized user - only staff users can access picklist picking")
+             #logger.error("Unauthorized user - only staff users can access picklist picking")
             return Response({"error": "Not allowed. You need login as a staff "}, status=403)
 
-        item.status = True
-        item.save()
+        # Only set picked_at if it's not already picked
+        if not item.status:
+            item.status = True
+            item.picked_at = timezone.now()  # <-- set the pick time
+            item.save()
+            #logger.info("Item %s has been successfully picked", picklist_item_id)
 
-        #logger.info("Item %s has been successfully picked", picklist_item_id)
         return Response({"message": "Item picked successfully"}, status=status.HTTP_200_OK)
