@@ -1,6 +1,9 @@
 from django.urls import path
 from . import views
+from .views import daily_picks_data, daily_picks_details
 
 urlpatterns = [
     path('order-picking-accuracy/', views.order_picking_accuracy, name='order_picking_accuracy'),
+    path('order-picking-daily-stats/', daily_picks_data, name='daily_picks_data'),
+    path('order-picking-daily-details/', daily_picks_details, name='daily_picks_details'),
 ]
