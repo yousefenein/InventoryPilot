@@ -1,8 +1,7 @@
-import React, { useState } from "react";
-import { Input, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
+import React, { useState, useEffect, useRef } from "react";
+import { Input, Button } from "@nextui-org/react";
 import type { Inventory, StatusOptions } from "./data";
 import { toast } from "react-toastify";
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 type AddItemFormProps = {
@@ -20,6 +19,7 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, onCancel })
     status: "Low" as StatusOptions,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const skuColorIdRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (key: keyof Omit<Inventory, "inventory_id">, value: string | number) => {
     setNewItem((prev) => ({ ...prev, [key]: value }));
@@ -50,6 +50,20 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, onCancel })
     }
   };
 
+  useEffect(() => {
+    const handleBarcodeScan = (event: Event) => {
+      if (skuColorIdRef.current && event.target === skuColorIdRef.current) {
+        console.log("Barcode scanned:", (event.target as HTMLInputElement).value); 
+        handleChange("sku_color_id", (event.target as HTMLInputElement).value);
+      }
+    };
+
+    window.addEventListener("input", handleBarcodeScan);
+    return () => {
+      window.removeEventListener("input", handleBarcodeScan);
+    };
+  }, []);
+
   return (
     <div className="p-4">
       <div className="mb-4">
@@ -66,6 +80,7 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, onCancel })
           value={newItem.sku_color_id}
           onChange={(e) => handleChange("sku_color_id", e.target.value)}
           fullWidth
+          ref={skuColorIdRef}
         />
       </div>
       <div className="mb-4">
