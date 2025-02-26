@@ -38,7 +38,8 @@ export type ColumnsKey =
   | "qty"
   | "warehouse_number"
   | "amount_needed"
-  | "status";
+  | "status"
+  | "edit";
 
 export const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = [
   "inventory_id",
@@ -48,6 +49,7 @@ export const INITIAL_VISIBLE_COLUMNS: ColumnsKey[] = [
   "warehouse_number",
   "amount_needed",
   "status",
+  "edit",
 ];
 
 export const columns = [
@@ -58,6 +60,7 @@ export const columns = [
   {name: "Inventory ID", uid: "inventory_id"},
   {name: "Amount Needed", uid: "amount_needed"},
   {name: "Stock Level", uid: "status"},
+  {name: "Edit", uid: "edit"},
 ];
 
 export const fetchInventoryData = async (): Promise<Inventory[]> => {
