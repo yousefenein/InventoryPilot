@@ -2,6 +2,7 @@ from django.db import models
 from orders.models import Orders
 from parts.models import Part
 from auth_app.models import users
+from django.utils import timezone
 # Create your models here.
 
 class Inventory(models.Model):
@@ -35,3 +36,7 @@ class InventoryPicklistItem(models.Model):
       amount = models.IntegerField()
       status = models.BooleanField() # True if picked, False if not picked
       item_picked_timestamp = models.DateTimeField(null=True, blank=True, default=None) # when the item has been picked
+      picked_at = models.DateTimeField(null=True, blank=True)
+
+def __str__(self):
+        return f"Picklist Item {self.picklist_item_id} - Status: {self.status}"
