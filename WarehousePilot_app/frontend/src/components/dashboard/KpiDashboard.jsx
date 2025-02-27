@@ -2,6 +2,8 @@ import React, { useState } from "react";
 // import Header from "../dashboard_sidebar/Header";
  import CycleTime from "./CycleTime";
  import OrderPickingAccuracy from "./OrderPickingAccuracy";
+
+
 // import StockLevels from "./StockLevels";
  import WarehouseThroughput from "./WarehouseThroughput";
 // import OrderFulfillmentRate from "./OrderFulfillmentRate";
@@ -43,7 +45,7 @@ const KPIDashboard = ({ userData }) => {
             <p className="text-red-500">-25%</p>
           </div>
           <div className="bg-white ps-4 p-4 shadow rounded-lg">
-            <h2 className="text-xl font-semibold">Picking Accuracy</h2>
+            <h2 className="text-xl font-semibold"></h2>
             <div className="accuracy-metrics">
               <OrderPickingAccuracy />
             </div>
