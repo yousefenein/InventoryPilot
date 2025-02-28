@@ -178,6 +178,14 @@ export default function InventoryTable() {
         return <div className="text-default-foreground">{cellValue}</div>;
       case "status":
         return <div className="flex items-center gap-2">{statusColorMap[cellValue as StatusOptions]} {cellValue}</div>;
+      case "edit":
+        return (
+          <div className="flex items-center gap-2">
+            <Button {...(getEditProps() as any)} ref={editRef} isIconOnly variant="flat">
+              <EditLinearIcon />
+            </Button>
+          </div>
+        );
       default:
         return cellValue;
     }
