@@ -12,8 +12,8 @@ import {
   Modal,
   ModalContent,
   Tab,
-} from "@nextui-org/react";
-import { SearchIcon } from "@nextui-org/shared-icons";
+} from "@heroui/react";
+import { SearchIcon } from "@heroui/shared-icons";
 import { useNavigate, useParams } from "react-router-dom";
 import SideBar from "../dashboard_sidebar1/App";
 import axios from "axios";
