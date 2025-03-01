@@ -28,6 +28,8 @@ const InventoryPicklistItem = () => {
   const { order_id } = useParams();
   const [inventoryItems, setInventoryItems] = useState([]);
   const [manufacturingItems, setManufacturingItems] = useState([]);
+  const [pickedQuantities, setPickedQuantities] = useState({});// changed 
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterValue, setFilterValue] = useState("");
@@ -134,7 +136,14 @@ const InventoryPicklistItem = () => {
   const totalManufacturingPages = Math.ceil(
     filteredManufacturingItems.length / rowsPerPage
   );
-
+  const handlePickedQuantityChange = (picklistItemId, value) => {
+    const newQuantity = parseInt(value, 10) || 0;
+    setPickedQuantities((prev) => ({
+      ...prev,
+      [picklistItemId]: newQuantity,
+    }));
+  };
+  
   // Pick Item Logic
   const openPickModal = (item) => {
     setSelectedItem(item);
@@ -154,9 +163,30 @@ const InventoryPicklistItem = () => {
         setError("No authorization token found");
         return;
       }
+    
+    const pickedQuantity = pickedQuantities[selectedItem.picklist_item_id] || 0; 
+    const requiredQuantity = selectedItem.quantity; 
+
+    closePickModal();
+    if (pickedQuantity < requiredQuantity) {
+      setPickedQuantities((prev) => ({
+        ...prev,
+        [selectedItem.picklist_item_id]: "", 
+      }));
+      alert(`There are missing picks. Please make sure you pick the required quantity.`);
+      return; 
+
+    } else if (pickedQuantity > requiredQuantity) {
+      setPickedQuantities((prev) => ({
+        ...prev,
+        [selectedItem.picklist_item_id]: "", 
+      }));
+      alert(`⚠ Overpicked! Required: ${requiredQuantity}, Picked: ${pickedQuantity}`);
+      return; 
+    }
       await axios.patch(
         `${API_BASE_URL}/inventory/inventory_picklist_items/${selectedItem.picklist_item_id}/pick/`,
-        {},
+        {picked_quantity: pickedQuantity},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -171,11 +201,12 @@ const InventoryPicklistItem = () => {
             : it
         )
       );
-      closePickModal();
+      
     } catch (err) {
       console.error("Error picking item:", err.response?.data || err.message);
       setError("Not allowed, you need to login as a staff");
     }
+  
   };
 
   // Apply pagination for inventory items
@@ -276,7 +307,8 @@ const InventoryPicklistItem = () => {
                         <TableColumn>Picklist Item ID</TableColumn>
                         <TableColumn>Location</TableColumn>
                         <TableColumn>SKU Color</TableColumn>
-                        <TableColumn>Quantity</TableColumn>
+                        <TableColumn>Required Quantity</TableColumn>
+                        <TableColumn>Picked Quantity</TableColumn>
                         <TableColumn>Status</TableColumn>
                         <TableColumn>Action</TableColumn>
                         <TableColumn>Label</TableColumn>
@@ -289,6 +321,17 @@ const InventoryPicklistItem = () => {
                             <TableCell>{item.sku_color}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={pickedQuantities[item.picklist_item_id] || ""}
+                                onChange={(e) =>
+                                  handlePickedQuantityChange(item.picklist_item_id, e.target.value)
+                                }
+                                disabled={item.status} 
+                                />
+                            </TableCell>
+                            <TableCell>
                               {item.status ? "Picked" : "To Pick"}
                             </TableCell>
                             <TableCell>
@@ -297,7 +340,11 @@ const InventoryPicklistItem = () => {
                               ) : (
                                 <input
                                   type="checkbox"
+                                  checked={pickedQuantities[item.picklist_item_id] === item.quantity} // ✅ Checkbox turns blue when correct
                                   onChange={() => openPickModal(item)}
+                                  style={{
+                                    cursor: "pointer", 
+                                  }}
                                 />
                               )}
                             </TableCell>
