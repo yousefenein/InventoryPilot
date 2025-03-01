@@ -11,6 +11,7 @@ import {
   Button,
   Modal,
   ModalContent,
+  ModalBody,
   Tab,
 } from "@heroui/react";
 import { SearchIcon } from "@heroui/shared-icons";

@@ -374,7 +374,7 @@ const InventoryPickList = () => {
         </>
       )}
       {/* Staff Assignment Modal */}
-      <Modal isOpen={assignModalOpen} onClose={handleCloseModal}>
+      <Modal isOpen={assignModalOpen} onClose={handleCloseModal} isDismissable={false}>
         <ModalContent>
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-4">Assign Staff</h2>
