@@ -95,13 +95,14 @@ def daily_picks_details(request):
 
 
 from django.http import JsonResponse
-from django.db.models import Count, Q, Exists, OuterRef
+from django.db.models import Count, Q
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
-from orders.models import Orders
+from orders.models import Orders, OrderPart
 from manufacturingLists.models import ManufacturingTask
 from inventory.models import Part
-import logging
 from datetime import timedelta, datetime
+from dateutil.relativedelta import relativedelta
+import logging
 import traceback
 
 logger = logging.getLogger(__name__)
@@ -110,186 +111,117 @@ def order_fulfillment_rate(request):
     """
     API endpoint to get order fulfillment statistics filtered by date range.
     Supports filtering by 'day', 'week', or 'month'.
+    Allows users to specify a custom date for filtering.
     """
-    if request.method == 'GET':
-        try:
-            logger.debug("Starting order_fulfillment_rate function")
-            
-            # Get filter type (default: monthly)
-            filter_type = request.GET.get('filter', 'month')
-            logger.debug(f"Filter type: {filter_type}")
-            
-            # Determine the appropriate time truncation function and date range
-            if filter_type == 'day':
-                trunc_function = TruncDay('start_timestamp')
-                # Optionally, limit to recent days to avoid too many data points
-                date_limit = datetime.now() - timedelta(days=30)  # Last 30 days
-            elif filter_type == 'week':
-                trunc_function = TruncWeek('start_timestamp')
-                # Limit to recent weeks
-                date_limit = datetime.now() - timedelta(weeks=12)  # Last 12 weeks
-            else:  # Default to 'month'
-                trunc_function = TruncMonth('start_timestamp')
-                date_limit = datetime.now() - timedelta(days=365)  # Last 12 months
-            
-            # Query orders and classify them based on fulfillment status
+    if request.method != 'GET':
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    try:
+        logger.debug("Starting order_fulfillment_rate function")
+
+        # Get filter type (default: monthly)
+        filter_type = request.GET.get('filter', 'month').lower()
+        reference_date = request.GET.get('date', None)
+
+        if reference_date:
             try:
-                orders_qs = (
-                    Orders.objects
-                    .filter(start_timestamp__gte=date_limit)  # Add date limit
-                    .annotate(period=trunc_function)
-                    .values('period')
-                    .annotate(
-                        total_orders=Count('order_id'),
-                    )
-                    .order_by('period')
-                )
-                logger.debug(f"Orders query successful, count: {len(orders_qs)}")
-            except Exception as e:
-                logger.error(f"Error in orders query: {str(e)}")
-                logger.error(traceback.format_exc())
-                return JsonResponse({"error": f"Orders query error: {str(e)}"}, status=500)
-            
-            # Process each period to calculate fulfillment statuses
-            data = []
-            
-            for entry in orders_qs:
-                logger.debug(f"Processing entry: {entry}")
-                
-                if entry['period']:
-                    period_start = entry['period']
-                    logger.debug(f"Period start: {period_start}")
-                    
-                    try:
-                        # Calculate the end date for this period based on the filter type
-                        if filter_type == 'day':
-                            period_end = period_start + timedelta(days=1)
-                        elif filter_type == 'week':
-                            period_end = period_start + timedelta(days=7)
-                        else:  # month
-                            # For month, we need to go to the next month's same day
-                            # This is more accurate than just adding 30 days
-                            if period_start.month == 12:
-                                period_end = period_start.replace(year=period_start.year + 1, month=1)
-                            else:
-                                period_end = period_start.replace(month=period_start.month + 1)
-                        
-                        logger.debug(f"Period end: {period_end}")
-                        
-                        # For the given period, find all orders
-                        period_orders = Orders.objects.filter(
-                            start_timestamp__gte=period_start,
-                            start_timestamp__lt=period_end
-                        )
-                        logger.debug(f"Period orders count: {period_orders.count()}")
-                        
-                        # Get order IDs for this period
-                        order_ids = list(period_orders.values_list('order_id', flat=True))
-                        logger.debug(f"Order IDs count: {len(order_ids)}")
-                        
-                        # Count various fulfillment states
-                        orders_started = period_orders.exclude(status__in=["Not Started", None]).count()
-                        logger.debug(f"Orders started: {orders_started}")
-                        
-                        # Handle empty order_ids list
-                        if not order_ids:
-                            data.append({
-                                "period": period_start.strftime("%Y-%m-%d"),
-                                "total_orders": entry['total_orders'],
-                                "orders_started": orders_started,
-                                "partially_fulfilled": 0,
-                                "fully_fulfilled": 0,
-                            })
-                            continue
-                        
-                        try:
-                            # Parts associated with these orders
-                            parts = Part.objects.filter(order_id__in=order_ids)
-                            part_count = parts.count()
-                            logger.debug(f"Parts count: {part_count}")
-                            
-                            if part_count == 0:
-                                # No parts for these orders
-                                data.append({
-                                    "period": period_start.strftime("%Y-%m-%d"),
-                                    "total_orders": entry['total_orders'],
-                                    "orders_started": orders_started,
-                                    "partially_fulfilled": 0,
-                                    "fully_fulfilled": 0,
-                                })
-                                continue
-                            
-                            part_skus = list(parts.values_list('sku_color', flat=True))
-                            logger.debug(f"Part SKUs count: {len(part_skus)}")
-                            
-                        except Exception as e:
-                            logger.error(f"Error in parts query: {str(e)}")
-                            logger.error(traceback.format_exc())
-                            part_skus = []
-                        
-                        # Handle empty part_skus list
-                        if not part_skus:
-                            data.append({
-                                "period": period_start.strftime("%Y-%m-%d"),
-                                "total_orders": entry['total_orders'],
-                                "orders_started": orders_started,
-                                "partially_fulfilled": 0,
-                                "fully_fulfilled": 0,
-                            })
-                            continue
-                        
-                        try:
-                            # Count partially fulfilled orders (at least one task in progress)
-                            tasks_in_progress = ManufacturingTask.objects.filter(
-                                sku_color__in=part_skus,
-                                status__in=["nesting", "bending", "cutting", "welding", "painting"]
-                            ).values('sku_color').distinct()
-                            
-                            partially_fulfilled = len(tasks_in_progress)
-                            logger.debug(f"Partially fulfilled: {partially_fulfilled}")
-                            
-                        except Exception as e:
-                            logger.error(f"Error in partially fulfilled query: {str(e)}")
-                            logger.error(traceback.format_exc())
-                            partially_fulfilled = 0
-                        
-                        try:
-                            # Count fully fulfilled orders (all tasks completed)
-                            completed_tasks = ManufacturingTask.objects.filter(
-                                sku_color__in=part_skus,
-                                status="completed"
-                            ).values('sku_color').distinct()
-                            
-                            fully_fulfilled = len(completed_tasks)
-                            logger.debug(f"Fully fulfilled: {fully_fulfilled}")
-                            
-                        except Exception as e:
-                            logger.error(f"Error in fully fulfilled query: {str(e)}")
-                            logger.error(traceback.format_exc())
-                            fully_fulfilled = 0
-                        
-                        data.append({
-                            "period": period_start.strftime("%Y-%m-%d"),
-                            "total_orders": entry['total_orders'],
-                            "orders_started": orders_started,
-                            "partially_fulfilled": partially_fulfilled,
-                            "fully_fulfilled": fully_fulfilled,
-                        })
-                        logger.debug(f"Added data entry for period {period_start}")
-                        
-                    except Exception as e:
-                        logger.error(f"Error processing period {period_start}: {str(e)}")
-                        logger.error(traceback.format_exc())
-            
-            logger.debug(f"Final data count: {len(data)}")
-            return JsonResponse(data, safe=False)
-            
-        except Exception as e:
-            logger.error(f"Unexpected error in order_fulfillment_rate: {str(e)}")
-            logger.error(traceback.format_exc())
-            return JsonResponse({
-                "error": str(e), 
-                "traceback": traceback.format_exc()
-            }, status=500)
-    
-    return JsonResponse({"error": "Method not allowed"}, status=405)
+                reference_date = datetime.strptime(reference_date, "%Y-%m-%d")
+            except ValueError:
+                return JsonResponse({"error": "Invalid date format, expected YYYY-MM-DD"}, status=400)
+        else:
+            reference_date = datetime.now()
+
+        # Determine truncation function and period range
+        if filter_type == 'day':
+            trunc_function = TruncDay('start_timestamp')
+            period_start = reference_date.replace(hour=0, minute=0, second=0)
+            period_end = reference_date.replace(hour=23, minute=59, second=59)
+
+        elif filter_type == 'week':
+            trunc_function = TruncWeek('start_timestamp')
+            period_start = reference_date - timedelta(days=reference_date.weekday())  # Start of the week (Monday)
+            period_end = period_start + timedelta(days=6, hours=23, minutes=59, seconds=59)  # End of the week (Sunday)
+
+        else:  # Default to 'month'
+            trunc_function = TruncMonth('start_timestamp')
+            period_start = reference_date.replace(day=1, hour=0, minute=0, second=0)
+            period_end = period_start + relativedelta(months=1, seconds=-1)  # Last second of the month
+
+        logger.debug(f"Filtering orders from {period_start} to {period_end}")
+
+        # Get orders in the selected period
+        orders_qs = (
+            Orders.objects
+            .filter(start_timestamp__gte=period_start, start_timestamp__lte=period_end)
+            .annotate(period=trunc_function)
+            .values('period')
+            .annotate(total_orders=Count('order_id'))
+            .order_by('period')
+        )
+
+        logger.debug(f"Orders query returned {len(orders_qs)} periods")
+
+        data = []
+        for entry in orders_qs:
+            period_date = entry['period']
+            if not period_date:
+                continue  # Skip invalid periods
+
+            # Orders within this period
+            period_orders = Orders.objects.filter(start_timestamp__gte=period_date, start_timestamp__lt=period_end)
+            order_ids = list(period_orders.values_list('order_id', flat=True))
+            orders_started = period_orders.exclude(status__in=["Not Started", None]).count()
+
+            if not order_ids:
+                data.append({
+                    "period": period_date.strftime("%Y-%m-%d"),
+                    "total_orders": entry['total_orders'],
+                    "orders_started": orders_started,
+                    "partially_fulfilled": 0,
+                    "fully_fulfilled": 0,
+                })
+                continue
+
+            # Get parts associated with these orders through OrderPart
+            parts = Part.objects.filter(orderpart__order_id__in=order_ids)
+            part_skus = list(parts.values_list('sku_color', flat=True))
+
+            if not part_skus:
+                data.append({
+                    "period": period_date.strftime("%Y-%m-%d"),
+                    "total_orders": entry['total_orders'],
+                    "orders_started": orders_started,
+                    "partially_fulfilled": 0,
+                    "fully_fulfilled": 0,
+                })
+                continue
+
+            # Count partially fulfilled orders (Orders that have at least one ManufacturingTask in progress)
+            partially_fulfilled_orders = OrderPart.objects.filter(
+                order_id__in=order_ids,
+                sku_color__manufacturingtask__status__in=["nesting", "bending", "cutting", "welding", "painting"]
+            ).values('order_id').distinct().count()
+
+            # Count fully fulfilled orders (Orders where all ManufacturingTasks are completed)
+            fully_fulfilled_orders = OrderPart.objects.filter(
+                order_id__in=order_ids,
+                sku_color__manufacturingtask__status="completed"
+            ).values('order_id').distinct().count()
+
+            data.append({
+                "period": period_date.strftime("%Y-%m-%d"),
+                "total_orders": entry['total_orders'],
+                "orders_started": orders_started,
+                "partially_fulfilled": partially_fulfilled_orders,
+                "fully_fulfilled": fully_fulfilled_orders,
+            })
+
+            logger.debug(f"Added data entry for {period_date}")
+
+        logger.debug(f"Final data count: {len(data)}")
+        return JsonResponse(data, safe=False)
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        logger.error(traceback.format_exc())
+        return JsonResponse({"error": str(e), "traceback": traceback.format_exc()}, status=500)
