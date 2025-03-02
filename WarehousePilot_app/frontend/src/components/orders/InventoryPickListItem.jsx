@@ -351,7 +351,10 @@ const InventoryPicklistItem = () => {
                             </TableCell>
                             <TableCell>
                               <Button 
-                               color="primary"
+                              style={{
+                               backgroundColor: '#b91c1c',
+                               color: 'white',
+                              }}
                                size="sm"
                                 onPress={() => handleLabelClick(item.picklist_item_id)}>
                                 View Label
@@ -371,6 +374,11 @@ const InventoryPicklistItem = () => {
                         initialPage={1}
                         current={inventoryPage}
                         onChange={(newPage) => setInventoryPage(newPage)}
+                        color="default"
+                        classNames={{
+                          item: "bg-white text-black",
+                          cursor: "bg-black text-white",
+                        }}
                       />
                     </div>
                   </>
@@ -460,6 +468,11 @@ const InventoryPicklistItem = () => {
                         initialPage={1}
                         current={page}
                         onChange={(newPage) => setPage(newPage)}
+                        color="default"
+                        classNames={{
+                          item: "bg-white text-black",
+                          cursor: "bg-black text-white",
+                        }}
                       />
                     </div>
                   </>
