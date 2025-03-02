@@ -321,10 +321,11 @@ const InventoryPicklistItem = () => {
                             <TableCell>{item.location}</TableCell>
                             <TableCell>{item.sku_color}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
-                            <TableCell>
+                            <TableCell style={{width:"150px", paddingRight:"50px"}}>
                               <Input
                                 type="number"
                                 min="0"
+                                size="sm"
                                 value={pickedQuantities[item.picklist_item_id] || ""}
                                 onChange={(e) =>
                                   handlePickedQuantityChange(item.picklist_item_id, e.target.value)
