@@ -1,21 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-  PieChart, Pie, Cell, ResponsiveContainer, 
-  Tooltip, Legend, LineChart, Line, XAxis, YAxis, 
-  CartesianGrid, BarChart, Bar
-} from 'recharts';
+import OrderFulfillmentChart from './OrderFulfillmentChart';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-const API_BASE_URL = "http://127.0.0.1:8000/kpi_dashboard"; // Change to your backend URL
+const API_BASE_URL = "http://127.0.0.1:8000/kpi_dashboard"; // Update with your backend URL
 
 const OrderFulfillmentDashboard = () => {
   const [data, setData] = useState([]);
   const [currentPeriod, setCurrentPeriod] = useState(null);
   const [filterType, setFilterType] = useState('month');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]); // Default to today
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(true);
-  const [chartType, setChartType] = useState('pie');
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -44,14 +38,12 @@ const OrderFulfillmentDashboard = () => {
         }
       );
 
-      console.log("API Response:", response.data); // Debugging log
-
       if (!Array.isArray(response.data) || response.data.length === 0) {
         setData([]);
         setCurrentPeriod(null);
       } else {
         setData(response.data);
-        setCurrentPeriod(response.data[response.data.length - 1]); // Last period
+        setCurrentPeriod(response.data[response.data.length - 1]);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -63,32 +55,54 @@ const OrderFulfillmentDashboard = () => {
     }
   };
 
-  const prepareCircularData = (periodData) => {
+  // Function to format the date for display
+  const formatPeriodDate = (dateStr) => {
+    if (!dateStr) return "N/A";
+    
+    const date = new Date(dateStr);
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    
+    if (filterType === 'month') {
+      options.day = undefined;
+    } else if (filterType === 'week') {
+      return `Week of ${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+    
+    return date.toLocaleDateString(undefined, options);
+  };
+
+  // Prepare data for stats display
+  const prepareStatsData = (periodData) => {
     if (!periodData) return [];
+    const total = periodData.total_orders || 1; // Avoid division by zero
+
+    // Calculate orders that are started but not in progress or completed
+    const startedOnly = Math.max(0, (periodData.orders_started || 0) - 
+                               (periodData.partially_fulfilled || 0) - 
+                               (periodData.fully_fulfilled || 0));
+    
+    // Not started orders - these have null or "Not Started" status in DB
+    const notStarted = Math.max(0, total - (periodData.orders_started || 0));
 
     return [
-      { name: 'Started', value: periodData.orders_started || 0 },
-      { name: 'Partially Fulfilled', value: periodData.partially_fulfilled || 0 },
-      { name: 'Fully Fulfilled', value: periodData.fully_fulfilled || 0 },
+      { name: 'Total Orders', value: periodData.total_orders || 0 },
+      { name: 'Fully Fulfilled', value: periodData.fully_fulfilled || 0, percent: ((periodData.fully_fulfilled / total) * 100).toFixed(1) },
+      { name: 'Partially Fulfilled', value: periodData.partially_fulfilled || 0, percent: ((periodData.partially_fulfilled / total) * 100).toFixed(1) },
+      { 
+        name: 'Started Only', 
+        value: startedOnly,
+        percent: ((startedOnly / total) * 100).toFixed(1)
+      },
       { 
         name: 'Not Started', 
-        value: Math.max(0, (periodData.total_orders || 0) - (periodData.orders_started || 0) - (periodData.partially_fulfilled || 0) - (periodData.fully_fulfilled || 0))
+        value: notStarted,
+        percent: ((notStarted / total) * 100).toFixed(1)
       }
     ];
-  };
-
-  const prepareTrendData = () => {
-    return data.map(period => ({
-      period: period.period,
-      started: calculatePercentage(period.orders_started, period.total_orders),
-      partial: calculatePercentage(period.partially_fulfilled, period.total_orders),
-      fulfilled: calculatePercentage(period.fully_fulfilled, period.total_orders)
-    }));
-  };
-
-  const calculatePercentage = (value, total) => {
-    if (!total || total === 0) return 0;
-    return Math.round((value / total) * 100);
   };
 
   return (
@@ -96,7 +110,11 @@ const OrderFulfillmentDashboard = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-800">Order Fulfillment Dashboard</h2>
         <div className="flex space-x-4">
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="border rounded-md px-2 py-1">
+          <select 
+            value={filterType} 
+            onChange={(e) => setFilterType(e.target.value)} 
+            className="border rounded-md px-2 py-1"
+          >
             <option value="day">Daily</option>
             <option value="week">Weekly</option>
             <option value="month">Monthly</option>
@@ -107,67 +125,54 @@ const OrderFulfillmentDashboard = () => {
             onChange={(e) => setSelectedDate(e.target.value)} 
             className="border rounded-md px-2 py-1"
           />
-          <select value={chartType} onChange={(e) => setChartType(e.target.value)} className="border rounded-md px-2 py-1">
-            <option value="pie">Pie Chart</option>
-            <option value="bar">Bar Chart</option>
-            <option value="line">Line Chart</option>
-          </select>
         </div>
       </div>
 
       {error ? (
-        <div className="text-red-500 text-center">{error}</div>
+        <div className="text-red-500 text-center p-4 bg-white rounded-lg shadow-sm">{error}</div>
       ) : loading ? (
-        <div className="flex justify-center items-center h-64">Loading data...</div>
+        <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-sm p-4">
+          <div className="animate-pulse text-gray-600">Loading data...</div>
+        </div>
       ) : currentPeriod ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Order Fulfillment Chart Component */}
+          <OrderFulfillmentChart currentPeriod={currentPeriod} />
+
+          {/* Data Table */}
           <div className="bg-white p-4 rounded-lg shadow-sm">
-            <h3 className="text-lg font-medium mb-4">Current Period: {currentPeriod?.period}</h3>
-            <div className="h-64">
-              {chartType === 'pie' && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={prepareCircularData(currentPeriod)} cx="50%" cy="50%" outerRadius={80} fill="#8884d8" label>
-                      {prepareCircularData(currentPeriod).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-              {chartType === 'bar' && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={prepareCircularData(currentPeriod)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="value" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-              {chartType === 'line' && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={prepareTrendData()}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="started" stroke="#0088FE" />
-                    <Line type="monotone" dataKey="partial" stroke="#FFBB28" />
-                    <Line type="monotone" dataKey="fulfilled" stroke="#00C49F" />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
+            <h3 className="text-lg font-medium mb-4">Order Fulfillment Statistics</h3>
+            <div className="overflow-hidden">
+              <p className="text-gray-600 mb-2">
+                Period: <span className="font-medium">{formatPeriodDate(currentPeriod.period)}</span>
+              </p>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
+                    <th className="border border-gray-300 px-4 py-2 text-right">Count</th>
+                    <th className="border border-gray-300 px-4 py-2 text-right">Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {prepareStatsData(currentPeriod).map((entry, index) => (
+                    <tr key={index} className={index === 0 ? "font-semibold bg-gray-50" : ""}>
+                      <td className="border border-gray-300 px-4 py-2">{entry.name}</td>
+                      <td className="border border-gray-300 px-4 py-2 text-right">{entry.value}</td>
+                      <td className="border border-gray-300 px-4 py-2 text-right">
+                        {index === 0 ? '-' : `${entry.percent}%`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       ) : (
-        <div className="text-gray-500 text-center">No data available</div>
+        <div className="text-gray-500 text-center p-4 bg-white rounded-lg shadow-sm">
+          No data available for the selected period
+        </div>
       )}
     </div>
   );
