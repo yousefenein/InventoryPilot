@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { Input, Button, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
+import React, { useState, useEffect, useRef } from "react";
+import { Input, Button } from "@heroui/react";
 import type { Inventory, StatusOptions } from "./data";
 import { toast } from "react-toastify";
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import BarcodeScannerComponent from "react-qr-barcode-scanner";
+
 
 type AddItemFormProps = {
   onAddItem: (newItem: Inventory) => void;
@@ -20,6 +21,8 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, onCancel })
     status: "Low" as StatusOptions,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScannerActive, setIsScannerActive] = useState(false); 
+  const skuColorIdRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (key: keyof Omit<Inventory, "inventory_id">, value: string | number) => {
     setNewItem((prev) => ({ ...prev, [key]: value }));
@@ -50,6 +53,20 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, onCancel })
     }
   };
 
+  useEffect(() => {
+    const handleBarcodeScan = (event: Event) => {
+      if (skuColorIdRef.current && event.target === skuColorIdRef.current) {
+        console.log("Barcode scanned:", (event.target as HTMLInputElement).value); 
+        handleChange("sku_color_id", (event.target as HTMLInputElement).value);
+      }
+    };
+
+    window.addEventListener("input", handleBarcodeScan);
+    return () => {
+      window.removeEventListener("input", handleBarcodeScan);
+    };
+  }, []);
+
   return (
     <div className="p-4">
       <div className="mb-4">
@@ -66,7 +83,27 @@ export const AddItemForm: React.FC<AddItemFormProps> = ({ onAddItem, onCancel })
           value={newItem.sku_color_id}
           onChange={(e) => handleChange("sku_color_id", e.target.value)}
           fullWidth
+          ref={skuColorIdRef}
         />
+          <Button onPress={() => setIsScannerActive((prev) => !prev)}>
+          {isScannerActive ? "Stop Scanner" : "Scan Barcode"}
+        </Button>
+
+      {isScannerActive && (
+        <div className="mb-4 border rounded-lg p-2 bg-gray-200">
+          <BarcodeScannerComponent
+            width={300}
+            height={300}
+            onUpdate={(err, result) => {
+              if (result) {
+                handleChange("sku_color_id", result.getText());
+                setIsScannerActive(false); 
+              }
+            }}
+          />
+        </div>
+      )}
+
       </div>
       <div className="mb-4">
         <Input
