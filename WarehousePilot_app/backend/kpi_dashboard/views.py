@@ -149,13 +149,13 @@ def order_fulfillment_rate(request):
 
         logger.debug(f"Filtering orders from {period_start} to {period_end}")
 
-        # Get orders in the selected period
+        # Get orders started in the selected period
         orders_qs = (
             Orders.objects
             .filter(start_timestamp__gte=period_start, start_timestamp__lte=period_end)
             .annotate(period=trunc_function)
             .values('period')
-            .annotate(total_orders=Count('order_id'))
+            .annotate(total_orders_started=Count('order_id'))  # Renamed from total_orders
             .order_by('period')
         )
 
@@ -170,13 +170,19 @@ def order_fulfillment_rate(request):
             # Orders within this period
             period_orders = Orders.objects.filter(start_timestamp__gte=period_date, start_timestamp__lt=period_end)
             order_ids = list(period_orders.values_list('order_id', flat=True))
-            orders_started = period_orders.exclude(status__in=["Not Started", None]).count()
+            
+            # Get orders_started without exclusions
+            orders_started = period_orders.count()
+            
+            # Get ALL orders in the system for total count (regardless of period)
+            total_orders_count = Orders.objects.count()
 
             if not order_ids:
                 data.append({
                     "period": period_date.strftime("%Y-%m-%d"),
-                    "total_orders": entry['total_orders'],
-                    "orders_started": orders_started,
+                    "total_orders_started": entry['total_orders_started'],  # Renamed from total_orders
+                    "total_orders_count": total_orders_count,
+                    "orders_started": orders_started,  # Now without exclusions
                     "partially_fulfilled": 0,
                     "fully_fulfilled": 0,
                 })
@@ -189,8 +195,9 @@ def order_fulfillment_rate(request):
             if not part_skus:
                 data.append({
                     "period": period_date.strftime("%Y-%m-%d"),
-                    "total_orders": entry['total_orders'],
-                    "orders_started": orders_started,
+                    "total_orders_started": entry['total_orders_started'],  # Renamed from total_orders
+                    "total_orders_count": total_orders_count,
+                    "orders_started": orders_started,  # Now without exclusions
                     "partially_fulfilled": 0,
                     "fully_fulfilled": 0,
                 })
@@ -210,8 +217,9 @@ def order_fulfillment_rate(request):
 
             data.append({
                 "period": period_date.strftime("%Y-%m-%d"),
-                "total_orders": entry['total_orders'],
-                "orders_started": orders_started,
+                "total_orders_started": entry['total_orders_started'],  # Renamed from total_orders
+                "total_orders_count": total_orders_count,
+                "orders_started": orders_started,  # Now without exclusions
                 "partially_fulfilled": partially_fulfilled_orders,
                 "fully_fulfilled": fully_fulfilled_orders,
             })

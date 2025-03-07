@@ -4,38 +4,39 @@ import {
   Tooltip, Legend
 } from 'recharts';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const COLORS = ['#4CAF50', '#8BC34A', '#FF9800'];
 
 const OrderFulfillmentChart = ({ currentPeriod }) => {
   // Function to prepare data for the donut chart
   const prepareChartData = (periodData) => {
     if (!periodData) return [];
-    const total = periodData.total_orders || 1; // Avoid division by zero
-
+    
+    const startedOrders = periodData.orders_started || 0; // Orders that are in progress
+    
+    // Calculate "started only" - orders that are started but not in manufacturing
+    const startedOnly = Math.max(0, startedOrders - 
+                              (periodData.partially_fulfilled || 0) - 
+                              (periodData.fully_fulfilled || 0));
+    
+    // Only include the three requested categories - percentages based on started orders
     return [
       { 
         name: 'Fully Fulfilled', 
         value: periodData.fully_fulfilled || 0, 
-        percent: ((periodData.fully_fulfilled / total) * 100).toFixed(1),
+        percent: startedOrders ? ((periodData.fully_fulfilled / startedOrders) * 100).toFixed(1) : '0.0',
         count: periodData.fully_fulfilled || 0
       },
       { 
         name: 'Partially Fulfilled', 
         value: periodData.partially_fulfilled || 0, 
-        percent: ((periodData.partially_fulfilled / total) * 100).toFixed(1),
+        percent: startedOrders ? ((periodData.partially_fulfilled / startedOrders) * 100).toFixed(1) : '0.0',
         count: periodData.partially_fulfilled || 0
       },
       { 
         name: 'Started Only', 
-        value: Math.max(0, (periodData.orders_started || 0) - (periodData.partially_fulfilled || 0) - (periodData.fully_fulfilled || 0)),
-        percent: ((Math.max(0, (periodData.orders_started || 0) - (periodData.partially_fulfilled || 0) - (periodData.fully_fulfilled || 0)) / total) * 100).toFixed(1),
-        count: Math.max(0, (periodData.orders_started || 0) - (periodData.partially_fulfilled || 0) - (periodData.fully_fulfilled || 0))
-      },
-      { 
-        name: 'Not Started', 
-        value: Math.max(0, total - (periodData.orders_started || 0)),
-        percent: ((Math.max(0, total - (periodData.orders_started || 0)) / total) * 100).toFixed(1),
-        count: Math.max(0, total - (periodData.orders_started || 0))
+        value: startedOnly,
+        percent: startedOrders ? ((startedOnly / startedOrders) * 100).toFixed(1) : '0.0',
+        count: startedOnly
       }
     ];
   };
@@ -54,8 +55,8 @@ const OrderFulfillmentChart = ({ currentPeriod }) => {
     return null;
   };
 
-  // Custom label to display name and percentage
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }) => {
+  // Custom label to display percentage
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -81,10 +82,17 @@ const OrderFulfillmentChart = ({ currentPeriod }) => {
   };
 
   const chartData = prepareChartData(currentPeriod);
+  const startedOrders = currentPeriod?.orders_started || 0;
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm">
-      <h3 className="text-lg font-medium mb-4">Order Fulfillment Status: {currentPeriod?.period}</h3>
+      <h3 className="text-lg font-medium mb-4">Started Orders Breakdown</h3>
+      <div className="text-center mb-2">
+        <div className="text-2xl font-bold">
+          {startedOrders.toLocaleString()}
+        </div>
+        <div className="text-gray-500">Started Orders</div>
+      </div>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -92,8 +100,8 @@ const OrderFulfillmentChart = ({ currentPeriod }) => {
               data={chartData} 
               cx="50%" 
               cy="50%" 
-              innerRadius={70} 
-              outerRadius={130} 
+              innerRadius={60} 
+              outerRadius={100} 
               fill="#8884d8" 
               dataKey="value"
               labelLine={false}
