@@ -7,18 +7,22 @@ import {
 const COLORS = ['#4CAF50', '#8BC34A', '#FF9800'];
 
 const OrderFulfillmentBarChart = ({ data }) => {
-  // Prepare the chart data
+  // Convert raw data into a consistent shape
   const prepareChartData = (periodData) => {
     if (!periodData || !Array.isArray(periodData) || periodData.length === 0) {
       return [];
     }
-
+  
     return periodData.map(period => {
-      const startedOrders = period.orders_started || 0;
-      const startedOnly = Math.max(
-        0,
-        startedOrders - (period.partially_fulfilled || 0) - (period.fully_fulfilled || 0)
-      );
+      const started = period.orders_started || 0;
+      const full = period.fully_fulfilled || 0;
+      const partial = period.partially_fulfilled || 0;
+      
+      // Calculate each segment ensuring they don't overlap
+      const fullyFulfilled = Math.min(full, started);
+      const partiallyFulfilled = Math.min(partial, started) - fullyFulfilled;
+      const startedOnly = Math.max(0, started - fullyFulfilled - partiallyFulfilled);
+      
       const date = new Date(period.period);
       const formattedDate = date.toLocaleDateString(undefined, {
         month: 'short',
@@ -27,64 +31,58 @@ const OrderFulfillmentBarChart = ({ data }) => {
       
       return {
         name: formattedDate,
-        "Fully Fulfilled": period.fully_fulfilled || 0,
-        "Partially Fulfilled": period.partially_fulfilled || 0,
-        "Started Only": startedOnly,
-        totalStarted: startedOrders
+        'Fully Fulfilled': fullyFulfilled,
+        'Partially Fulfilled': partiallyFulfilled,
+        'Started Only': startedOnly,
+        totalStarted: started
       };
     });
   };
 
   const chartData = prepareChartData(data);
 
-  // If there is only one data point, normalize manually.
-  // Otherwise, let Recharts handle it with stackOffset="expand".
-  const finalData =
-    chartData.length === 1
-      ? chartData.map(item => {
-          const total = item.totalStarted;
-          return {
-            ...item,
-            "Fully Fulfilled": total ? item["Fully Fulfilled"] / total : 0,
-            "Partially Fulfilled": total ? item["Partially Fulfilled"] / total : 0,
-            "Started Only": total ? item["Started Only"] / total : 0,
-          };
-        })
-      : chartData;
+  // For single data point, normalize as fractions
+  const finalData = chartData.length === 1
+    ? chartData.map(item => {
+        const total = item.totalStarted || 1; // Avoid division by zero
+        return {
+          ...item,
+          "Fully Fulfilled": item["Fully Fulfilled"] / total,
+          "Partially Fulfilled": item["Partially Fulfilled"] / total,
+          "Started Only": item["Started Only"] / total,
+        };
+      })
+    : chartData;
 
+  // Stack props for multiple data points
   const stackProps = chartData.length > 1 ? { stackOffset: "expand" } : {};
 
-  // Custom tooltip (adjusts for normalized vs. raw values)
+  // Modified tooltip to show only count values (no percentages)
   const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const totalStarted = payload[0].payload.totalStarted;
-      
-      return (
-        <div className="bg-white p-2 border border-gray-200 shadow-sm rounded">
-          <p className="font-medium">{label}</p>
-          {payload.map((entry, index) => {
-            // If only one point, convert normalized value back to count
-            const actualCount =
-              chartData.length === 1 && totalStarted
-                ? (entry.value * totalStarted).toFixed(0)
-                : entry.value;
-            const percent = totalStarted
-              ? ((entry.value) * 100).toFixed(1)
-              : '0.0';
-            
-            return (
-              <p key={index} style={{ color: entry.color }}>
-                {entry.name}: {actualCount} ({percent}%)
-              </p>
-            );
-          })}
-          <p className="text-gray-600 text-sm mt-1">
-            Total Started: {totalStarted}
-          </p>
-        </div>
-      );
-    }
-    return null;
+    if (!active || !payload || !payload.length) return null;
+    const totalStarted = payload[0].payload.totalStarted || 0;
+
+    return (
+      <div className="bg-white p-2 border border-gray-200 shadow-sm rounded">
+        <p className="font-medium">{label}</p>
+        {payload.map((entry, index) => {
+          // Get the actual count based on whether we're using normalized data
+          const fraction = entry.value;
+          const rawCount = chartData.length === 1 
+            ? Math.round(fraction * totalStarted) 
+            : Math.round(entry.value * 100) / 100;
+
+          return (
+            <p key={index} style={{ color: entry.color }}>
+              {entry.name}: {rawCount}
+            </p>
+          );
+        })}
+        <p className="text-gray-600 text-sm mt-1">
+          Total Started: {totalStarted}
+        </p>
+      </div>
+    );
   };
 
   return (
@@ -113,4 +111,3 @@ const OrderFulfillmentBarChart = ({ data }) => {
 };
 
 export default OrderFulfillmentBarChart;
-

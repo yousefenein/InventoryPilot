@@ -68,31 +68,29 @@ const OrderFulfillmentDashboard = () => {
     }
   };
 
-  // Sums up daily data into one object
-  const aggregatePeriodData = (dailyArray) => {
-    // Adjust fields to match your data keys
-    let totalOrdersCount = 0;
-    let ordersStartedSum = 0;
-    let partiallyFulfilledSum = 0;
-    let fullyFulfilledSum = 0;
+  // Sum the orders
+const aggregatePeriodData = (dailyArray) => {
+  let ordersStartedSum = 0;
+  let partiallyFulfilledSum = 0;
+  let fullyFulfilledSum = 0;
 
-    dailyArray.forEach(day => {
-      totalOrdersCount += day.total_orders_count || 0;
-      ordersStartedSum += day.orders_started || 0;
-      partiallyFulfilledSum += day.partially_fulfilled || 0;
-      fullyFulfilledSum += day.fully_fulfilled || 0;
-    });
+  dailyArray.forEach((day) => {
+    ordersStartedSum += day.orders_started || 0;
+    partiallyFulfilledSum += day.partially_fulfilled || 0;
+    fullyFulfilledSum += day.fully_fulfilled || 0;
+  });
 
-    // "period" can be a label like "Aggregated" or you can keep the selectedDate
-    // for display in your donut/table. Up to you:
-    return {
-      period: selectedDate, // or "Aggregated",
-      total_orders_count: totalOrdersCount,
-      orders_started: ordersStartedSum,
-      partially_fulfilled: partiallyFulfilledSum,
-      fully_fulfilled: fullyFulfilledSum,
-    };
+  // For total_orders_count
+  const totalOrdersCount = dailyArray[dailyArray.length - 1].total_orders_count || 0;
+
+  return {
+    period: selectedDate, // or any label
+    total_orders_count: totalOrdersCount,  // Don't sum it
+    orders_started: ordersStartedSum,
+    partially_fulfilled: partiallyFulfilledSum,
+    fully_fulfilled: fullyFulfilledSum,
   };
+};
 
   // Format date for display
   const formatPeriodDate = (dateStr) => {
