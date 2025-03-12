@@ -36,7 +36,7 @@ function Login() {
         localStorage.removeItem('rememberedUsername');
       }
       if (user.role === 'admin') {
-        navigate('/admin_dashboard/manage_users');
+        navigate('/admin_dashboard');
       } else if (user.role === 'manager') {
         navigate('/kpi');
       } else if (user.role === 'staff') {
