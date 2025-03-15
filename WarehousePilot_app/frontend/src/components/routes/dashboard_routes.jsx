@@ -21,6 +21,7 @@ import OrderPickingPage from "../dashboard/OrderPickingPage";
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import OrderFulfillmentDashboard from '../kpis/OrderFulfillmentDashboard ';
 
 const ProtectedRoute = ({ element }) => {
   const isLoggedIn = !!localStorage.getItem('token');
@@ -52,7 +53,8 @@ export const dashboard_routes = [
   { path: '/manufacturing_tasks', element: <ProtectedRoute element={<ManuTasksTable />} /> },
   { path: '/qa_error_list_view', element: <ProtectedRoute element={<QAErrorListView />} /> },
   {path: '/CTPO', element: <ProtectedRoute element={<CTPOTable />} />},
-  {path:"/order-picking", element: <ProtectedRoute element={<OrderPickingPage />} />}
+  {path:"/order-picking", element: <ProtectedRoute element={<OrderPickingPage />} />},
+  {path:"/order-fullfillement-dashboard", element: <ProtectedRoute element={<OrderFulfillmentDashboard />} />}
   
 ];
 
