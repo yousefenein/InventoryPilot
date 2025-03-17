@@ -34,20 +34,20 @@ function AdminDashboard() {
 
   return (
     <div>
-            {/* Sidebar */}
-            <SideBar />
-            <NavBar/>
-          
+      {/* Sidebar */}
+      <SideBar/>
+      <NavBar/>
 
-        {/* Main Content */}
-        <div className="flex-1 p-6">
+
+      {/* Main Content */}
+      <div className="flex-1 p-6">
         <div className="ml-4">
           {/* Header Section */}
           <div className="mb-4">
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mt-2 lg:mt-4 mb-2">
               Welcome, {userData ? userData.first_name : "Loading..."}!
             </h1>
-           
+
           </div>
 
           {/* User Information Section */}
