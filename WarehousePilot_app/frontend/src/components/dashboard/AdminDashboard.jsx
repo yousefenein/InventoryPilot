@@ -35,8 +35,8 @@ function AdminDashboard() {
   return (
     <div>
       {/* Sidebar */}
-      <SideBar/>
-      <NavBar/>
+      <SideBar />
+      <NavBar />
 
 
       {/* Main Content */}
@@ -45,30 +45,32 @@ function AdminDashboard() {
           {/* Header Section */}
           <div className="mb-4">
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mt-2 lg:mt-4 mb-2">
-              Welcome, {userData ? userData.first_name : "Loading..."}!
+              Welcome, {userData ? userData.first_name : "..."}!
             </h1>
 
           </div>
-
-          {/* User Information Section */}
-          {userData ? (
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">User Details</h2>
-              <p className="text-gray-700">
-                <strong>Username:</strong> {userData.username}
-              </p>
-              <p className="text-gray-700">
-                <strong>Email:</strong> {userData.email}
-              </p>
-              <p className="text-gray-700">
-                <strong>Role:</strong> {userData.role}
-              </p>
-              <p className="text-gray-700">
-                <strong>Department:</strong> {userData.department}
-              </p>
+          {/* Information Section */}
+          {userData && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Basic Information */}
+              <div className="p-6 bg-white rounded-lg shadow-md border border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Basic Information</h2>
+                <div className="space-y-3 text-gray-700">
+                  <p>
+                    <span className="font-medium text-gray-600">Username:</span>
+                    <span className="ml-2 font-semibold text-gray-900">{userData.username}</span>
+                  </p>
+                  <p>
+                    <span className="font-medium text-gray-600">Email:</span>
+                    <span className="ml-2 font-semibold text-gray-900">{userData.email}</span>
+                  </p>
+                  <p>
+                    <span className="font-medium text-gray-600">Role:</span>
+                    <span className="ml-2 font-semibold text-gray-900 capitalize">{userData.role}</span>
+                  </p>
+                </div>
+              </div>
             </div>
-          ) : (
-            <p className="text-red-500">Error loading user data.</p>
           )}
 
           {/* Logout Button */}
