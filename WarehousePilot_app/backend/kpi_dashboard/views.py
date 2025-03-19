@@ -1,9 +1,12 @@
-from datetime import timedelta
-from django.http import JsonResponse
-from django.db.models import Count
-from inventory.models import InventoryPicklistItem
-from django.db.models.functions import TruncDay
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.db.models import Count, Q, Min
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models.functions import TruncDate
+import logging
+from inventory.models import InventoryPicklist, InventoryPicklistItem
 
 def order_picking_accuracy(request):
     if request.method == 'GET':
@@ -89,9 +92,6 @@ def daily_picks_details(request):
 
     else:
         return JsonResponse({"error": "Method not allowed"}, status=405)    
-    
-    
-    
 
 
 from django.http import JsonResponse
@@ -232,3 +232,77 @@ def order_fulfillment_rate(request):
         logger.error(f"Unexpected error: {str(e)}")
         logger.error(traceback.format_exc())
         return JsonResponse({"error": str(e), "traceback": traceback.format_exc()}, status=500)
+    
+class ActiveOrdersView(APIView):
+    def get(self, request):
+        try:
+            end_date = timezone.now().date()
+            start_date = end_date - timedelta(days=30)
+
+            # Debug: Log picklists and Orders data
+            total_picklists = InventoryPicklist.objects.count()
+            picklist_statuses = InventoryPicklist.objects.values('status').distinct()
+            orders_statuses = InventoryPicklist.objects.values('order_id__status').distinct()
+            logger.info("Total picklists in database: %s", total_picklists)
+            logger.info("Distinct picklist status values: %s", [s['status'] for s in picklist_statuses])
+            logger.info("Distinct order status values: %s", [s['order_id__status'] for s in orders_statuses])
+
+            # Active Orders: Picklists where status=False and Orders status="In Progress"
+            active_orders = (
+                InventoryPicklist.objects
+                .filter(
+                    status=False,
+                    order_id__status="In Progress",
+                    order_id__start_timestamp__date__gte=start_date,
+                    order_id__start_timestamp__date__lte=end_date
+                )
+                .annotate(date=TruncDate('order_id__start_timestamp'))
+                .values('date')
+                .annotate(active_orders=Count('picklist_id', distinct=True))
+                .order_by('date')
+            )
+
+            date_range = [start_date + timedelta(days=x) for x in range((end_date - start_date).days + 1)]
+            active_orders_dict = {entry['date']: entry['active_orders'] for entry in active_orders}
+            response_data = [
+                {"date": day.strftime('%Y-%m-%d'), "active_orders": active_orders_dict.get(day, 0)}
+                for day in date_range
+            ]
+            logger.info("Active orders data: %s", response_data)
+            return Response(response_data, status=200)
+        except Exception as e:
+            logger.error(f"Failed to fetch active orders data: {str(e)}")
+            return Response({"error": str(e)}, status=500)
+
+class CompletedOrdersView(APIView):
+    def get(self, request):
+        try:
+            end_date = timezone.now().date()
+            start_date = end_date - timedelta(days=30)
+
+            # Completed Orders: Picklists where status=True and Orders status="Completed"
+            completed_orders = (
+                InventoryPicklist.objects
+                .filter(
+                    status=True,
+                    order_id__status="Completed",
+                    picklist_complete_timestamp__date__gte=start_date,
+                    picklist_complete_timestamp__date__lte=end_date
+                )
+                .annotate(date=TruncDate('picklist_complete_timestamp'))
+                .values('date')
+                .annotate(completed_orders=Count('picklist_id', distinct=True))
+                .order_by('date')
+            )
+
+            date_range = [start_date + timedelta(days=x) for x in range((end_date - start_date).days + 1)]
+            completed_orders_dict = {entry['date']: entry['completed_orders'] for entry in completed_orders}
+            response_data = [
+                {"date": day.strftime('%Y-%m-%d'), "completed_orders": completed_orders_dict.get(day, 0)}
+                for day in date_range
+            ]
+            logger.info("Completed orders data: %s", response_data)
+            return Response(response_data, status=200)
+        except Exception as e:
+            logger.error(f"Failed to fetch completed orders data: {str(e)}")
+            return Response({"error": str(e)}, status=500)
