@@ -424,7 +424,7 @@ export default function InventoryTable() {
     exportData,
     confirmDelete
   ]);
-
+  
   const topBar = useMemo(() => {
     return (
       <div className="mb-[18px] flex items-center justify-between" style={{ marginTop: "40px" }}>
