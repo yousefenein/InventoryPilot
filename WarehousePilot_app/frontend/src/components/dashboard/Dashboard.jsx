@@ -20,13 +20,13 @@ const Dashboard = ({ userData }) => {
   };
 
   return (
-    <div>
+    <div className="mt-2"> 
     <SideBar /> {/* Add the SideBar component here */}
-    <NavBar/>
+    
 
       {/* Main Content */}
-      <div className="flex-1 sm:ml-10 sm:mt-10">
-      
+      <div className="flex-1 sm:ml-10 sm:mt-8">
+      <NavBar/>
         {/* Page Content */}
         <main className="p-4 mt-16 bg-gray-100 ">
           <h1 className="text-2xl font-semibold">This is the {userData?.role} dashboard</h1>

@@ -469,10 +469,11 @@ export default function ManuTasksTable() {
   }
 
   return (
-    <div style={{ backgroundColor: "#F8F8F8", marginTop: "-80px", minHeight: "100vh" }}>
-      <NavBar />
+    <div  className="flex-1 px-10" style={{ backgroundColor: "#F8F8F8",  minHeight: "100vh" }}>
+     
       <SideBar /> {/* Add the SideBar component here */}
-      <div className="flex-1 p-6" style={{ padding: "40px" }}>
+      <div className="flex-1 mt-2 ">
+      <NavBar />
         {topBar}
         <Table
           isHeaderSticky

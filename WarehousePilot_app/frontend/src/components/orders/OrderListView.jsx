@@ -315,11 +315,13 @@ const OrderListView = () => {
   };
 
   return (
-    <div className="h-full" style={{ marginTop: "-80px" }}>
-      <NavBar />
-      <SideBar />
+    <div className="mt-2">
       
-      <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto">
+      <SideBar />
+     
+      <div className="flex-1 sm:ml-10 sm:mt-2">
+      <NavBar />
+      <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto ">
         <div className="flex flex-col flex-1">
           <div className="flex flex-col">
             <div className="flex flex-row justify-between items-center gap-11 mt-10">
@@ -327,11 +329,14 @@ const OrderListView = () => {
               <Chip
                 color="primary"
                 variant="shadow"
-                radius="medium"
+                radius="md"
                 size="lg"
                 onClick={() => navigate("/inventory_and_manufacturing_picklist")}
-                className="text-center"
-                style={{ backgroundColor: '#000', color: '#fff' }}
+                classNames={{
+                  base: " text-lg border-small border-white/50 w-40 p-2 justify-item-center",
+                  content: "drop-shadow  text-white",
+                }}
+                style={{ backgroundColor: '#000', color: '#fff' ,}}
               >
                 Inventory and Manufacturing List
               </Chip>
@@ -444,7 +449,7 @@ const OrderListView = () => {
                 </DropdownMenu>
               </Dropdown>
             </div>
-
+            </div>
             {loading ? (
               <div className="flex justify-center items-center h-64">
                 <div>Loading...
@@ -496,18 +501,20 @@ const OrderListView = () => {
                         <TableCell>{item.estimated_duration}</TableCell>
 
                         <TableCell className="flex items-center gap-2">
+                          <Chip color="default" variant="flat" >
                           <span
                             className={`flex items-center gap-1 px-2 py-1 rounded ${
-                              item.status === "In Progress" ? "text-red-800" : ""
+                              item.status === "In Progress" ? "text-blue-800" : ""
                             }`}
                           >
                             {item.status === "In Progress" ? (
-                              <FaClock className="text-black" /> 
+                              <FaClock className="text-red" /> 
                             ) : (
                               <FaExclamationCircle className="text-red-600 text-xl" />
                             )}
                             <span>{item.status || "Not started"}</span>
                           </span>
+                          </Chip>
                         </TableCell>
 
                         <TableCell className="items-center gap-2">
@@ -517,7 +524,7 @@ const OrderListView = () => {
                               width={18}
                               className="text-gray-500"
                             />
-                            <span>{item.due_date}</span>
+                            <span>{item.due_date||"undefined"}</span>
                           </div>
                         </TableCell>
 
