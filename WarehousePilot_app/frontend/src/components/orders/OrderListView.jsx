@@ -9,19 +9,22 @@ import {
   Input,
   Pagination,
   Button,
-} from "@heroui/react"; // Importing necessary components from NextUI for the table and buttons
-import { SearchIcon } from "@heroui/shared-icons"; // Importing SearchIcon from NextUI shared icons
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+} from "@heroui/react"; // Added Dropdown components
+import { SearchIcon } from "@heroui/shared-icons";
 import { FaPlay, FaCheck, FaClock } from "react-icons/fa6";
 import { MdError } from "react-icons/md";
-import axios from "axios"; // Importing Axios for making HTTP requests
+import axios from "axios";
 import SideBar from "../dashboard_sidebar1/App";
 import Header from "../dashboard_sidebar/Header";
-import { useNavigate } from "react-router-dom"; // Importing Header component
+import { useNavigate } from "react-router-dom";
 import { FaExclamationCircle } from "react-icons/fa";
 import CopyText from "../orders/copy-text";
 import { Icon } from "@iconify/react";
 import { Chip } from "@heroui/react";
-// ---- NEW IMPORTS FOR TIMEZONE HANDLING ----
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -35,22 +38,27 @@ dayjs.extend(timezone);
 
 const OrderListView = () => {
   // State variables
-  const [filterValue, setFilterValue] = useState(""); // Filter value for search functionality
-  const [rows, setRows] = useState([]); // To store the list of orders fetched from the backend
-  const [loading, setLoading] = useState(true); // To manage loading state
-  const [error, setError] = useState(null); // To store any error message
-  const [successOrderStart, setSuccessOrderStart] = useState(null); // Success message for starting the order
-  const [successListGeneration, setSuccessListGeneration] = useState(null); // Success message for list generation
-  const [page, setPage] = useState(1); // Page number for pagination
-  const [isSidebarOpen, setSidebarOpen] = useState(false); // To toggle the sidebar visibility
-  const [userData, setUserData] = useState(null); // To store user data
-  const [updatingOrderId, setUpdatingOrderId] = useState(null); // To track which order is being updated
+  const [filterValue, setFilterValue] = useState("");
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successOrderStart, setSuccessOrderStart] = useState(null);
+  const [successListGeneration, setSuccessListGeneration] = useState(null);
+  const [page, setPage] = useState(1);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  // Added sort descriptor state
+  const [sortDescriptor, setSortDescriptor] = useState({ 
+    column: "status", 
+    direction: "ascending" 
+  });
   const navigate = useNavigate();
-  const rowsPerPage = 10; // Number of rows to display per page
+  const rowsPerPage = 10;
 
-  // Filter rows based on search text (order ID, duration, status, due date)
+  // Filter rows based on search text
   const filteredRows = useMemo(() => {
-    if (!filterValue.trim()) return rows; // If no filter, return all rows
+    if (!filterValue.trim()) return rows;
 
     const searchTerm = filterValue.toLowerCase();
 
@@ -72,20 +80,72 @@ const OrderListView = () => {
     });
   }, [rows, filterValue]);
 
-  // Sort rows so that "In Progress" items appear at the top
+  // Updated sorting logic to prioritize "Not Started" orders by default
   const sortedFilteredRows = useMemo(() => {
     const rowsCopy = [...filteredRows];
+    
+    // First sort by status priority: "Not Started" first, then normal sort
     rowsCopy.sort((a, b) => {
-      if (a.status === "In Progress" && b.status !== "In Progress") {
+      // Default priority: Not Started > other statuses
+      if (a.status === "Not Started" && b.status !== "Not Started") {
         return -1;
       }
-      if (a.status !== "In Progress" && b.status === "In Progress") {
+      if (a.status !== "Not Started" && b.status === "Not Started") {
         return 1;
       }
+      
+      // Then apply the user-selected sort
+      const col = sortDescriptor.column;
+      
+      // For date comparison
+      if (col === "due_date") {
+        const dateA = a[col] ? new Date(a[col]) : new Date(0);
+        const dateB = b[col] ? new Date(b[col]) : new Date(0);
+        
+        if (sortDescriptor.direction === "ascending") {
+          return dateA - dateB;
+        } else {
+          return dateB - dateA;
+        }
+      }
+      
+      // For numeric comparison
+      if (col === "order_id" || col === "estimated_duration") {
+        const numA = Number(a[col]) || 0;
+        const numB = Number(b[col]) || 0;
+        
+        if (sortDescriptor.direction === "ascending") {
+          return numA - numB;
+        } else {
+          return numB - numA;
+        }
+      }
+      
+      // For string comparison (status)
+      if (col === "status") {
+        // If we're sorting by status and in ascending order,
+        // "Not Started" should be at the top unless explicitly sorting in descending order
+        if (sortDescriptor.direction === "ascending" && 
+            (a.status === "Not Started" || b.status === "Not Started")) {
+          if (a.status === "Not Started") return -1;
+          if (b.status === "Not Started") return 1;
+        }
+        
+        const strA = a[col]?.toLowerCase() || "";
+        const strB = b[col]?.toLowerCase() || "";
+        
+        if (sortDescriptor.direction === "ascending") {
+          return strA.localeCompare(strB);
+        } else {
+          return strB.localeCompare(strA);
+        }
+      }
+      
       return 0;
     });
+    
     return rowsCopy;
-  }, [filteredRows]);
+  }, [filteredRows, sortDescriptor]);
 
   // Apply pagination to the filtered rows
   const paginatedRows = useMemo(() => {
@@ -133,7 +193,7 @@ const OrderListView = () => {
       setRows(
         response.data.map((row, index) => ({
           id: index + 1,
-          order_id: row.order_id?.toString() || "", // Ensure order_id is always a string
+          order_id: row.order_id?.toString() || "",
           estimated_duration: row.estimated_duration?.toString() || "",
           status: row.status || "Not Started",
           due_date: row.due_date || "",
@@ -154,7 +214,7 @@ const OrderListView = () => {
     fetchOrders();
   }, []);
 
-  // Auto-dismiss success message for starting the order after 3 seconds
+  // Auto-dismiss success message for starting the order after 5 seconds
   useEffect(() => {
     if (successOrderStart) {
       const timer = setTimeout(() => {
@@ -164,7 +224,7 @@ const OrderListView = () => {
     }
   }, [successOrderStart]);
 
-  // Auto-dismiss success message for generating lists after 3 seconds
+  // Auto-dismiss success message for generating lists after 5 seconds
   useEffect(() => {
     if (successListGeneration) {
       const timer = setTimeout(() => {
@@ -179,7 +239,7 @@ const OrderListView = () => {
     try {
       setUpdatingOrderId(orderId);
       setError(null);
-      setSuccessOrderStart(null); // Reset previous success message
+      setSuccessOrderStart(null);
 
       const token = localStorage.getItem("token");
 
@@ -253,227 +313,274 @@ const OrderListView = () => {
       setUpdatingOrderId(null);
     }
   };
-  //style={{backgroundColor: "#F2F4F6"}}
+
   return (
-    <div className="  h-full" style={{ marginTop: "-80px" }}>
-      
-      {" "}
-      
+    <div className="h-full" style={{ marginTop: "-80px" }}>
       <NavBar />
       <SideBar />
       
       <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto">
-  <div className="flex flex-col flex-1">
-    <div className="flex flex-col">
-      <div className="flex flex-row justify-between items-center gap-11 mt-10">
-        <h1 className="text-2xl font-bold mb-6">Orders</h1>
-        <Chip
-          color="primary"
-          variant="shadow"
-          radius="medium"
-          size="lg"
-          onClick={() => navigate("/inventory_and_manufacturing_picklist")}
-          className="text-center"
-          style={{ backgroundColor: '#000', color: '#fff' }} // Black background with white text
-        >
-          Inventory and Manufacturing List
-        </Chip>
-      </div>
+        <div className="flex flex-col flex-1">
+          <div className="flex flex-col">
+            <div className="flex flex-row justify-between items-center gap-11 mt-10">
+              <h1 className="text-2xl font-bold mb-6">Orders</h1>
+              <Chip
+                color="primary"
+                variant="shadow"
+                radius="medium"
+                size="lg"
+                onClick={() => navigate("/inventory_and_manufacturing_picklist")}
+                className="text-center"
+                style={{ backgroundColor: '#000', color: '#fff' }}
+              >
+                Inventory and Manufacturing List
+              </Chip>
+            </div>
 
-      {/* Success message for starting the order */}
-      {successOrderStart && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
-          <span>{successOrderStart}</span>
-          <button
-            onClick={() => setSuccessOrderStart(null)}
-            className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
-          >
-            ×
-          </button>
-        </div>
-      )}
+            {/* Success message for starting the order */}
+            {successOrderStart && (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+                <span>{successOrderStart}</span>
+                <button
+                  onClick={() => setSuccessOrderStart(null)}
+                  className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
+                >
+                  ×
+                </button>
+              </div>
+            )}
 
-      {/* Success message for generating the lists */}
-      {successListGeneration && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
-          <span>{successListGeneration}</span>
-          <button
-            onClick={() => setSuccessListGeneration(null)}
-            className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
-          >
-            ×
-          </button>
-        </div>
-      )}
+            {/* Success message for generating the lists */}
+            {successListGeneration && (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+                <span>{successListGeneration}</span>
+                <button
+                  onClick={() => setSuccessListGeneration(null)}
+                  className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
+                >
+                  ×
+                </button>
+              </div>
+            )}
 
-      {/* Error message */}
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
-          <span>{error}</span>
-          <Button
-            onClick={() => setError(null)}
-            style={{
-              backgroundColor: '#b91c1c',
-              color: 'white',
-            }}
-          >
-            ×
-          </Button>
-        </div>
-      )}
+            {/* Error message */}
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+                <span>{error}</span>
+                <Button
+                  onClick={() => setError(null)}
+                  style={{
+                    backgroundColor: '#b91c1c',
+                    color: 'white',
+                  }}
+                >
+                  ×
+                </Button>
+              </div>
+            )}
 
-      {/* Search Input */}
-      <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-2 w-full">
-        <Input
-          size="md"
-          placeholder="Search by order ID"
-          value={filterValue}
-          onChange={(e) => {
-            console.log("New filter value:", e.target.value); // Debugging log
-            setFilterValue(e.target.value);
-          }}
-          endContent={<SearchIcon className="text-default-400" width={16} />}
-          className="w-full sm:w-72"
-        />
-      </div>
+            {/* Search and Sort Controls */}
+            <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
+              <Input
+                size="md"
+                placeholder="Search by order ID, status, or due date"
+                value={filterValue}
+                onChange={(e) => {
+                  console.log("New filter value:", e.target.value);
+                  setFilterValue(e.target.value);
+                }}
+                endContent={<SearchIcon className="text-default-400" width={16} />}
+                className="w-full sm:w-72"
+              />
+              
+              {/* Added Sort Dropdown */}
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button 
+                    variant="flat" 
+                    startContent={<Icon icon="mdi:sort" width={16} />}
+                    style={{ backgroundColor: '#f3f4f6', color: '#000' }}
+                  >
+                    Sort by {sortDescriptor.column} ({sortDescriptor.direction})
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="Sort options">
+                  <DropdownItem 
+                    key="order_id" 
+                    onPress={() => setSortDescriptor({ 
+                      column: "order_id", 
+                      direction: sortDescriptor.column === "order_id" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
+                    })}
+                  >
+                    Order ID
+                  </DropdownItem>
+                  <DropdownItem 
+                    key="due_date" 
+                    onPress={() => setSortDescriptor({ 
+                      column: "due_date", 
+                      direction: sortDescriptor.column === "due_date" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
+                    })}
+                  >
+                    Due Date
+                  </DropdownItem>
+                  {/* <DropdownItem 
+                    key="status" 
+                    onPress={() => setSortDescriptor({ 
+                      column: "status", 
+                      direction: sortDescriptor.column === "status" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
+                    })}
+                  >
+                    Status
+                  </DropdownItem> */}
+                  {/* <DropdownItem 
+                    key="estimated_duration" 
+                    onPress={() => setSortDescriptor({ 
+                      column: "estimated_duration", 
+                      direction: sortDescriptor.column === "estimated_duration" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
+                    })}
+                  >
+                    Estimated Duration
+                  </DropdownItem> */}
+                </DropdownMenu>
+              </Dropdown>
+            </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div>Loading...
-          <Spinner size="lg" color="default" className="ms-5"/>
-          </div>
-        </div>
-      ) : (
-        <>
-          <Table
-            aria-label="Inventory Pick List"
-            className="min-w-full shadow-lg"
-            isHeaderSticky
-            selectionMode="multiple"
-            bottomContentPlacement="outside"
-            classNames={{
-              td: "before:bg-transparent",
-            }}
-            topContentPlacement="outside"
-          >
-            <TableHeader className="shadow-xl">
-              <TableColumn className="text-gray-800 font-bold text-lg">
-                Order ID
-              </TableColumn>
-              <TableColumn className="text-gray-800 font-bold text-lg">
-                Estimated Duration
-              </TableColumn>
-              <TableColumn className="text-gray-800 font-bold text-lg">
-                Status
-              </TableColumn>
-              <TableColumn className="text-gray-800 font-bold text-lg">
-                Due Date
-              </TableColumn>
-              <TableColumn className="text-gray-800 font-bold text-lg">
-                Start Date
-              </TableColumn>
-              <TableColumn className="text-gray-800 font-bold text-lg">
-                Action
-              </TableColumn>
-            </TableHeader>
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div>Loading...
+                <Spinner size="lg" color="default" className="ms-5"/>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Table
+                  aria-label="Inventory Pick List"
+                  className="min-w-full shadow-lg"
+                  isHeaderSticky
+                  selectionMode="multiple"
+                  bottomContentPlacement="outside"
+                  classNames={{
+                    td: "before:bg-transparent",
+                  }}
+                  topContentPlacement="outside"
+                >
+                  <TableHeader className="shadow-xl">
+                    <TableColumn className="text-gray-800 font-bold text-lg">
+                      Order ID
+                    </TableColumn>
+                    <TableColumn className="text-gray-800 font-bold text-lg">
+                      Estimated Duration
+                    </TableColumn>
+                    <TableColumn className="text-gray-800 font-bold text-lg">
+                      Status
+                    </TableColumn>
+                    <TableColumn className="text-gray-800 font-bold text-lg">
+                      Due Date
+                    </TableColumn>
+                    <TableColumn className="text-gray-800 font-bold text-lg">
+                      Start Date
+                    </TableColumn>
+                    <TableColumn className="text-gray-800 font-bold text-lg">
+                      Action
+                    </TableColumn>
+                  </TableHeader>
 
-            <TableBody items={paginatedRows}>
-              {(item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="flex items-center">
-                    {item.order_id}
-                    <CopyText text={item.order_id.toString()} />{" "}
-                    {/* Ensure order_id is a string */}
-                  </TableCell>
+                  <TableBody items={paginatedRows}>
+                    {(item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="flex items-center">
+                          {item.order_id}
+                          <CopyText text={item.order_id.toString()} />
+                        </TableCell>
 
-                  <TableCell>{item.estimated_duration}</TableCell>
+                        <TableCell>{item.estimated_duration}</TableCell>
 
-                  <TableCell className="flex items-center gap-2">
-                    <span
-                      className={`flex items-center gap-1 px-2 py-1 rounded ${
-                        item.status === "In Progress" ? "text-red-800" : ""
-                      }`}
-                    >
-                      {item.status === "In Progress" ? (
-                        <FaClock className="text-black" /> 
-                      ) : (
-                        <FaExclamationCircle className="text-red-600 text-xl" />
-                      )}
-                      <span>{item.status || "Not started"}</span>
-                    </span>
-                  </TableCell>
+                        <TableCell className="flex items-center gap-2">
+                          <span
+                            className={`flex items-center gap-1 px-2 py-1 rounded ${
+                              item.status === "In Progress" ? "text-red-800" : ""
+                            }`}
+                          >
+                            {item.status === "In Progress" ? (
+                              <FaClock className="text-black" /> 
+                            ) : (
+                              <FaExclamationCircle className="text-red-600 text-xl" />
+                            )}
+                            <span>{item.status || "Not started"}</span>
+                          </span>
+                        </TableCell>
 
-                  <TableCell className="items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <Icon
-                        icon="solar:calendar-linear"
-                        width={18}
-                        className="text-gray-500"
-                      />
-                      <span>{item.due_date}</span>
-                    </div>
-                  </TableCell>
+                        <TableCell className="items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <Icon
+                              icon="solar:calendar-linear"
+                              width={18}
+                              className="text-gray-500"
+                            />
+                            <span>{item.due_date}</span>
+                          </div>
+                        </TableCell>
 
-                  <TableCell>
-                    {item.start_timestamp ? (
-                      <Chip color="success" variant="dot">
-                        {dayjs
-                          .utc(item.start_timestamp)
-                          .tz("America/Toronto")
-                          .format("YYYY-MM-DD HH:mm")}
-                      </Chip>
-                    ) : (
-                      <Chip color="default" variant="flat">
-                        Not Started
-                      </Chip>
+                        <TableCell>
+                          {item.start_timestamp ? (
+                            <Chip color="success" variant="dot">
+                              {dayjs
+                                .utc(item.start_timestamp)
+                                .tz("America/Toronto")
+                                .format("YYYY-MM-DD HH:mm")}
+                            </Chip>
+                          ) : (
+                            <Chip color="default" variant="flat">
+                              Not Started
+                            </Chip>
+                          )}
+                        </TableCell>
+
+                        <TableCell>
+                          <Button
+                            style={{
+                              backgroundColor: item.status === "In Progress" ? "#D1D5DB" : "#000",
+                              color: item.status === "In Progress" ? "#000000" : "#FFFFFF",
+                            }}
+                            size="sm"
+                            isDisabled={
+                              item.status === "In Progress" || updatingOrderId !== null
+                            }
+                            onPress={() => handleStart(item.order_id)}
+                            startContent={
+                              item.status === "In Progress" ? <FaCheck /> : <FaPlay />
+                            }
+                          >
+                            {item.status === "In Progress" ? "Started" : "Start"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     )}
-                  </TableCell>
+                  </TableBody>
+                </Table>
 
-                  <TableCell>
-                    <Button
-                      style={{
-                        backgroundColor: item.status === "In Progress" ? "#D1D5DB" : "#000", // Black background
-                        color: item.status === "In Progress" ? "#000000" : "#FFFFFF", // White text for black background
-                      }}
-                      size="sm"
-                      isDisabled={
-                        item.status === "In Progress" || updatingOrderId !== null
-                      }
-                      onPress={() => handleStart(item.order_id)}
-                      startContent={
-                        item.status === "In Progress" ? <FaCheck /> : <FaPlay />
-                      }
-                    >
-                      {item.status === "In Progress" ? "Started" : "Start"}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-          <div className="flex justify-between items-center mt-4">
-            <span>
-              Page {page} of {totalPages}
-            </span>
-            <Pagination
-              total={totalPages}
-              initialPage={1}
-              current={page}
-              onChange={(newPage) => setPage(newPage)}
-              color="default"
-              classNames={{
-                item: "bg-white text-black",
-                cursor: "bg-black text-white",
-              }}
-            />
+                <div className="flex justify-between items-center mt-4">
+                  <span>
+                    Page {page} of {totalPages}
+                  </span>
+                  <Pagination
+                    total={totalPages}
+                    initialPage={1}
+                    current={page}
+                    onChange={(newPage) => setPage(newPage)}
+                    color="default"
+                    classNames={{
+                      item: "bg-white text-black",
+                      cursor: "bg-black text-white",
+                    }}
+                  />
+                </div>
+              </>
+            )}
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
-  </div>
-  </div>
-</div>
   );
 };
 
