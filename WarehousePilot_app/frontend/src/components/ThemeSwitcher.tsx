@@ -23,7 +23,7 @@ export default function ThemeSwitcher() {
         >
             {theme === "dark" ? (
                 <>
-                    <SunIcon className="h-5 w-5 text-yellow-500" />
+                    <SunIcon className="h-5 w-5 text-red-500" />
                     
                 </>
             ) : (
