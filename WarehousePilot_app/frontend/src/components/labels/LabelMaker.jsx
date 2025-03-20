@@ -68,13 +68,13 @@ const LabelMaker = () => {
         {/* Left column */}
         <div className="border-r border-gray-300 pr-4 flex flex-col space-y-2 text-xl h-full flex-grow">
         <div>
-            <strong>AREA:</strong> {labelData.CRATE_SIZE || "AREA"}
+            <strong>AREA:</strong> {labelData.AREA || "AREA"}
           </div>
           <div>
-            <strong>LINE UP:</strong> {labelData.CRATE_SIZE || "LINE UP NB"}
+            <strong>LINE UP:</strong> {labelData.LINEUP_NB || "LINE UP NB"}
           </div>
           <div>
-            <strong>MODEL:</strong> {labelData.CRATE_SIZE || "MODEL CODE"}
+            <strong>MODEL:</strong> {labelData.MODEL_NB || "MODEL CODE"}
           </div>
           <div>
             <strong>SKU:</strong> {labelData.SKU_COLOR || "SKU COLOR"}
