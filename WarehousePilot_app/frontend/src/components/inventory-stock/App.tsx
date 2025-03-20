@@ -1,9 +1,10 @@
 "use client";
 
 import SideBar from "../dashboard_sidebar1/App"; 
-import type {Selection, SortDescriptor} from "@nextui-org/react";
+import type {Selection, SortDescriptor} from "@heroui/react";
 import type {ColumnsKey, Inventory, StatusOptions} from "./data";
 import type {Key} from "@react-types/shared";
+import { Spinner } from "@heroui/spinner";
 
 import {
   Dropdown,
@@ -27,11 +28,11 @@ import {
   PopoverContent,
   Chip,
   Badge,
-} from "@nextui-org/react";
-import {SearchIcon} from "@nextui-org/shared-icons";
+} from "@heroui/react";
+import {SearchIcon} from "@heroui/shared-icons";
 import React, {useMemo, useRef, useCallback, useState, useEffect} from "react";
 import {Icon} from "@iconify/react";
-import {cn} from "@nextui-org/react";
+import {cn} from "@heroui/react";
 import { saveAs } from 'file-saver';
 
 import {CopyText} from "./copy-text";
@@ -178,6 +179,14 @@ export default function InventoryTable() {
         return <div className="text-default-foreground">{cellValue}</div>;
       case "status":
         return <div className="flex items-center gap-2">{statusColorMap[cellValue as StatusOptions]} {cellValue}</div>;
+      case "edit":
+        return (
+          <div className="flex items-center gap-2">
+            <Button {...(getEditProps() as any)} ref={editRef} isIconOnly variant="flat">
+              <EditLinearIcon />
+            </Button>
+          </div>
+        );
       default:
         return cellValue;
     }
@@ -499,7 +508,9 @@ export default function InventoryTable() {
   }, [filterSelectedKeys, page, pages, filteredItems.length, onPreviousPage, onNextPage]);
 
   if (loading) {
-    return <div className="loading-container">Loading... This may take a minute</div>;
+    return <div className="loading-container">Loading... This may take a minute
+    <Spinner size="lg" color="default" className="ms-5"/>
+    </div>;
   }
 
   return (

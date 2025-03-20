@@ -25,24 +25,30 @@ function App() {
   }));
 
   return (
+    <HeroUIProvider>
     <Router>
-      <HeroUIProvider>
-        <div className={darkMode ? 'dark bg-gray-900 text-white min-h-screen' : 'bg-white text-black min-h-screen'}>
+    <div className={darkMode ? 'dark bg-gray-900 text-white min-h-screen' : 'bg-white text-black min-h-screen'}>
           {/* Dark mode toggle button */}
           <button onClick={toggleDarkMode} className="p-2 m-4 rounded bg-blue-500 text-white">
             Toggle Dark Mode
           </button>
           
           {/* Routes for the application */}
-          <Routes>
-            {/* Map through routes with darkMode prop */}
-            {routesWithDarkMode.map((route, index) => (
-              <Route key={index} path={route.path} element={route.element} />
-            ))}
-          </Routes>
-        </div>
-      </HeroUIProvider>
+    
+      <Routes>
+        
+        {/* Map through predefined routes */}
+        {routesWithDarkMode.map((route, index) => (
+          <Route 
+            key={index} 
+            path={route.path} 
+            element={route.element} 
+          />
+        ))}
+      </Routes>
+      </div>
     </Router>
+    </HeroUIProvider>
   );
 }
 

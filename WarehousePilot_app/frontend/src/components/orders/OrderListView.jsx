@@ -9,8 +9,8 @@ import {
   Input,
   Pagination,
   Button,
-} from "@nextui-org/react"; // Importing necessary components from NextUI for the table and buttons
-import { SearchIcon } from "@nextui-org/shared-icons"; // Importing SearchIcon from NextUI shared icons
+} from "@heroui/react"; // Importing necessary components from NextUI for the table and buttons
+import { SearchIcon } from "@heroui/shared-icons"; // Importing SearchIcon from NextUI shared icons
 import { FaPlay, FaCheck, FaClock } from "react-icons/fa6";
 import { MdError } from "react-icons/md";
 import axios from "axios"; // Importing Axios for making HTTP requests
@@ -20,12 +20,13 @@ import { useNavigate } from "react-router-dom"; // Importing Header component
 import { FaExclamationCircle } from "react-icons/fa";
 import CopyText from "../orders/copy-text";
 import { Icon } from "@iconify/react";
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@heroui/react";
 // ---- NEW IMPORTS FOR TIMEZONE HANDLING ----
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import NavBar from "../navbar/App";
+import { Spinner } from "@heroui/spinner";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Extend dayjs with UTC and timezone
@@ -338,7 +339,9 @@ const OrderListView = () => {
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div>Loading...</div>
+          <div>Loading...
+          <Spinner size="lg" color="default" className="ms-5"/>
+          </div>
         </div>
       ) : (
         <>
