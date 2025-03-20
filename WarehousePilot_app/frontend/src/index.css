@@ -1,3 +1,7 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 body {
   margin: 0;
   padding: 0;
@@ -7,7 +11,9 @@ body {
   Allow body to scroll */
   height: 100vh; /* Ensure body takes up full viewport height */
 }
-
+html {
+  transition: background-color 0.3s ease;
+}
 
 
 /* #root {

@@ -1,6 +1,7 @@
 import type { NavbarProps } from "@heroui/react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from "react";
+import ThemeSwitcher from "../ThemeSwitcher";
 import {
   Navbar,
   NavbarBrand,
@@ -92,6 +93,9 @@ export default function NavBar(props: NavbarProps) {
         </NavbarBrand>
 
         {/* Conditionally Rendered Navbar Items */}
+        <NavbarItem>
+            <ThemeSwitcher />
+          </NavbarItem>
         <NavbarItem>
           <Link className="text-default-500" href="/dashboard" size="sm">
             Dashboard
