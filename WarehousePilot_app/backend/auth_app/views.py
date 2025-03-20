@@ -6,6 +6,7 @@
 # RetrieveUsers: Fetches a list of all users from the database.
 
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -18,11 +19,12 @@ from .models import users
 from django.contrib.auth import update_session_auth_hash
 from .serializers import StaffSerializer
 import logging
+from django_ratelimit.decorators import ratelimit
 
 # Django logger for backend
 logger = logging.getLogger('WarehousePilot_app')
 
-# This is the view for the login endpoint
+@method_decorator(ratelimit(key='ip',rate='5/m',method='POST',block=False), name='post')
 class LoginView(APIView):
     permission_classes = []
 
@@ -52,9 +54,19 @@ class LoginView(APIView):
                     }
                 })
             else:
-                logger.error(f"User {username} failed to log in with valid credentials")
-                return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-
+                # Check if this request is beyond allowed attempts
+                if getattr(request, 'limited', False):
+                    # The IP address has exceeded 5 failed attempts this minute
+                    return Response(
+                        {"detail": "Too many failed login attempts. Please try again later."},
+                        status=status.HTTP_429_TOO_MANY_REQUESTS
+                    )
+                else:
+                    return Response(
+                        {"detail": "Invalid credentials"},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+                
 # This is the view for the change password endpoint           
 class ChangePasswordView(APIView):
     authentication_classes = [JWTAuthentication]
