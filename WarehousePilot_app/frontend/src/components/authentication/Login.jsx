@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './authentication.css';
 
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function Login() {
@@ -65,7 +66,7 @@ function Login() {
               alt="Company Logo" 
               className="h-16 mx-auto mb-8"
             />
-            <h1 className="text-3xl font-bold mb-8">Sign In</h1>
+            <h1 className="text-3xl font-bold mb-8 dark: text-white">Sign In</h1>
           </div>
 
           <form onSubmit={handleLogin} className={`space-y-8 ${shake ? 'animate-shake' : ''}`}>
@@ -114,7 +115,7 @@ function Login() {
 
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-black  text-white rounded-lg transition-colors duration-200 text-lg font-medium"
+              className="w-full py-3 px-4 bg-black dark:bg-gray-600 text-white dark:text-black rounded-lg transition-colors duration-200 text-lg font-medium"
             >
               Sign In
             </button>

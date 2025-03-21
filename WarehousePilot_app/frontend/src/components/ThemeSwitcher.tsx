@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 
+
 export default function ThemeSwitcher() {
     const [theme, setTheme] = useState(
         localStorage.getItem("theme") || "light"
@@ -19,7 +20,11 @@ export default function ThemeSwitcher() {
     return (
         <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex items-center gap-2 p-2 border rounded-lg bg-gray-200 dark:bg-gray-800"
+            className="theme-switcher-button flex items-center gap-2 p-2
+        dark:bg-transparent 
+        dark:border-transparent
+        text-gray-800 dark:text-white  
+        "
         >
             {theme === "dark" ? (
                 <>
