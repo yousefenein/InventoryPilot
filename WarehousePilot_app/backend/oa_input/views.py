@@ -81,7 +81,7 @@ class OAInputView(APIView):
                 for _, row in df.iterrows()
             ]
 
-            OAReport.objects.bulk_create(records)  
+            OAReport.objects.bulk_create(records, ignore_conflicts=True)  
             logger.info(f"✅ Successfully inserted {len(records)} rows into database.")
 
             # ✅ Delete the uploaded file after processing

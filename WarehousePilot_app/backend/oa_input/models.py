@@ -16,3 +16,9 @@ class OAReport(models.Model):
     project_type = models.CharField(max_length=255)
     area = models.CharField(max_length=255)
     final_model = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ('order_id', 'sku_color', 'qty', 'lineup_nb', 'due_date','project_type','area', 'final_model')  
+
+    def __str__(self):
+        return f"Order {self.order_id} - {self.sku_color}"
