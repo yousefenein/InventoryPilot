@@ -361,13 +361,18 @@ class CycleTimePerOrderView(APIView):
             # Calculate cycle time for each order
             for order in fetched_orders:
                 id = order['order_id']
-                current_order = {"order_id": id}
+                current_order = {"order_id": id} # Initialize order dictionary
                 status = "N/A"
 
                 try:
+                    # Fetch the completion timestamps of picking, packing, and shipping for order of order_id
                     picklist_completion = InventoryPicklist.objects.all().values('picklist_complete_timestamp').filter(order_id=id).first()
                     pack_completion = Orders.objects.all().values('pack_complete_timestamp').filter(order_id=id).first()
                     ship_completion = Orders.objects.all().values('ship_complete_timestamp').filter(order_id=id).first()
+                    
+                    picking_duration = 0
+                    packing_duration = 0
+                    shipping_duration = 0
 
                     # Skip orders that have not been fully picked
                     if picklist_completion is None or picklist_completion['picklist_complete_timestamp'] is None:
@@ -377,25 +382,52 @@ class CycleTimePerOrderView(APIView):
                     elif (picklist_completion['picklist_complete_timestamp'].date() > past_month and picklist_completion['picklist_complete_timestamp'].date() is not None): 
                         # Calculate the picking duration
                         picking_duration = abs((picklist_completion['picklist_complete_timestamp'].date() - order['start_timestamp'].date()).days)
+                        # Update current order with picking time duration
                         current_order["pick_time"] = picking_duration
                         status = "Picked"
 
-                    # Checking pack completion of order
+                    # Check if order hasn't been packed
                     if  pack_completion['pack_complete_timestamp'] is None:
-                        logger.info("Pack completion is not done")
+                        logger.info("Order %s has not been packed", id)
+                        # Update current order with packing and shipping duration, cycle time, and status
                         current_order["pack_time"] = 0
                         current_order["ship_time"] = 0
+                        current_order["cycle_time"] = picking_duration
                         current_order["status"] = "Picked"
+                        # Add order to return list
                         orders.append(current_order)
                         continue       
                     else:
                         # Calculate packing duration
-                        pack_duration = abs((pack_completion['pack_complete_timestamp'].date() - picklist_completion['picklist_complete_timestamp'].date()).days)
-                        current_order["pack_time"] = pack_duration
+                        packing_duration = abs((pack_completion['pack_complete_timestamp'].date() - picklist_completion['picklist_complete_timestamp'].date()).days)
+                        # Update current order with packing time duration
+                        current_order["pack_time"] = packing_duration
                         status = "Packed"
+                    
+                    # Check if order hasn't been shipped
+                    if ship_completion['ship_complete_timestamp'] is None:
+                        logger.info("Order %s has not been shipped", id)
+                        # Update current order with shipping duration, cycle time, and status
+                        current_order["ship_time"] = 0
+                        current_order["cycle_time"] = picking_duration + packing_duration
+                        current_order["status"] = "Packed"
+                        # Add order to return list
+                        orders.append(current_order)
+                        continue
+                    else:
+                        # Calculate shipping duration
+                        shipping_duration = abs((ship_completion['ship_complete_timestamp'].date() - pack_completion['pack_complete_timestamp'].date()).days)
+                        # Update current order with packing time duration
+                        current_order["ship_time"] = shipping_duration
+                        status = "Shipped"
+
+                    # Update current order with cycle time and status
+                    current_order["cycle_time"] = picking_duration + packing_duration + shipping_duration
                     current_order["status"] = status        
 
-                    # Add order's cycle time to the return list
+                    logger.debug("Current order: %s", current_order) # Debugging: Log current order
+
+                    # Add order to return list
                     orders.append(current_order)
 
                 except InventoryPicklist.DoesNotExist:
