@@ -68,7 +68,7 @@ const CTPO = () => {
       }
 
       const response = await axios.get(
-        `${API_BASE_URL}/orders/ordersview/`,
+        `${API_BASE_URL}/orders/cycle_time_per_order/`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -79,16 +79,17 @@ const CTPO = () => {
 
       // Filter response data to only include items with a status
       const filteredData = response.data.filter(row => row.status !== null);
+      console.log("filteredData", filteredData);
 
       setRows(
         filteredData.map((row, index) => ({
           id: index + 1,
           order_id: row.order_id,
           status: row.status,
-          cycle_time: "N/A",
-          pick_time: Math.floor(Math.random() * 10) + 1,
-          pack_time: Math.floor(Math.random() * 10) + 1,
-          ship_time: Math.floor(Math.random() * 10) + 1,
+          cycle_time: row.cycle_time,
+          pick_time: row.pick_time,
+          pack_time: row.pack_time,
+          ship_time: row.ship_time,
         }))
       );
       setLoading(false);
