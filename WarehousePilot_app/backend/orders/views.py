@@ -361,22 +361,43 @@ class CycleTimePerOrderView(APIView):
             # Calculate cycle time for each order
             for order in fetched_orders:
                 id = order['order_id']
+                current_order = {"order_id": id}
+                status = "N/A"
+
                 try:
                     picklist_completion = InventoryPicklist.objects.all().values('picklist_complete_timestamp').filter(order_id=id).first()
+                    pack_completion = Orders.objects.all().values('pack_complete_timestamp').filter(order_id=id).first()
+                    ship_completion = Orders.objects.all().values('ship_complete_timestamp').filter(order_id=id).first()
 
                     # Skip orders that have not been fully picked
                     if picklist_completion is None or picklist_completion['picklist_complete_timestamp'] is None:
                         continue
 
                     # Check if picklist completion is within the past month and has been completed
-                    if (picklist_completion['picklist_complete_timestamp'].date() > past_month and picklist_completion['picklist_complete_timestamp'].date() is not None): 
-                        # Calculate cycle time
-                        completion_duration = picklist_completion['picklist_complete_timestamp'].date() - order['start_timestamp'].date()
-                        # Add order's cycle time to the return list
-                        orders.append({
-                            "order_id": id,
-                            "cycle_time": completion_duration.days
-                        })
+                    elif (picklist_completion['picklist_complete_timestamp'].date() > past_month and picklist_completion['picklist_complete_timestamp'].date() is not None): 
+                        # Calculate the picking duration
+                        picking_duration = abs((picklist_completion['picklist_complete_timestamp'].date() - order['start_timestamp'].date()).days)
+                        current_order["pick_time"] = picking_duration
+                        status = "Picked"
+
+                    # Checking pack completion of order
+                    if  pack_completion['pack_complete_timestamp'] is None:
+                        logger.info("Pack completion is not done")
+                        current_order["pack_time"] = 0
+                        current_order["ship_time"] = 0
+                        current_order["status"] = "Picked"
+                        orders.append(current_order)
+                        continue       
+                    else:
+                        # Calculate packing duration
+                        pack_duration = abs((pack_completion['pack_complete_timestamp'].date() - picklist_completion['picklist_complete_timestamp'].date()).days)
+                        current_order["pack_time"] = pack_duration
+                        status = "Packed"
+                    current_order["status"] = status        
+
+                    # Add order's cycle time to the return list
+                    orders.append(current_order)
+
                 except InventoryPicklist.DoesNotExist:
                     logger.warning("Picklist could not be found for order %s (CycleTimePerOrderView)", id)
                 
