@@ -8,6 +8,8 @@ class Orders(models.Model):
     status = models.CharField(max_length = 255, null=True, default="Not Started")
     due_date = models.DateField(null=True)
     start_timestamp = models.DateTimeField(null=True, blank=True, default=None)
+    pack_complete_timestamp = models.DateTimeField(null=True, blank=True, default=None)
+    ship_complete_timestamp = models.DateTimeField(null=True, blank=True, default=None)
 
 class OrderPart(models.Model):
     order_part_id = models.AutoField(primary_key = True)
@@ -15,3 +17,4 @@ class OrderPart(models.Model):
     sku_color = models.ForeignKey(Part, on_delete=models.CASCADE)
     qty = models.FloatField()
     status = models.BooleanField(null=True)
+    # packed_timestamp = models.DateTimeField(null=True, blank=True, default=None)
