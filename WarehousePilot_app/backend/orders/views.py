@@ -6,6 +6,7 @@
 # InventoryPicklistView: Retrieves picklists for orders in progress, indicating if they are filled and their assigned employee.
 # InventoryPicklistItemsView: Fetches detailed items of a picklist for a given order, including location, SKU, quantity, and status.
 # CycleTimePerOrderView: Calculates the cycle time for each order that has been fully picked in the past month.
+# DelayedOrders: Retrieve all orders that have not been shipped by the due date.
 
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timedelta
@@ -439,4 +440,22 @@ class CycleTimePerOrderView(APIView):
 
         except Exception as e:
             logger.error("Failed to calculate cycle time per order (CycleTimePerOrderView)")
+            return Response({"error": str(e)}, status=500)
+
+class DelayedOrders(APIView):
+    #authentication_classes = [JWTAuthentication]
+    #permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            current_date = timezone.now().date()  # Get the current date
+            orders = []
+            # Fetch all delayed orders (orders that have not been shipped before the due date)
+            delayed_orders = Orders.objects.all().values('order_id', 'due_date', 'ship_complete_timestamp', 'start_timestamp').filter(due_date__lt=current_date, ship_complete_timestamp__isnull=True, start_timestamp__isnull=False)
+            for order in delayed_orders:
+                delay = (current_date - order['due_date']).days
+                orders.append({"order_id": order['order_id'], "due_date": order['due_date'], "delay": delay})
+            return Response(orders)
+        except Exception as e:
+            logger.error("Failed to fetch delayed orders (DelayedOrders)")
             return Response({"error": str(e)}, status=500)
