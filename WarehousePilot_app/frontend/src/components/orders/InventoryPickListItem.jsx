@@ -17,6 +17,7 @@ import {
 import { SearchIcon } from "@heroui/shared-icons";
 import { useNavigate, useParams } from "react-router-dom";
 import SideBar from "../dashboard_sidebar1/App";
+import NavBar from "../navbar/App";
 import axios from "axios";
 
 
@@ -236,6 +237,10 @@ const InventoryPicklistItem = () => {
   return (
     <div className="flex h-full">
       <SideBar isOpen={isSidebarOpen} />
+       
+           
+        <div className="flex-1 sm:ml-10 sm:mt-2">
+          <NavBar />
 
       <div className="flex-1 sm:ml-8">
         <div className="mt-16 p-8">
@@ -300,21 +305,33 @@ const InventoryPicklistItem = () => {
                   </div>
                 ) : paginatedInventoryItems.length > 0 ? (
                   <>
-                    <Table>
-                      <TableHeader>
-                        <TableColumn>Picklist Item ID</TableColumn>
-                        <TableColumn>Location</TableColumn>
-                        <TableColumn>SKU Color</TableColumn>
-                        <TableColumn>Area</TableColumn>
-                        <TableColumn>Lineup #</TableColumn>
-                        <TableColumn>Model Type</TableColumn>
-                        <TableColumn>Material Type</TableColumn>
-                        <TableColumn>Required Quantity</TableColumn>
-                        <TableColumn>Picked Quantity</TableColumn>
-                        <TableColumn>Status</TableColumn>
-                        <TableColumn>Picked At</TableColumn>
-                        <TableColumn>Action</TableColumn>
-                        <TableColumn>Label</TableColumn>
+                    <Table  
+                     aria-label="Inventory Pick List"
+                     className="min-w-full shadow-lg"
+                     isHeaderSticky
+                     selectionMode="multiple"
+                     bottomContentPlacement="outside"
+                     classNames={{
+                        td: "before:bg-transparent", 
+                      }}
+                      topContentPlacement="outside"
+                    
+                    
+                    >
+                      <TableHeader className="shadow-xl">
+                        <TableColumn className="text-gray-800 font-bold text-base">Picklist Item ID</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Location</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">SKU Color</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Area</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Lineup #</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Model Type</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Material Type</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Required Quantity</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Picked Quantity</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Status</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Picked At</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Action</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Label</TableColumn>
                       </TableHeader>
                       <TableBody>
                         {paginatedInventoryItems.map((item) => (
@@ -516,6 +533,7 @@ const InventoryPicklistItem = () => {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 };

@@ -491,14 +491,22 @@ export default function ManuTasksTable() {
           onSelectionChange={onSelectionChange}
           onSortChange={setSortDescriptor}
         >
-          <TableHeader columns={headerColumns}>
+          <TableHeader 
+          
+          columns={headerColumns}
+          
+          
+          >
             {(column) => (
               <TableColumn
                 key={column.uid}
                 align={column.uid === "actions" ? "end" : "start"}
+                
                 className={cn([
                   column.uid === "actions" ? "flex items-center justify-end px-[20px]" : "",
                 ])}
+
+               
               >
                 {column.name}
               </TableColumn>

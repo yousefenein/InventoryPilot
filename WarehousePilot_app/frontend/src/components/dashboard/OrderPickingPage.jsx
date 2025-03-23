@@ -15,6 +15,7 @@ import {
 import { Input, Button } from "@heroui/react";
 import { SearchIcon } from "@heroui/shared-icons";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const COLORS = ["#950606", "#ca3433"];
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -182,7 +183,12 @@ const OrderPickingPage = () => {
       return dayMatch || orderMatch || picksMatch;
     });
   }, [detailedData, detailFilter]);
+  
+  const navigate = useNavigate();
 
+  const handleViewDetails = () => {
+    navigate('/kpi');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -192,10 +198,21 @@ const OrderPickingPage = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header & Refresh */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <h1 className="text-3xl font-bold">Order Picking Details</h1>
+
+        <div className="flex justify-between items-center mb-4 gap-4">
+        <h1 className="text-3xl font-bold">Order Picking Details</h1>
+          
+          <button 
+            className="bg-red-600 text-white py-1 px-3 rounded"
+            onClick={handleViewDetails}  //bg-gray-500 hover
+            >
+            Back to KPI Overview
+          </button>
+          </div>
           <Button color="primary" onPress={fetchAllData}>
             Refresh Data
           </Button>
+         
         </div>
 
         {/* Error messages if no token, etc. */}

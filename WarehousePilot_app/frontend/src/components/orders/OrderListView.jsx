@@ -43,11 +43,11 @@ const columns = [
     name: "Order ID",
     sortable: true,
   },
-  {
-    uid: "estimated_duration",
-    name: "Estimated Duration",
-    sortable: true,
-  },
+  // {
+  //   uid: "estimated_duration",
+  //   name: "Estimated Duration",
+  //   sortable: true,
+  // },
   {
     uid: "status",
     name: "Status",
