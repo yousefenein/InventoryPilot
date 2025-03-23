@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "qa_dashboard.apps.QADashboardConfig",
     "kpi_dashboard.apps.KpiConfig",
     "label_maker.apps.LabelMakerConfig",
+    "oa_input.apps.OaInputConfig",
 ]
 
 MIDDLEWARE = [
