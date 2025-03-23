@@ -302,7 +302,7 @@ class InventoryPicklistItemsView(APIView):
             # Fetch picklist items for the given picklist
             picklist_items = InventoryPicklistItem.objects.filter(
                 picklist_id=picklist.picklist_id
-            ).values(
+            ).order_by("location").values(
                 'picklist_item_id',
                 'location__location',
                 'sku_color__sku_color',
