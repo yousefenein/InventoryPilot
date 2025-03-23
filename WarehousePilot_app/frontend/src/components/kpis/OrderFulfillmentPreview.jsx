@@ -88,12 +88,12 @@ const OrderFulfillmentPreview = () => {
     <div className="bg-white p-4 rounded-lg shadow-sm">
       {/* Header row: Title + Details button */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Order Fulfillment Preview</h2>
+        <h2 className="text-xl font-semibold">Order Fulfillment</h2>
         <button
           onClick={handleDetailsClick}
           className="bg-blue-500 text-white px-4 py-2 rounded"
         >
-          Details
+          View Details
         </button>
       </div>
 
