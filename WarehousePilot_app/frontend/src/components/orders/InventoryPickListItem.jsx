@@ -110,7 +110,11 @@ const InventoryPicklistItem = () => {
       (item) =>
         item.picklist_item_id?.toString().toLowerCase().includes(searchTerm) ||
         item.location?.toLowerCase().includes(searchTerm) ||
-        item.sku_color?.toLowerCase().includes(searchTerm)
+        item.sku_color?.toLowerCase().includes(searchTerm) ||
+        item.area?.toLowerCase().includes(searchTerm) ||
+        item.lineup_nb?.toLowerCase().includes(searchTerm) ||
+        item.model_nb?.toLowerCase().includes(searchTerm) ||
+        item.material_type?.toLowerCase().includes(searchTerm)
     );
   }, [inventoryItems, filterValue]);
 
@@ -224,10 +228,6 @@ const InventoryPicklistItem = () => {
     return filteredManufacturingItems.slice(start, end);
   }, [page, filteredManufacturingItems]);
 
-  // ... (keep all the imports and component code the same until the return statement)
-
-  // const [isHovered, setIsHovered] = useState(false);
-
   const handleLabelClick = (picklistItemId) => {
     navigate(`/label/${picklistItemId}`);
   };
@@ -260,18 +260,15 @@ const InventoryPicklistItem = () => {
             />
 
             <Button
-           style={{
-            color: '#b91c1c',
-            padding: '8px 16px',
-            fontSize: '14px',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s ease',
-          
-          }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-            
-              // variant="light"
+              style={{
+                color: '#b91c1c',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+              }}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
               color="default"
               variant="faded"
               onPress={() => {
@@ -308,9 +305,14 @@ const InventoryPicklistItem = () => {
                         <TableColumn>Picklist Item ID</TableColumn>
                         <TableColumn>Location</TableColumn>
                         <TableColumn>SKU Color</TableColumn>
+                        <TableColumn>Area</TableColumn>
+                        <TableColumn>Lineup #</TableColumn>
+                        <TableColumn>Model Type</TableColumn>
+                        <TableColumn>Material Type</TableColumn>
                         <TableColumn>Required Quantity</TableColumn>
                         <TableColumn>Picked Quantity</TableColumn>
                         <TableColumn>Status</TableColumn>
+                        <TableColumn>Picked At</TableColumn>
                         <TableColumn>Action</TableColumn>
                         <TableColumn>Label</TableColumn>
                       </TableHeader>
@@ -320,6 +322,10 @@ const InventoryPicklistItem = () => {
                             <TableCell>{item.picklist_item_id}</TableCell>
                             <TableCell>{item.location}</TableCell>
                             <TableCell>{item.sku_color}</TableCell>
+                            <TableCell>{item.area || 'N/A'}</TableCell>
+                            <TableCell>{item.lineup_nb || 'N/A'}</TableCell>
+                            <TableCell>{item.model_nb || 'N/A'}</TableCell>
+                            <TableCell>{item.material_type || 'N/A'}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell style={{width:"150px", paddingRight:"50px"}}>
                               <Input
@@ -335,6 +341,9 @@ const InventoryPicklistItem = () => {
                             </TableCell>
                             <TableCell>
                               {item.status ? "Picked" : "To Pick"}
+                            </TableCell>
+                            <TableCell>
+                              {item.picked_at ? new Date(item.picked_at).toLocaleString() : 'Not picked yet'}
                             </TableCell>
                             <TableCell>
                               {item.status ? (
@@ -402,6 +411,26 @@ const InventoryPicklistItem = () => {
                           Do you want to pick this{" "}
                           <b>{selectedItem.sku_color}</b> item?
                         </p>
+                        {selectedItem.area && (
+                          <p className="mt-2">
+                            <b>Area:</b> {selectedItem.area}
+                          </p>
+                        )}
+                        {selectedItem.lineup_nb && (
+                          <p>
+                            <b>Lineup:</b> {selectedItem.lineup_nb}
+                          </p>
+                        )}
+                        {selectedItem.model_nb && (
+                          <p>
+                            <b>Model:</b> {selectedItem.model_nb}
+                          </p>
+                        )}
+                        {selectedItem.material_type && (
+                          <p>
+                            <b>Material:</b> {selectedItem.material_type}
+                          </p>
+                        )}
 
                         <div className="flex justify-end mt-6 gap-4">
                           <Button onPress={closePickModal} color="default">

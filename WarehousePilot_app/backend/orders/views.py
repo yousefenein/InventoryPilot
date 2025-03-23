@@ -306,7 +306,13 @@ class InventoryPicklistItemsView(APIView):
                 'location__location',
                 'sku_color__sku_color',
                 'amount',
-                'status'
+                'status',
+                'item_picked_timestamp',
+                'picked_at',
+                'area',
+                'lineup_nb',
+                'model_nb',
+                'material_type'
             )
 
             # Build response data
@@ -316,7 +322,13 @@ class InventoryPicklistItemsView(APIView):
                     "location": item['location__location'],
                     "sku_color": item['sku_color__sku_color'],
                     "quantity": item['amount'],
-                    "status": item['status']
+                    "status": item['status'],
+                    "item_picked_timestamp": item['item_picked_timestamp'],
+                    "picked_at": item['picked_at'],
+                    "area": item['area'],
+                    "lineup_nb": item['lineup_nb'],
+                    "model_nb": item['model_nb'],
+                    "material_type": item['material_type']
                 }
                 for item in picklist_items
             ]
@@ -344,7 +356,6 @@ class InventoryPicklistItemsView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
 
 class CycleTimePerOrderView(APIView):
     authentication_classes = [JWTAuthentication]
