@@ -7,6 +7,7 @@ import OrderPickingAccuracy from "./OrderPickingAccuracy";
 import WarehouseThroughput from "./WarehouseThroughput";
 // import OrderFulfillmentRate from "./OrderFulfillmentRate";
 // import StockLevelsPreview from "./StockLevelsPreview";
+import OrderFulfillmentPreview from "../kpis/OrderFulfillmentPreview"
 import SideBar from "../dashboard_sidebar1/App";
 import NavBar from "../navbar/App";
 import axios from "axios";
@@ -146,6 +147,7 @@ const KPIDashboard = ({ userData }) => {
 
           {/* Graph Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
             {/* Left graph */}
             <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full">
               <h2 className="text-xl font-semibold">Warehouse Throughput Graph</h2>
@@ -155,9 +157,8 @@ const KPIDashboard = ({ userData }) => {
 
             {/* Right graph */}
             <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full">
-              <h2 className="text-xl font-semibold mb-4">Cycle Time Per Order</h2>
               {/* Placeholder for graph */}
-              <div className="h-64 bg-gray-200 flex items-center justify-center"></div>
+              <OrderFulfillmentPreview/>
             </div>
           </div>
 
