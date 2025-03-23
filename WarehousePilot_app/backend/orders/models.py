@@ -8,8 +8,6 @@ class Orders(models.Model):
     status = models.CharField(max_length = 255, null=True, default="Not Started")
     due_date = models.DateField(null=True)
     start_timestamp = models.DateTimeField(null=True, blank=True, default=None)
-    pack_complete_timestamp = models.DateTimeField(null=True, blank=True, default=None) #IGNORE - WAS ADDED BEFORE END_TIMESTAMP WAS ADDED
-    ship_complete_timestamp = models.DateTimeField(null=True, blank=True, default=None) #IGNORE - WAS ADDED BEFORE SHIP_DATE WAS ADDED
     end_timestamp = models.DateTimeField(null=True, blank=True, default=None) # date when the order is completed and ready to be shipped (packed completion timestamp)
     ship_date = models.DateField(null=True)   # date when the order is shipped (ship completion date)
     customer_name = models.CharField(max_length = 255, null = True)
