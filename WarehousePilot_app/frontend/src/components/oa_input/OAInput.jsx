@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
 import { Divider } from "@heroui/divider";
+import SideBar from "../dashboard_sidebar1/App";
 
 const OAInput = () => {
   const [file, setFile] = useState(null);
@@ -67,15 +68,18 @@ const OAInput = () => {
   };
 
   return (
-    <Card className="max-w-[500px] h-[300px] flex flex-col justify-between">
+    <div>
+    <SideBar/>
+    <div className="flex flex-col items-center justify-center h-screen">
+    <Card className="max-w-[1000px] w-full h-[500px] flex flex-col justify-between">
       <CardHeader className="flex justify-center items-center">
-        <p className="text-2xl font-bold text-center">Upload XLSM File</p>
+        <p className="text-2xl font-bold text-center">Upload OA Report File</p>
       </CardHeader>
       <Divider />
-      <CardBody className="flex flex-col items-center space-y-4">
+      <CardBody className="flex flex-col items-center justify-center space-y-4">
         <input
           type="file"
-          accept=".xlsm"
+          accept=".xlsx"
           onChange={handleFileChange}
           className="border p-2 rounded"
         />
@@ -93,6 +97,8 @@ const OAInput = () => {
         {uploadResponse && <p className="text-green-500">Upload Successful!</p>}
       </CardFooter>
     </Card>
+    </div>
+    </div>
   );
 };
 
