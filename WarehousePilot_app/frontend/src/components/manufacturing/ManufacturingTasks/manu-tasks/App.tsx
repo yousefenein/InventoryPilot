@@ -469,10 +469,11 @@ export default function ManuTasksTable() {
   }
 
   return (
-    <div style={{ backgroundColor: "#F8F8F8", marginTop: "-80px", minHeight: "100vh" }}>
-      <NavBar />
+    <div  className="flex-1 px-10" style={{ backgroundColor: "#F8F8F8",  minHeight: "100vh" }}>
+     
       <SideBar /> {/* Add the SideBar component here */}
-      <div className="flex-1 p-6" style={{ padding: "40px" }}>
+      <div className="flex-1 mt-2 ">
+      <NavBar />
         {topBar}
         <Table
           isHeaderSticky
@@ -490,14 +491,22 @@ export default function ManuTasksTable() {
           onSelectionChange={onSelectionChange}
           onSortChange={setSortDescriptor}
         >
-          <TableHeader columns={headerColumns}>
+          <TableHeader 
+          
+          columns={headerColumns}
+          
+          
+          >
             {(column) => (
               <TableColumn
                 key={column.uid}
                 align={column.uid === "actions" ? "end" : "start"}
+                
                 className={cn([
                   column.uid === "actions" ? "flex items-center justify-end px-[20px]" : "",
                 ])}
+
+               
               >
                 {column.name}
               </TableColumn>

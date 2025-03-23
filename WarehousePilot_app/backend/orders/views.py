@@ -6,6 +6,7 @@
 # InventoryPicklistView: Retrieves picklists for orders in progress, indicating if they are filled and their assigned employee.
 # InventoryPicklistItemsView: Fetches detailed items of a picklist for a given order, including location, SKU, quantity, and status.
 # CycleTimePerOrderView: Calculates the cycle time for each order that has been fully picked in the past month.
+# DelayedOrders: Retrieve all orders that have not been shipped by the due date.
 
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timedelta
@@ -306,7 +307,13 @@ class InventoryPicklistItemsView(APIView):
                 'location__location',
                 'sku_color__sku_color',
                 'amount',
-                'status'
+                'status',
+                'item_picked_timestamp',
+                'picked_at',
+                'area',
+                'lineup_nb',
+                'model_nb',
+                'material_type'
             )
 
             # Build response data
@@ -316,7 +323,13 @@ class InventoryPicklistItemsView(APIView):
                     "location": item['location__location'],
                     "sku_color": item['sku_color__sku_color'],
                     "quantity": item['amount'],
-                    "status": item['status']
+                    "status": item['status'],
+                    "item_picked_timestamp": item['item_picked_timestamp'],
+                    "picked_at": item['picked_at'],
+                    "area": item['area'],
+                    "lineup_nb": item['lineup_nb'],
+                    "model_nb": item['model_nb'],
+                    "material_type": item['material_type']
                 }
                 for item in picklist_items
             ]
@@ -344,7 +357,6 @@ class InventoryPicklistItemsView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
 
 class CycleTimePerOrderView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -361,22 +373,75 @@ class CycleTimePerOrderView(APIView):
             # Calculate cycle time for each order
             for order in fetched_orders:
                 id = order['order_id']
+                current_order = {"order_id": id} # Initialize order dictionary
+                status = "N/A"
+
                 try:
+                    # Fetch the completion timestamps of picking, packing, and shipping for order of order_id
                     picklist_completion = InventoryPicklist.objects.all().values('picklist_complete_timestamp').filter(order_id=id).first()
+                    pack_completion = Orders.objects.all().values('end_timestamp').filter(order_id=id).first()
+                    ship_completion = Orders.objects.all().values('ship_date').filter(order_id=id).first()
+                    
+                    picking_duration = 0
+                    packing_duration = 0
+                    shipping_duration = 0
 
                     # Skip orders that have not been fully picked
                     if picklist_completion is None or picklist_completion['picklist_complete_timestamp'] is None:
                         continue
 
                     # Check if picklist completion is within the past month and has been completed
-                    if (picklist_completion['picklist_complete_timestamp'].date() > past_month and picklist_completion['picklist_complete_timestamp'].date() is not None): 
-                        # Calculate cycle time
-                        completion_duration = picklist_completion['picklist_complete_timestamp'].date() - order['start_timestamp'].date()
-                        # Add order's cycle time to the return list
-                        orders.append({
-                            "order_id": id,
-                            "cycle_time": completion_duration.days
-                        })
+                    elif (picklist_completion['picklist_complete_timestamp'].date() > past_month and picklist_completion['picklist_complete_timestamp'].date() is not None): 
+                        # Calculate the picking duration
+                        picking_duration = abs((picklist_completion['picklist_complete_timestamp'].date() - order['start_timestamp'].date()).days)
+                        # Update current order with picking time duration
+                        current_order["pick_time"] = picking_duration
+                        status = "Picked"
+
+                    # Check if order hasn't been packed
+                    if  pack_completion['end_timestamp'] is None:
+                        logger.debug("Order %s has not been packed", id)
+                        # Update current order with packing and shipping duration, cycle time, and status
+                        current_order["pack_time"] = 0
+                        current_order["ship_time"] = 0
+                        current_order["cycle_time"] = picking_duration
+                        current_order["status"] = "Picked"
+                        # Add order to return list
+                        orders.append(current_order)
+                        continue       
+                    else:
+                        # Calculate packing duration
+                        packing_duration = abs((pack_completion['end_timestamp'].date() - picklist_completion['picklist_complete_timestamp'].date()).days)
+                        # Update current order with packing time duration
+                        current_order["pack_time"] = packing_duration
+                        status = "Packed"
+                    
+                    # Check if order hasn't been shipped
+                    if ship_completion['ship_date'] is None:
+                        logger.debug("Order %s has not been shipped", id)
+                        # Update current order with shipping duration, cycle time, and status
+                        current_order["ship_time"] = 0
+                        current_order["cycle_time"] = picking_duration + packing_duration
+                        current_order["status"] = "Packed"
+                        # Add order to return list
+                        orders.append(current_order)
+                        continue
+                    else:
+                        # Calculate shipping duration
+                        shipping_duration = abs((ship_completion['ship_date'] - pack_completion['end_timestamp'].date()).days)
+                        # Update current order with packing time duration
+                        current_order["ship_time"] = shipping_duration
+                        status = "Shipped"
+
+                    # Update current order with cycle time and status
+                    current_order["cycle_time"] = picking_duration + packing_duration + shipping_duration
+                    current_order["status"] = status        
+
+                    logger.debug("Current order: %s", current_order) # Debugging: Log current order
+
+                    # Add order to return list
+                    orders.append(current_order)
+
                 except InventoryPicklist.DoesNotExist:
                     logger.warning("Picklist could not be found for order %s (CycleTimePerOrderView)", id)
                 
@@ -386,4 +451,25 @@ class CycleTimePerOrderView(APIView):
 
         except Exception as e:
             logger.error("Failed to calculate cycle time per order (CycleTimePerOrderView)")
+            return Response({"error": str(e)}, status=500)
+
+class DelayedOrders(APIView):
+    #authentication_classes = [JWTAuthentication]
+    #permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            current_date = timezone.now().date()  # Get the current date
+            orders = []
+
+            # Fetch all delayed orders (orders that have not been shipped before the due date)
+            delayed_orders = Orders.objects.all().values('order_id', 'due_date', 'ship_complete_timestamp', 'start_timestamp').filter(due_date__lt=current_date, ship_complete_timestamp__isnull=True, start_timestamp__isnull=False)
+            for order in delayed_orders:
+                delay = (current_date - order['due_date']).days
+                orders.append({"order_id": order['order_id'], "due_date": order['due_date'], "delay": delay})
+            
+            logger.info("Successfully fetched delayed orders")
+            return Response(orders)
+        except Exception as e:
+            logger.error("Failed to fetch delayed orders (DelayedOrders)")
             return Response({"error": str(e)}, status=500)
