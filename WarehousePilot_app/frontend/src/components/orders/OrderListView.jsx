@@ -55,31 +55,31 @@ const OrderListView = () => {
   });
   const navigate = useNavigate();
   const rowsPerPage = 10;
-
+  
   // Filter rows based on search text
   const filteredRows = useMemo(() => {
     if (!filterValue.trim()) return rows;
-
+    
     const searchTerm = filterValue.toLowerCase();
-
+    
     console.log("Search Term:", searchTerm);
     console.log(
       "All Order IDs:",
       rows.map((row) => row.order_id)
     );
-
+    
     return rows.filter((row) => {
       const orderIdMatch = row.order_id?.toString().includes(searchTerm);
       const durationMatch = row.estimated_duration
-        ?.toString()
-        .includes(searchTerm);
+      ?.toString()
+      .includes(searchTerm);
       const statusMatch = row.status?.toLowerCase().includes(searchTerm);
       const dueDateMatch = row.due_date?.toLowerCase().includes(searchTerm);
-
+      
       return orderIdMatch || durationMatch || statusMatch || dueDateMatch;
     });
   }, [rows, filterValue]);
-
+  
   // Updated sorting logic to prioritize "Not Started" orders by default
   const sortedFilteredRows = useMemo(() => {
     const rowsCopy = [...filteredRows];
@@ -146,26 +146,26 @@ const OrderListView = () => {
     
     return rowsCopy;
   }, [filteredRows, sortDescriptor]);
-
+  
   // Apply pagination to the filtered rows
   const paginatedRows = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-
+    
     // If the filtered list has fewer pages, reset page number
     if (start >= sortedFilteredRows.length) {
       setPage(1); // Reset to first page if page number is out of range
     }
-
+    
     return sortedFilteredRows.slice(start, end);
   }, [page, sortedFilteredRows]);
-
+  
   // Calculate total pages based on the number of filtered rows
   const totalPages = Math.max(
     1,
     Math.ceil(sortedFilteredRows.length / rowsPerPage)
   );
-
+  
   // Fetch orders data from the backend
   const fetchOrders = async () => {
     try {
@@ -175,21 +175,21 @@ const OrderListView = () => {
         setLoading(false);
         return;
       }
-
+      
       const response = await axios.get(`${API_BASE_URL}/orders/ordersview/`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
-
+      
       if (!response.data || response.data.length === 0) {
         console.error("No data received from API.");
         return;
       }
-
+      
       console.log("Fetched Orders:", response.data);
-
+      
       setRows(
         response.data.map((row, index) => ({
           id: index + 1,
@@ -200,7 +200,7 @@ const OrderListView = () => {
           start_timestamp: row.start_timestamp || null,
         }))
       );
-
+      
       setLoading(false);
     } catch (err) {
       console.error("Error fetching orders:", err);
@@ -208,12 +208,12 @@ const OrderListView = () => {
       setLoading(false);
     }
   };
-
+  
   // Fetch orders on component mount
   useEffect(() => {
     fetchOrders();
   }, []);
-
+  
   // Auto-dismiss success message for starting the order after 5 seconds
   useEffect(() => {
     if (successOrderStart) {
@@ -223,7 +223,7 @@ const OrderListView = () => {
       return () => clearTimeout(timer);
     }
   }, [successOrderStart]);
-
+  
   // Auto-dismiss success message for generating lists after 5 seconds
   useEffect(() => {
     if (successListGeneration) {
@@ -233,21 +233,21 @@ const OrderListView = () => {
       return () => clearTimeout(timer);
     }
   }, [successListGeneration]);
-
+  
   // Handle the start button click event
   const handleStart = async (orderId) => {
     try {
       setUpdatingOrderId(orderId);
       setError(null);
       setSuccessOrderStart(null);
-
+      
       const token = localStorage.getItem("token");
-
+      
       if (!token) {
         setError("No authorization token found");
         return;
       }
-
+      
       // Send POST request to start the order
       const response = await axios.post(
         `${API_BASE_URL}/orders/start_order/${orderId}/`,
@@ -259,9 +259,9 @@ const OrderListView = () => {
           },
         }
       );
-
+      
       console.log("Response from backend (start_order):", response.data);
-
+      
       if (response.data.status === "success") {
         // Update the order status and start timestamp
         setRows((prevRows) =>

@@ -296,7 +296,7 @@ export default function ManuTasksTable() {
   //   await deleteSelectedItems();
   //   toast.success("Items deleted successfully!");
   // };
-
+  const tasksCount = tasks.length;
   const topContent = useMemo(() => {
     return (
       <div className="flex items-center gap-4 overflow-auto px-[6px] py-[4px]">
