@@ -389,7 +389,7 @@ class CycleTimePerOrderView(APIView):
 
                     # Check if order hasn't been packed
                     if  pack_completion['pack_complete_timestamp'] is None:
-                        logger.info("Order %s has not been packed", id)
+                        logger.debug("Order %s has not been packed", id)
                         # Update current order with packing and shipping duration, cycle time, and status
                         current_order["pack_time"] = 0
                         current_order["ship_time"] = 0
@@ -407,7 +407,7 @@ class CycleTimePerOrderView(APIView):
                     
                     # Check if order hasn't been shipped
                     if ship_completion['ship_complete_timestamp'] is None:
-                        logger.info("Order %s has not been shipped", id)
+                        logger.debug("Order %s has not been shipped", id)
                         # Update current order with shipping duration, cycle time, and status
                         current_order["ship_time"] = 0
                         current_order["cycle_time"] = picking_duration + packing_duration
@@ -450,11 +450,14 @@ class DelayedOrders(APIView):
         try:
             current_date = timezone.now().date()  # Get the current date
             orders = []
+
             # Fetch all delayed orders (orders that have not been shipped before the due date)
             delayed_orders = Orders.objects.all().values('order_id', 'due_date', 'ship_complete_timestamp', 'start_timestamp').filter(due_date__lt=current_date, ship_complete_timestamp__isnull=True, start_timestamp__isnull=False)
             for order in delayed_orders:
                 delay = (current_date - order['due_date']).days
                 orders.append({"order_id": order['order_id'], "due_date": order['due_date'], "delay": delay})
+            
+            logger.info("Successfully fetched delayed orders")
             return Response(orders)
         except Exception as e:
             logger.error("Failed to fetch delayed orders (DelayedOrders)")
