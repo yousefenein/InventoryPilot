@@ -86,6 +86,13 @@ const OrderFulfillmentPreview = () => {
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm">
+      {/* Inline style block to hide the header (h3) within the chart */}
+      <style>{`
+        .hide-chart-title h3 {
+          display: none;
+        }
+      `}</style>
+
       {/* Header row: Title + Details button */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Order Fulfillment</h2>
@@ -114,15 +121,19 @@ const OrderFulfillmentPreview = () => {
         ))}
       </div>
 
-      {/* Bar Chart */}
+      {/* Bar Chart wrapped in a div that hides the inner h3 title */}
       {loading ? (
         <div className="text-center">Loading...</div>
       ) : error ? (
         <div className="text-red-500 text-center">{error}</div>
       ) : filteredData.length > 0 ? (
-        <OrderFulfillmentBarChart data={filteredData} />
+        <div className="hide-chart-title">
+          <OrderFulfillmentBarChart data={filteredData} />
+        </div>
       ) : (
-        <div className="text-center">No data available for the selected range.</div>
+        <div className="text-center">
+          No data available for the selected range.
+        </div>
       )}
     </div>
   );
