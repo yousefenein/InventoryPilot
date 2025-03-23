@@ -13,7 +13,7 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-} from "@heroui/react"; // Added Dropdown components
+} from "@heroui/react";
 import { SearchIcon } from "@heroui/shared-icons";
 import { FaPlay, FaCheck, FaClock } from "react-icons/fa6";
 import { MdError } from "react-icons/md";
@@ -36,6 +36,45 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+// Define columns for table (NEW)
+const columns = [
+  {
+    uid: "order_id",
+    name: "Order ID",
+    sortable: true,
+  },
+  {
+    uid: "estimated_duration",
+    name: "Estimated Duration",
+    sortable: true,
+  },
+  {
+    uid: "status",
+    name: "Status",
+    sortable: true,
+  },
+  {
+    uid: "due_date",
+    name: "Due Date",
+    sortable: true,
+  },
+  {
+    uid: "start_timestamp",
+    name: "Start Date",
+    sortable: false,
+  },
+  {
+    uid: "actions",
+    name: "Action",
+    sortable: false,
+  },
+];
+
+// Function to get default visible columns (NEW)
+const getVisibleColumns = () => {
+  return columns.map(column => column.uid);
+};
+
 const OrderListView = () => {
   // State variables
   const [filterValue, setFilterValue] = useState("");
@@ -53,6 +92,9 @@ const OrderListView = () => {
     column: "status", 
     direction: "ascending" 
   });
+  // NEW: Column visibility state
+  const [visibleColumns, setVisibleColumns] = useState(new Set(getVisibleColumns()));
+  
   const navigate = useNavigate();
   const rowsPerPage = 10;
   
@@ -165,6 +207,15 @@ const OrderListView = () => {
     1,
     Math.ceil(sortedFilteredRows.length / rowsPerPage)
   );
+  
+  // NEW: filter columns based on visibility settings
+  const visibleTableColumns = useMemo(() => {
+    if (visibleColumns === "all") return columns;
+    
+    return columns.filter(
+      (column) => Array.from(visibleColumns).includes(column.uid)
+    );
+  }, [visibleColumns]);
   
   // Fetch orders data from the backend
   const fetchOrders = async () => {
@@ -314,6 +365,91 @@ const OrderListView = () => {
     }
   };
 
+  // NEW: Render a table cell based on column key
+  const renderCell = (item, columnKey) => {
+    const cellValue = item[columnKey];
+    
+    switch (columnKey) {
+      case "order_id":
+        return (
+          <div className="flex items-center">
+            {item.order_id}
+            <CopyText text={item.order_id.toString()} />
+          </div>
+        );
+      case "estimated_duration":
+        return <div>{item.estimated_duration}</div>;
+      case "status":
+        return (
+          <div className="flex items-center gap-2">
+            <Chip color="default" variant="flat">
+              <span
+                className={`flex items-center gap-1 px-2 py-1 rounded ${
+                  item.status === "In Progress" ? "text-blue-800" : ""
+                }`}
+              >
+                {item.status === "In Progress" ? (
+                  <FaClock className="text-red" /> 
+                ) : (
+                  <FaExclamationCircle className="text-red-600 text-xl" />
+                )}
+                <span>{item.status || "Not started"}</span>
+              </span>
+            </Chip>
+          </div>
+        );
+      case "due_date":
+        return (
+          <div className="flex items-center gap-2">
+            <Icon
+              icon="solar:calendar-linear"
+              width={18}
+              className="text-gray-500"
+            />
+            <span>{item.due_date || "undefined"}</span>
+          </div>
+        );
+      case "start_timestamp":
+        return (
+          <>
+            {item.start_timestamp ? (
+              <Chip color="success" variant="dot">
+                {dayjs
+                  .utc(item.start_timestamp)
+                  .tz("America/Toronto")
+                  .format("YYYY-MM-DD HH:mm")}
+              </Chip>
+            ) : (
+              <Chip color="default" variant="flat">
+                Not Started
+              </Chip>
+            )}
+          </>
+        );
+      case "actions":
+        return (
+          <Button
+            style={{
+              backgroundColor: item.status === "In Progress" ? "#D1D5DB" : "#006FEE",
+              color: item.status === "In Progress" ? "#000000" : "#FFFFFF",
+            }}
+            size="sm"
+            isDisabled={
+              item.status === "In Progress" || updatingOrderId !== null
+            }
+            onPress={() => handleStart(item.order_id)}
+            startContent={
+              item.status === "In Progress" ? <FaCheck /> : <FaPlay />
+            }
+          >
+            {item.status === "In Progress" ? "Started" : "Start"}
+          </Button>
+        );
+      default:
+        return cellValue;
+    }
+  };
+
   return (
     <div className="mt-2">
       
@@ -336,7 +472,7 @@ const OrderListView = () => {
                   base: " text-lg border-small border-white/50 w-40 p-2 justify-item-center",
                   content: "drop-shadow  text-white",
                 }}
-                style={{ backgroundColor: '#000', color: '#fff' ,}}
+                style={{ backgroundColor: '#006FEE', color: '#fff' ,}}
               >
                 Inventory and Manufacturing List
               </Chip>
@@ -384,7 +520,7 @@ const OrderListView = () => {
               </div>
             )}
 
-            {/* Search and Sort Controls */}
+            {/* Search, Sort and Column Visibility Controls */}
             <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
               <Input
                 size="md"
@@ -398,7 +534,7 @@ const OrderListView = () => {
                 className="w-full sm:w-72"
               />
               
-              {/* Added Sort Dropdown */}
+              {/* Sort Dropdown */}
               <Dropdown>
                 <DropdownTrigger>
                   <Button 
@@ -428,24 +564,30 @@ const OrderListView = () => {
                   >
                     Due Date
                   </DropdownItem>
-                  {/* <DropdownItem 
-                    key="status" 
-                    onPress={() => setSortDescriptor({ 
-                      column: "status", 
-                      direction: sortDescriptor.column === "status" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
-                    })}
+                </DropdownMenu>
+              </Dropdown>
+              
+              {/* NEW: Column Visibility Dropdown */}
+              <Dropdown closeOnSelect={false}>
+                <DropdownTrigger>
+                  <Button 
+                    variant="flat" 
+                    startContent={<Icon icon="material-symbols:view-column" width={16} />}
+                    style={{ backgroundColor: '#f3f4f6', color: '#000' }}
                   >
-                    Status
-                  </DropdownItem> */}
-                  {/* <DropdownItem 
-                    key="estimated_duration" 
-                    onPress={() => setSortDescriptor({ 
-                      column: "estimated_duration", 
-                      direction: sortDescriptor.column === "estimated_duration" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
-                    })}
-                  >
-                    Estimated Duration
-                  </DropdownItem> */}
+                    Columns
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu 
+                  disallowEmptySelection
+                  aria-label="Column Visibility"
+                  selectedKeys={visibleColumns}
+                  selectionMode="multiple"
+                  onSelectionChange={setVisibleColumns}
+                >
+                  {columns.map((column) => (
+                    <DropdownItem key={column.uid}>{column.name}</DropdownItem>
+                  ))}
                 </DropdownMenu>
               </Dropdown>
             </div>
@@ -470,97 +612,24 @@ const OrderListView = () => {
                   topContentPlacement="outside"
                 >
                   <TableHeader className="shadow-xl">
-                    <TableColumn className="text-gray-800 font-bold text-lg">
-                      Order ID
-                    </TableColumn>
-                    <TableColumn className="text-gray-800 font-bold text-lg">
-                      Estimated Duration
-                    </TableColumn>
-                    <TableColumn className="text-gray-800 font-bold text-lg">
-                      Status
-                    </TableColumn>
-                    <TableColumn className="text-gray-800 font-bold text-lg">
-                      Due Date
-                    </TableColumn>
-                    <TableColumn className="text-gray-800 font-bold text-lg">
-                      Start Date
-                    </TableColumn>
-                    <TableColumn className="text-gray-800 font-bold text-lg">
-                      Action
-                    </TableColumn>
+                    {visibleTableColumns.map((column) => (
+                      <TableColumn 
+                        key={column.uid} 
+                        className="text-gray-800 font-bold text-lg"
+                      >
+                        {column.name}
+                      </TableColumn>
+                    ))}
                   </TableHeader>
 
                   <TableBody items={paginatedRows}>
                     {(item) => (
                       <TableRow key={item.id}>
-                        <TableCell className="flex items-center">
-                          {item.order_id}
-                          <CopyText text={item.order_id.toString()} />
-                        </TableCell>
-
-                        <TableCell>{item.estimated_duration}</TableCell>
-
-                        <TableCell className="flex items-center gap-2">
-                          <Chip color="default" variant="flat" >
-                          <span
-                            className={`flex items-center gap-1 px-2 py-1 rounded ${
-                              item.status === "In Progress" ? "text-blue-800" : ""
-                            }`}
-                          >
-                            {item.status === "In Progress" ? (
-                              <FaClock className="text-red" /> 
-                            ) : (
-                              <FaExclamationCircle className="text-red-600 text-xl" />
-                            )}
-                            <span>{item.status || "Not started"}</span>
-                          </span>
-                          </Chip>
-                        </TableCell>
-
-                        <TableCell className="items-center gap-2">
-                          <div className="flex items-center gap-2">
-                            <Icon
-                              icon="solar:calendar-linear"
-                              width={18}
-                              className="text-gray-500"
-                            />
-                            <span>{item.due_date||"undefined"}</span>
-                          </div>
-                        </TableCell>
-
-                        <TableCell>
-                          {item.start_timestamp ? (
-                            <Chip color="success" variant="dot">
-                              {dayjs
-                                .utc(item.start_timestamp)
-                                .tz("America/Toronto")
-                                .format("YYYY-MM-DD HH:mm")}
-                            </Chip>
-                          ) : (
-                            <Chip color="default" variant="flat">
-                              Not Started
-                            </Chip>
-                          )}
-                        </TableCell>
-
-                        <TableCell>
-                          <Button
-                            style={{
-                              backgroundColor: item.status === "In Progress" ? "#D1D5DB" : "#000",
-                              color: item.status === "In Progress" ? "#000000" : "#FFFFFF",
-                            }}
-                            size="sm"
-                            isDisabled={
-                              item.status === "In Progress" || updatingOrderId !== null
-                            }
-                            onPress={() => handleStart(item.order_id)}
-                            startContent={
-                              item.status === "In Progress" ? <FaCheck /> : <FaPlay />
-                            }
-                          >
-                            {item.status === "In Progress" ? "Started" : "Start"}
-                          </Button>
-                        </TableCell>
+                        {visibleTableColumns.map((column) => (
+                          <TableCell key={`${item.id}-${column.uid}`}>
+                            {renderCell(item, column.uid)}
+                          </TableCell>
+                        ))}
                       </TableRow>
                     )}
                   </TableBody>
@@ -575,10 +644,9 @@ const OrderListView = () => {
                     initialPage={1}
                     current={page}
                     onChange={(newPage) => setPage(newPage)}
-                    color="default"
                     classNames={{
                       item: "bg-white text-black",
-                      cursor: "bg-black text-white",
+                      cursor: "#006FEE text-white",
                     }}
                   />
                 </div>
