@@ -61,15 +61,17 @@ const KPIDashboard = ({ userData }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100 " >
       {/* Sidebar */}
       <SideBar userData={userData} isOpen={isSidebarOpen} />
-
-      <div className="flex-1 flex flex-col p-6">
+      
+           
+            <div className="flex-1 sm:ml-10 sm:mt-2">
+            <NavBar />
         {/* KPI Dashboard Content */}
-        {/* <main className="flex-1 p-6"> */}
+        <main className="flex-1 p-12">
           {/* Title */}
-          <h1 className="text-3xl font-bold text-center m-6">KPI Dashboard</h1>
+          {/* <h1 className="text-3xl font-bold text-center m-6">KPI Dashboard</h1> */}
 
           {/* Overview Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -177,7 +179,7 @@ const KPIDashboard = ({ userData }) => {
             <OrderFulfillmentRate />
             <StockLevels />
           </div> */}
-        {/* </main> */}
+        </main>
       </div>
     </div>
   );

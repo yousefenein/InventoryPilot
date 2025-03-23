@@ -514,10 +514,11 @@ export default function InventoryTable() {
   }
 
   return (
-    <div style={{ marginTop: "-80px" }}>
-      <NavBar />
+    <div className="mt-2">
+     
       <SideBar /> {/* Add the SideBar component here */}
-      <div className="flex-1 p-6" style={{ padding: "40px" }}>
+      <div className="flex-1 px-10">
+      <NavBar />
         {topBar}
         <Table
           isHeaderSticky
