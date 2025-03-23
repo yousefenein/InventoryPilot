@@ -1,31 +1,6 @@
 import React from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 
-// Placeholder data for now
-const data = [
-  { time: "Day 1", parts: 300 },
-  { time: "Day 2", parts: 350 },
-  { time: "Day 3", parts: 280 },
-  { time: "Day 4", parts: 400 },
-  { time: "Day 5", parts: 320 },
-];
-
-// Backend 
-// Table: "inventory_inventory"
-// Columns:
-// we will use "time_frame" to determine the time period (e.g., Day, Week, Month).
-// we will use "throughput" to represent the total number of processed parts or items.
-// Backend Logic:
-//  Query the "inventory_inventory" table and group the data by "time_frame".
-// Return the aggregated data in this format:
-//   [
-//     { time: "Day 1", parts: 300 },
-//     { time: "Day 2", parts: 350 },
-//     { time: "Day 3", parts: 280 },
-//     { time: "Day 4", parts: 400 },
-//     { time: "Day 5", parts: 320 },
-//   ]
-
 const WarehouseThroughput = () => {
   return (
     <div className="bg-white p-4 shadow-md rounded-lg flex flex-col items-center">
