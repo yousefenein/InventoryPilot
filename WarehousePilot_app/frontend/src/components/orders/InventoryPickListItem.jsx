@@ -17,6 +17,7 @@ import {
 import { SearchIcon } from "@heroui/shared-icons";
 import { useNavigate, useParams } from "react-router-dom";
 import SideBar from "../dashboard_sidebar1/App";
+import NavBar from "../navbar/App";
 import axios from "axios";
 
 
@@ -110,7 +111,11 @@ const InventoryPicklistItem = () => {
       (item) =>
         item.picklist_item_id?.toString().toLowerCase().includes(searchTerm) ||
         item.location?.toLowerCase().includes(searchTerm) ||
-        item.sku_color?.toLowerCase().includes(searchTerm)
+        item.sku_color?.toLowerCase().includes(searchTerm) ||
+        item.area?.toLowerCase().includes(searchTerm) ||
+        item.lineup_nb?.toLowerCase().includes(searchTerm) ||
+        item.model_nb?.toLowerCase().includes(searchTerm) ||
+        item.material_type?.toLowerCase().includes(searchTerm)
     );
   }, [inventoryItems, filterValue]);
 
@@ -224,10 +229,6 @@ const InventoryPicklistItem = () => {
     return filteredManufacturingItems.slice(start, end);
   }, [page, filteredManufacturingItems]);
 
-  // ... (keep all the imports and component code the same until the return statement)
-
-  // const [isHovered, setIsHovered] = useState(false);
-
   const handleLabelClick = (picklistItemId) => {
     navigate(`/label/${picklistItemId}`);
   };
@@ -236,6 +237,10 @@ const InventoryPicklistItem = () => {
   return (
     <div className="flex h-full">
       <SideBar isOpen={isSidebarOpen} />
+       
+           
+        <div className="flex-1 sm:ml-10 sm:mt-2">
+          <NavBar />
 
       <div className="flex-1 sm:ml-8">
         <div className="mt-16 p-8">
@@ -260,18 +265,15 @@ const InventoryPicklistItem = () => {
             />
 
             <Button
-           style={{
-            color: '#b91c1c',
-            padding: '8px 16px',
-            fontSize: '14px',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s ease',
-          
-          }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-            
-              // variant="light"
+              style={{
+                color: '#b91c1c',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+              }}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
               color="default"
               variant="faded"
               onPress={() => {
@@ -303,16 +305,33 @@ const InventoryPicklistItem = () => {
                   </div>
                 ) : paginatedInventoryItems.length > 0 ? (
                   <>
-                    <Table>
-                      <TableHeader>
-                        <TableColumn>Picklist Item ID</TableColumn>
-                        <TableColumn>Location</TableColumn>
-                        <TableColumn>SKU Color</TableColumn>
-                        <TableColumn>Required Quantity</TableColumn>
-                        <TableColumn>Picked Quantity</TableColumn>
-                        <TableColumn>Status</TableColumn>
-                        <TableColumn>Action</TableColumn>
-                        <TableColumn>Label</TableColumn>
+                    <Table  
+                     aria-label="Inventory Pick List"
+                     className="min-w-full shadow-lg"
+                     isHeaderSticky
+                     selectionMode="multiple"
+                     bottomContentPlacement="outside"
+                     classNames={{
+                        td: "before:bg-transparent", 
+                      }}
+                      topContentPlacement="outside"
+                    
+                    
+                    >
+                      <TableHeader className="shadow-xl">
+                        <TableColumn className="text-gray-800 font-bold text-base">Picklist Item ID</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Location</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">SKU Color</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Area</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Lineup #</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Model Type</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Material Type</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Required Quantity</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Picked Quantity</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Status</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Picked At</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Action</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Label</TableColumn>
                       </TableHeader>
                       <TableBody>
                         {paginatedInventoryItems.map((item) => (
@@ -320,6 +339,10 @@ const InventoryPicklistItem = () => {
                             <TableCell>{item.picklist_item_id}</TableCell>
                             <TableCell>{item.location}</TableCell>
                             <TableCell>{item.sku_color}</TableCell>
+                            <TableCell>{item.area || 'N/A'}</TableCell>
+                            <TableCell>{item.lineup_nb || 'N/A'}</TableCell>
+                            <TableCell>{item.model_nb || 'N/A'}</TableCell>
+                            <TableCell>{item.material_type || 'N/A'}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell style={{width:"150px", paddingRight:"50px"}}>
                               <Input
@@ -335,6 +358,9 @@ const InventoryPicklistItem = () => {
                             </TableCell>
                             <TableCell>
                               {item.status ? "Picked" : "To Pick"}
+                            </TableCell>
+                            <TableCell>
+                              {item.picked_at ? new Date(item.picked_at).toLocaleString() : 'Not picked yet'}
                             </TableCell>
                             <TableCell>
                               {item.status ? (
@@ -402,6 +428,26 @@ const InventoryPicklistItem = () => {
                           Do you want to pick this{" "}
                           <b>{selectedItem.sku_color}</b> item?
                         </p>
+                        {selectedItem.area && (
+                          <p className="mt-2">
+                            <b>Area:</b> {selectedItem.area}
+                          </p>
+                        )}
+                        {selectedItem.lineup_nb && (
+                          <p>
+                            <b>Lineup:</b> {selectedItem.lineup_nb}
+                          </p>
+                        )}
+                        {selectedItem.model_nb && (
+                          <p>
+                            <b>Model:</b> {selectedItem.model_nb}
+                          </p>
+                        )}
+                        {selectedItem.material_type && (
+                          <p>
+                            <b>Material:</b> {selectedItem.material_type}
+                          </p>
+                        )}
 
                         <div className="flex justify-end mt-6 gap-4">
                           <Button onPress={closePickModal} color="default">
@@ -487,6 +533,7 @@ const InventoryPicklistItem = () => {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 };
