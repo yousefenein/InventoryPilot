@@ -11,6 +11,7 @@ import {
   NavbarMenuToggle,
   Link,
   Button,
+  Tooltip
 } from "@heroui/react";
 
 export default function NavBar(props: NavbarProps) {
@@ -100,10 +101,16 @@ export default function NavBar(props: NavbarProps) {
 
         {(userRole === "admin") && (
           <>
-            <NavbarItem><Link className="text-default-500" href="/kpi" size="sm">KPI</Link></NavbarItem>
-            <NavbarItem><Link className="text-default-500" href="/orders" size="sm">Orders</Link></NavbarItem>
-            <NavbarItem><Link className="text-default-500" href="/inventory-stock" size="sm">Inventory</Link></NavbarItem>
-            <NavbarItem><Link className="text-default-500" href="/manufacturing_tasks" size="sm">Manufacturing Tasks</Link></NavbarItem>
+            <Tooltip content="View all Key Performance Indicators">
+              <NavbarItem><Link className="text-default-500" href="/kpi" size="sm">KPI</Link></NavbarItem>
+            </Tooltip>
+            <Tooltip content="View order status">
+              <NavbarItem><Link className="text-default-500" href="/orders" size="sm">Orders</Link></NavbarItem>
+            </Tooltip>
+              <NavbarItem><Link className="text-default-500" href="/inventory-stock" size="sm">Inventory</Link></NavbarItem>
+            <Tooltip content="View all task details">
+              <NavbarItem><Link className="text-default-500" href="/manufacturing_tasks" size="sm">Manufacturing Tasks</Link></NavbarItem>
+            </Tooltip>
           </>
         )}
 
