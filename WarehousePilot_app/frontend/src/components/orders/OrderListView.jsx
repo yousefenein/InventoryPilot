@@ -27,6 +27,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import NavBar from "../navbar/App";
 import { Spinner } from "@heroui/spinner";
+import { useTheme } from "../../context/ThemeContext";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Extend dayjs with UTC and timezone
@@ -35,6 +36,7 @@ dayjs.extend(timezone);
 
 const OrderListView = () => {
   // State variables
+  const { theme } = useTheme();
   const [filterValue, setFilterValue] = useState(""); // Filter value for search functionality
   const [rows, setRows] = useState([]); // To store the list of orders fetched from the backend
   const [loading, setLoading] = useState(true); // To manage loading state
@@ -257,232 +259,219 @@ const OrderListView = () => {
 const orderCount = rows.length;
 //style={{backgroundColor: "#F2F4F6"}}
 return (
-  <div className="  h-full" style={{ marginTop: "-80px" }}>
-  
-  {" "}
-  
-  <NavBar />
-  <SideBar />
-  
-  <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto">
-  <div className="flex flex-col flex-1">
-  <div className="flex flex-col">
-  <div className="flex flex-row justify-between items-center gap-11 mt-10 mb-6">
-  <div className="flex items-center gap-2">
-  <h1 className="text-2xl font-bold leading-none">Orders</h1>
-  <Chip className="text-default-500 sm:flex px-3 py-1 rounded-full bg-gray-200" size="sm" variant="flat">
-    {orderCount}
-  </Chip>
-  </div>
-  <Chip
-  color="primary"
-  variant="shadow"
-  radius="medium"
-  size="lg"
-  onClick={() => navigate("/inventory_and_manufacturing_picklist")}
-  className="text-center"
-  style={{ backgroundColor: '#000', color: '#fff' }} // Black background with white text
-  >
-  Inventory and Manufacturing List
-  
-  </Chip>
-  </div>
-  
-  {/* Success message for starting the order */}
-  {successOrderStart && (
-    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
-    <span>{successOrderStart}</span>
-    <button
-    onClick={() => setSuccessOrderStart(null)}
-    className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
-    >
-    ×
-    </button>
-    </div>
-  )}
-  
-  {/* Success message for generating the lists */}
-  {successListGeneration && (
-    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
-    <span>{successListGeneration}</span>
-    <button
-    onClick={() => setSuccessListGeneration(null)}
-    className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
-    >
-    ×
-    </button>
-    </div>
-  )}
-  
-  {/* Error message */}
-  {error && (
-    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
-    <span>{error}</span>
-    <Button
-    onClick={() => setError(null)}
-    style={{
-      backgroundColor: '#b91c1c',
-      color: 'white',
-    }}
-    >
-    ×
-    </Button>
-    </div>
-  )}
-  
-  {/* Search Input */}
-  <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-2 w-full">
-  <Input
-  size="md"
-  placeholder="Search by order ID"
-  value={filterValue}
-  onChange={(e) => {
-    console.log("New filter value:", e.target.value); // Debugging log
-    setFilterValue(e.target.value);
-  }}
-  endContent={<SearchIcon className="text-default-400" width={16} />}
-  className="w-full sm:w-72"
-  />
-  </div>
-  
-  {loading ? (
-    <div className="flex justify-center items-center h-64">
-    <div>Loading...
-    <Spinner size="lg" color="default" className="ms-5"/>
-    </div>
-    </div>
-  ) : (
-    <>
-    <Table
-    aria-label="Inventory Pick List"
-    className="min-w-full shadow-lg"
-    isHeaderSticky
-    selectionMode="multiple"
-    bottomContentPlacement="outside"
-    classNames={{
-      td: "before:bg-transparent",
-    }}
-    topContentPlacement="outside"
-    >
-    <TableHeader className="shadow-xl">
-    <TableColumn className="text-gray-800 font-bold text-lg">
-    Order ID
-    </TableColumn>
-    <TableColumn className="text-gray-800 font-bold text-lg">
-    Estimated Duration
-    </TableColumn>
-    <TableColumn className="text-gray-800 font-bold text-lg">
-    Status
-    </TableColumn>
-    <TableColumn className="text-gray-800 font-bold text-lg">
-    Due Date
-    </TableColumn>
-    <TableColumn className="text-gray-800 font-bold text-lg">
-    Start Date
-    </TableColumn>
-    <TableColumn className="text-gray-800 font-bold text-lg">
-    Action
-    </TableColumn>
-    </TableHeader>
-    
-    <TableBody items={paginatedRows}>
-    {(item) => (
-      <TableRow key={item.id}>
-      <TableCell className="flex items-center">
-      {item.order_id}
-      <CopyText text={item.order_id.toString()} />{" "}
-      {/* Ensure order_id is a string */}
-      </TableCell>
-      
-      <TableCell>{item.estimated_duration}</TableCell>
-      
-      <TableCell className="flex items-center gap-2">
-      <span
-      className={`flex items-center gap-1 px-2 py-1 rounded ${
-        item.status === "In Progress" ? "text-red-800" : ""
-      }`}
-      >
-      {item.status === "In Progress" ? (
-        <FaClock className="text-black" /> 
-      ) : (
-        <FaExclamationCircle className="text-red-600 text-xl" />
-      )}
-      <span>{item.status || "Not started"}</span>
-      </span>
-      </TableCell>
-      
-      <TableCell className="items-center gap-2">
-      <div className="flex items-center gap-2">
-      <Icon
-      icon="solar:calendar-linear"
-      width={18}
-      className="text-gray-500"
-      />
-      <span>{item.due_date}</span>
+  <div className={`h-full ${theme === "dark" ? "dark" : ""}`} style={{ marginTop: "-80px", backgroundColor:"#111827" }}>
+    <NavBar />
+    <SideBar />
+
+    <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto bg-white dark:bg-gray-900">
+      <div className="flex flex-col flex-1">
+        <div className="flex flex-col">
+          <div className="flex flex-row justify-between items-center gap-11 mt-10 mb-6">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold leading-none dark:text-white">Orders</h1>
+              <Chip className="text-default-500 sm:flex px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 dark:text-white" size="sm" variant="flat">
+                {orderCount}
+              </Chip>
+            </div>
+            <Chip
+              color="primary"
+              radius="medium"
+              size="lg"
+              onClick={() => navigate("/inventory_and_manufacturing_picklist")}
+              className="text-center bg-gray-800 text-white rounded-lg px-4 py-2 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200"
+            >
+              Inventory and Manufacturing List
+            </Chip>
+          </div>
+
+          {/* Success and Error Messages */}
+          {successOrderStart && (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center dark:bg-green-800 dark:border-green-600 dark:text-green-100">
+              <span>{successOrderStart}</span>
+              <button
+                onClick={() => setSuccessOrderStart(null)}
+                className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2 dark:text-green-100 dark:hover:text-green-300"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {successListGeneration && (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center dark:bg-green-800 dark:border-green-600 dark:text-green-100">
+              <span>{successListGeneration}</span>
+              <button
+                onClick={() => setSuccessListGeneration(null)}
+                className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2 dark:text-green-100 dark:hover:text-green-300"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center dark:bg-red-800 dark:border-red-600 dark:text-red-100">
+              <span>{error}</span>
+              <Button
+                onClick={() => setError(null)}
+                className="bg-transparent text-red-700 hover:text-red-900 font-semibold px-2 dark:text-red-100 dark:hover:text-red-300"
+              >
+                ×
+              </Button>
+            </div>
+          )}
+
+          {/* Search Input */}
+          <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-2 w-full">
+            <Input
+              size="md"
+              placeholder="Search by order ID"
+              value={filterValue}
+              onChange={(e) => setFilterValue(e.target.value)}
+              endContent={<SearchIcon className="text-default-400" width={16} />}
+              className="w-full sm:w-72 bg-white dark:bg-transparent dark:text-white"
+            />
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="dark:text-white">Loading...
+                <Spinner size="lg" color="default" className="ms-5" />
+              </div>
+            </div>
+          ) : (
+            <>
+              <Table
+                aria-label="Inventory Pick List"
+                className="min-w-full shadow-lg bg-white dark:bg-transparent"
+                isHeaderSticky
+                selectionMode="multiple"
+                bottomContentPlacement="outside"
+                classNames={{
+                  td: "before:bg-transparent",
+                }}
+                topContentPlacement="outside"
+              >
+                <TableHeader className="shadow-xl bg-white dark:bg-transparent">
+                  <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
+                    Order ID
+                  </TableColumn>
+                  <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
+                    Estimated Duration
+                  </TableColumn>
+                  <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
+                    Status
+                  </TableColumn>
+                  <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
+                    Due Date
+                  </TableColumn>
+                  <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
+                    Start Date
+                  </TableColumn>
+                  <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
+                    Action
+                  </TableColumn>
+                </TableHeader>
+
+                <TableBody items={paginatedRows}>
+                  {(item) => (
+                    <TableRow
+                      key={item.id}
+                      className="bg-white dark:bg-transparent dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                    >
+                      <TableCell className="flex items-center dark:text-white">
+                        {item.order_id}
+                        <CopyText text={item.order_id.toString()} />
+                      </TableCell>
+
+                      <TableCell className="dark:text-white">{item.estimated_duration}</TableCell>
+
+                      <TableCell className="flex items-center gap-2">
+                        <span
+                          className={`flex items-center gap-1 px-2 py-1 rounded ${
+                            item.status === "In Progress" ? "text-red-800 dark:text-red-400" : ""
+                          }`}
+                        >
+                          {item.status === "In Progress" ? (
+                            <FaClock className="text-black dark:text-white" />
+                          ) : (
+                            <FaExclamationCircle className="text-red-600 text-xl dark:text-red-400" />
+                          )}
+                          <span>{item.status || "Not started"}</span>
+                        </span>
+                      </TableCell>
+
+                      <TableCell className="items-center gap-2">
+                        <div className="flex items-center gap-2">
+                          <Icon
+                            icon="solar:calendar-linear"
+                            width={18}
+                            className="text-gray-500 dark:text-gray-400"
+                          />
+                          <span className="dark:text-white">{item.due_date}</span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        {item.start_timestamp ? (
+                          <Chip color="success" variant="dot" className="dark:bg-transparent dark:text-green-500">
+                            {dayjs
+                              .utc(item.start_timestamp)
+                              .tz("America/Toronto")
+                              .format("YYYY-MM-DD HH:mm")}
+                          </Chip>
+                        ) : (
+                          <Chip color="default" variant="flat" className="dark:bg-gray-600 dark:text-white">
+                            Not Started
+                          </Chip>
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        <Button
+                          className={`${
+                            item.status === "In Progress" ? "bg-gray-300 dark:bg-gray-600" : "bg-black dark:bg-gray-400"
+                          } text-white dark:text-white`}
+                          size="sm"
+                          isDisabled={
+                            item.status === "In Progress" || updatingOrderId !== null
+                          }
+                          onPress={() => handleStart(item.order_id)}
+                          startContent={
+                            item.status === "In Progress" ? <FaCheck /> : <FaPlay />
+                          }
+                        >
+                          {item.status === "In Progress" ? "Started" : "Start"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+
+              <div className="flex justify-between items-center mt-4 dark:text-white">
+                <span>
+                  Page {page} of {totalPages}
+                </span>
+                <Pagination
+                  total={totalPages}
+                  initialPage={1}
+                  current={page}
+                  onChange={(newPage) => setPage(newPage)}
+                  color="default"
+                  classNames={{
+                    item: "bg-white text-black dark:bg-gray-700 dark:text-white",
+                    cursor: "bg-black text-white dark:bg-transparent dark:text-white",
+                  }}
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
-      </TableCell>
-      
-      <TableCell>
-      {item.start_timestamp ? (
-        <Chip color="success" variant="dot">
-        {dayjs
-          .utc(item.start_timestamp)
-          .tz("America/Toronto")
-          .format("YYYY-MM-DD HH:mm")}
-          </Chip>
-        ) : (
-          <Chip color="default" variant="flat">
-          Not Started
-          </Chip>
-        )}
-        </TableCell>
-        
-        <TableCell>
-        <Button
-        style={{
-          backgroundColor: item.status === "In Progress" ? "#D1D5DB" : "#000", // Black background
-          color: item.status === "In Progress" ? "#000000" : "#FFFFFF", // White text for black background
-        }}
-        size="sm"
-        isDisabled={
-          item.status === "In Progress" || updatingOrderId !== null
-        }
-        onPress={() => handleStart(item.order_id)}
-        startContent={
-          item.status === "In Progress" ? <FaCheck /> : <FaPlay />
-        }
-        >
-        {item.status === "In Progress" ? "Started" : "Start"}
-        </Button>
-        </TableCell>
-        </TableRow>
-      )}
-      </TableBody>
-      </Table>
-      
-      <div className="flex justify-between items-center mt-4">
-      <span>
-      Page {page} of {totalPages}
-      </span>
-      <Pagination
-      total={totalPages}
-      initialPage={1}
-      current={page}
-      onChange={(newPage) => setPage(newPage)}
-      color="default"
-      classNames={{
-        item: "bg-white text-black",
-        cursor: "bg-black text-white",
-      }}
-      />
-      </div>
-      </>
-    )}
     </div>
-    </div>
-    </div>
-    </div>
-  );
+  </div>
+);
 };
 
 export default OrderListView;

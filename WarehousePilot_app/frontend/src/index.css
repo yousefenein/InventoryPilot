@@ -4,10 +4,10 @@
 @tailwind utilities;
 
 
-:root {
+/* :root {
   --background-color-light: #ffffff;
-  --background-color-dark: #121212;
-}
+  --background-color-dark: #111827;
+} */
 
 body {
   margin: 0;
@@ -23,15 +23,15 @@ html {
   transition: background-color 0.3s ease;
   
 }
-html, body {
+ /* html, body {
   background-color: var(--background-color-light);
-}
+} */
 
-@media (prefers-color-scheme: dark) {
-  body {
+/* @media (prefers-color-scheme: dark) {
+  html, body {
     background-color: var(--background-color-dark);
   }
-} 
+}  */
 /* Apply dark mode styles to the entire document
 
 /* authentication.css */
