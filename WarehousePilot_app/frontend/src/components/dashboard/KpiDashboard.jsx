@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import CycleTime from "./CycleTime";
 import OrderPickingAccuracy from "./OrderPickingAccuracy";
 import WarehouseThroughput from "./WarehouseThroughput";
+// import OrderFulfillmentRate from "./OrderFulfillmentRate";
+// import StockLevelsPreview from "./StockLevelsPreview";
+import OrderFulfillmentPreview from "../kpis/OrderFulfillmentPreview"
 import SideBar from "../dashboard_sidebar1/App";
 import NavBar from "../navbar/App";
 import axios from "axios";
@@ -54,13 +57,19 @@ const KPIDashboard = ({ userData }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
+
+    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900" >
+
       {/* Sidebar */}
       <SideBar userData={userData} isOpen={isSidebarOpen} />
-
-      <div className="flex-1 flex flex-col p-6">
+      
+           
+            <div className="flex-1 sm:ml-10 sm:mt-2">
+            <NavBar />
         {/* KPI Dashboard Content */}
-        <h1 className="text-3xl font-bold text-center m-6 text-gray-800 dark:text-white">KPI Dashboard</h1>
+        <main className="flex-1 p-12">
+          {/* Title */}
+          {/* <h1 className="text-3xl font-bold text-center m-6">KPI Dashboard</h1> */}
 
         {/* Overview Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -96,6 +105,7 @@ const KPIDashboard = ({ userData }) => {
               </div>
             )}
           </div>
+
 
           {/* Completed Orders Card */}
           <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
@@ -136,9 +146,26 @@ const KPIDashboard = ({ userData }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Warehouse Throughput Graph */}
           <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg flex flex-col h-full">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Warehouse Throughput Graph</h2>
-            <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              Graph Placeholder
+            
+            
+          
+
+          {/* Graph Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* Left graph */}
+            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Warehouse Throughput Graph</h2>
+              {/* Placeholder for graph */}
+              <div className="h-64 bg-gray-200 flex items-center justify-center dark:bg-gray-700"></div>
+            </div>
+
+            {/* Right graph */}
+            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full">
+              {/* Placeholder for graph */}
+              <OrderFulfillmentPreview/>
+
+            </div>
             </div>
           </div>
 
@@ -151,15 +178,27 @@ const KPIDashboard = ({ userData }) => {
           </div>
         </div>
 
-        {/* Details Section */}
-        <div className="mt-6 bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
+          {/* Cards Container */}
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <CycleTime />
+            <OrderPickingAccuracy />
+            <StockLevels />
+            <WarehouseThroughput />
+            <OrderFulfillmentRate />
+            <StockLevels />
+          </div> */}
+
+           {/* Details Section */}
+        {/* <div className="mt-6 bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Details</h2>
           <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
             Table/Data Placeholder
           </div>
-        </div>
+        </div> */}
+        </main>
       </div>
     </div>
+
   );
 };
 

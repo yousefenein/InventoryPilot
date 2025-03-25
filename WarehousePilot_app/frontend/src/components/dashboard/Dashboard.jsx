@@ -16,12 +16,13 @@ const Dashboard = ({ userData, darkMode }) => {
   };
 
   return (
-    <div className={darkMode ? 'dark' : ''}>
-      <SideBar darkMode={darkMode} /> {/* Pass darkMode to child components */}
-      <NavBar darkMode={darkMode} />
-      
+    <div className= {darkMode ? 'dark' : ''}> 
+    <SideBar darkMode={darkMode} /> {/* Add the SideBar component here */}
+    
+
       {/* Main Content */}
-      <div className="flex-1 sm:ml-10 sm:mt-10">
+      <div className="flex-1 sm:ml-10 sm:mt-8">
+      <NavBar darkMode={darkMode}/>
         {/* Page Content */}
         <main className={`p-4 mt-16 ${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'}`}>
           <h1 className="text-2xl font-semibold">This is the {userData?.role} dashboard</h1>
