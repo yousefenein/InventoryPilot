@@ -310,7 +310,7 @@ export default function ManuTasksTable() {
               value={filterValue}
               onValueChange={onSearchChange}
             />
-            <Tooltip content="Sort in ascending or descending order">
+            <Tooltip content="Sort in Ascending or Descending order">
             <div>
               <Dropdown>
                 <DropdownTrigger>
@@ -422,9 +422,11 @@ export default function ManuTasksTable() {
           <h1 className="text-2xl font-[700] leading-[32px]">
             <b>Manufacturing Tasks</b>
           </h1>
+          <Tooltip content="Total number of tasks">
           <Chip className="hidden items-center text-default-500 sm:flex" size="sm" variant="flat">
             {tasks.length}
           </Chip>
+          </Tooltip>
         </div>
       </div>
     );
