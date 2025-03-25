@@ -33,13 +33,12 @@ def get_label_data(request, picklist_item_id):
             "ORDER_NUMBER": getattr(item.picklist_id.order_id, "order_id", None),
             "QTY_PER_BOX": getattr(part, "qty_per_box", None),
             "CRATE_SIZE": getattr(part, "crate_size", None), # this can somehow return a number or a word... 
-            "AREA": getattr(item.area, "area", None),
-            "LINEUP_NB": getattr(item.lineup_nb, "lineup_nb", None),
-            "MODEL_NB": getattr(item.model_nb, "model_nb", None),
-            "MATERIAL_TYPE": getattr(item.material_type, "material_type", None),
+            "AREA": item.area,
+            "LINEUP_NB": item.lineup_nb,
+            "MODEL_NB": item.model_nb,
+            "MATERIAL_TYPE": item.material_type,
             "SKU_COLOR_IMAGE":part.image.url if part.image else None,
             "BARCODE": None,
-            # Additional fields to be added: qty per case, case size, SKU_COLOR image, barcode
         }
         logger.info(f"Successfully fetched label data for picklist_item_id: {picklist_item_id}")
         return JsonResponse(label_data, status=200)
