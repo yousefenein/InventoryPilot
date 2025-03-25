@@ -4,8 +4,9 @@ import axios from 'axios';
 import NavBar from "../../navbar/App";
 import SideBar from '../../dashboard_sidebar1/App';
 import ThroughputBarGraph from './throughput-graph';
+import ThroughputDonutChart from './throughput-current-week-donut-chart';
 
-const API_BASE_URL = "http://127.0.0.1:8000/";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const ThroughputThresholdDashboard = ({ userData }) => {
     const navigate = useNavigate();
@@ -14,6 +15,7 @@ const ThroughputThresholdDashboard = ({ userData }) => {
     const [error, setError] = useState(null);
     const [data, setData] = useState([]); //formatted data for ThroughputBarGraph
 
+    const COLORS = ['#FF6B6B', '#FFA94D', '#FFD66B'];
 
     /* fetchData: fetch and format data for ThroughputBarGraph */
     const fetchData = async () => {
@@ -82,6 +84,13 @@ const ThroughputThresholdDashboard = ({ userData }) => {
         setLoading(false);
     }
 
+    const currentWeekThreshold = [
+        { name: 'Picked', value: data[data.length - 1].picked },
+        { name: 'Packed', value: data[data.length - 1].packed },
+        { name: 'Shipped', value: data[data.length - 1].shipped }
+    ];
+
+
     const handleViewDetails = () => {
         navigate('/kpi');
     };
@@ -90,10 +99,12 @@ const ThroughputThresholdDashboard = ({ userData }) => {
     return (
         <div className="min-h-screen bg-gray-50">
             <SideBar userData={userData} isOpen={isSidebarOpen} />
+
+            {/* Navbar */}
             <div className="flex-1 sm:ml-10 sm:mt-2">
-                {/* Navbar */}
                 <NavBar />
             </div>
+
             {/* Header - Title and Back to KPI Page button*/}
             <div className="flex justify-between items-center mx-10">
                 <h1 className="text-3xl font-bold mb-6">
@@ -107,8 +118,23 @@ const ThroughputThresholdDashboard = ({ userData }) => {
                 </button>
             </div>
 
-            {/* Week by week throughput data */}
-            <ThroughputBarGraph data={data} loading={loading} title={'Throughput per Week'} />
+            {loading ? (
+                <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-sm p-4">
+                    <div className="animate-pulse text-gray-600">Loading data...</div>
+                </div>
+            ) : (
+                <>
+                    {/* Donut Chart (This Week's Throughput Threshold) and Associated Orders */}
+                    <div className="flex-1 sm:ml-10 sm:mt-2 mx-10">
+                        <ThroughputDonutChart data={currentWeekThreshold} />
+                    </div>
+
+                    {/* Week by week throughput data */}
+                    <div className="flex-1 sm:ml-10 sm:mt-2 mx-10">
+                        <ThroughputBarGraph data={data} loading={loading} title={'Throughput per Week'} />
+                    </div>
+                </>
+            )}
         </div>
     );
 }
