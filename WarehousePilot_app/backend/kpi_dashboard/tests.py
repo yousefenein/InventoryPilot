@@ -186,5 +186,25 @@ class KPIDashboardTests(TestCase):
         url = reverse('order_fulfillment_rate')
         response = self.client.post(url)
         self.assertEqual(response.status_code, 405)
+        
+    def test_active_orders_get(self):
+        self.order.start_timestamp = timezone.now() - timedelta(days=10)
+        self.order.save()
+        url = reverse('active_orders')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertIsInstance(data, list)
+        if data:
+            sample = data[0]
+            self.assertIn("date", sample)
+            self.assertIn("active_orders", sample)
+
+    def test_active_orders_method_not_allowed(self):
+        url = reverse('active_orders')
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 405)
+    
 
     
