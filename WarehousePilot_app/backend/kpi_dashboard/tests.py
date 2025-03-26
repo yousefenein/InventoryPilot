@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="django.db.models.fields")
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from inventory.models import Inventory, InventoryPicklist, InventoryPicklistItem
@@ -5,9 +8,8 @@ from parts.models import Part
 from orders.models import Orders
 from auth_app.models import users
 from django.utils import timezone
-import json
-from datetime import date
-
+from datetime import date, timedelta
+from dateutil.relativedelta import relativedelta
 
 class KPIDashboardTests(TestCase):
     def setUp(self):
@@ -23,14 +25,15 @@ class KPIDashboardTests(TestCase):
             order_id=1,  # Explicitly set as per previous fix
             due_date=timezone.now(),
             status='In Progress',
-            estimated_duration=5
+            estimated_duration=5,
+            start_timestamp=timezone.now()  # Aware datetime provided here
         )
         # Provide all required fields for users model
         self.user = users.objects.create(
             username='testuser',
             email='test@example.com',
             role='staff',
-            date_of_hire=date(2023, 1, 1),  # Provide a valid date
+            date_of_hire=date(2023, 1, 1),
             first_name='Test',
             last_name='User',
             department='Warehouse'
@@ -56,7 +59,7 @@ class KPIDashboardTests(TestCase):
             sku_color=self.part,
             amount=10,
             status=True,  # Picked
-            picked_at=timezone.now() - timezone.timedelta(days=1)  # Picked yesterday
+            picked_at=timezone.now() - timedelta(days=1)  # Picked yesterday
         )
         self.picklist_item2 = InventoryPicklistItem.objects.create(
             picklist_id=self.picklist,
@@ -98,17 +101,17 @@ class KPIDashboardTests(TestCase):
         # Expect two days of data (yesterday and today)
         self.assertEqual(len(data), 2)
 
-        yesterday = (timezone.now() - timezone.timedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = (timezone.now() - timedelta(days=1)).strftime("%Y-%m-%d")
         today = timezone.now().strftime("%Y-%m-%d")
 
         yesterday_data = next((item for item in data if item['day'] == yesterday), None)
         today_data = next((item for item in data if item['day'] == today), None)
 
         self.assertIsNotNone(yesterday_data)
-        self.assertEqual(yesterday_data['picks'], 1)  # 1 item picked yesterday
+        self.assertEqual(yesterday_data['picks'], 1)
 
         self.assertIsNotNone(today_data)
-        self.assertEqual(today_data['picks'], 1)  # 1 item picked today
+        self.assertEqual(today_data['picks'], 1)
 
     def test_daily_picks_data_method_not_allowed(self):
         response = self.client.post(reverse('daily_picks_data'))
@@ -125,18 +128,18 @@ class KPIDashboardTests(TestCase):
         # Expect two entries (one for yesterday, one for today)
         self.assertEqual(len(data), 2)
 
-        yesterday = (timezone.now() - timezone.timedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = (timezone.now() - timedelta(days=1)).strftime("%Y-%m-%d")
         today = timezone.now().strftime("%Y-%m-%d")
 
         yesterday_data = next((item for item in data if item['day'] == yesterday), None)
         today_data = next((item for item in data if item['day'] == today), None)
 
         self.assertIsNotNone(yesterday_data)
-        self.assertEqual(yesterday_data['order_id'], str(self.order.order_id))  # Integer as string
+        self.assertEqual(yesterday_data['order_id'], str(self.order.order_id))
         self.assertEqual(yesterday_data['picks'], 1)
 
         self.assertIsNotNone(today_data)
-        self.assertEqual(today_data['order_id'], str(self.order.order_id))  # Integer as string
+        self.assertEqual(today_data['order_id'], str(self.order.order_id))
         self.assertEqual(today_data['picks'], 1)
 
     def test_daily_picks_details_method_not_allowed(self):
@@ -155,7 +158,33 @@ class KPIDashboardTests(TestCase):
         self.assertEqual(data['accuracy_percentage'], 0)
         self.assertEqual(data['target_accuracy'], 99)
 
+    def test_order_fulfillment_rate_get(self):
+        self.order.start_timestamp = timezone.now() - timedelta(days=1)
+        self.order.save()
 
-if __name__ == '__main__':
-    import unittest
-    unittest.main()
+        url = reverse('order_fulfillment_rate')
+        response = self.client.get(url, {'filter': 'day', 'date': self.order.start_timestamp.strftime("%Y-%m-%d")})
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertIsInstance(data, list)
+        self.assertGreaterEqual(len(data), 1)
+
+        day_str = self.order.start_timestamp.strftime("%Y-%m-%d")
+        day_entry = next((item for item in data if item['period'] == day_str), None)
+        self.assertIsNotNone(day_entry)
+        self.assertGreaterEqual(day_entry['total_orders_started'], 1)
+
+    def test_order_fulfillment_rate_invalid_date(self):
+        url = reverse('order_fulfillment_rate')
+        response = self.client.get(url, {'filter': 'day', 'date': 'invalid-date'})
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn("Invalid date format", data.get("error", ""))
+
+    def test_order_fulfillment_rate_method_not_allowed(self):
+        url = reverse('order_fulfillment_rate')
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 405)
+
+    
