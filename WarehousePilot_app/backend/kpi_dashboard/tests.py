@@ -206,5 +206,41 @@ class KPIDashboardTests(TestCase):
         response = self.client.post(url)
         self.assertEqual(response.status_code, 405)
     
+    def test_completed_orders_get(self):
+        self.order.start_timestamp = timezone.now() - timedelta(days=5)
+        self.order.save()
+
+        completed_order = Orders.objects.create(
+            order_id=2,
+            due_date=timezone.now(),
+            status='Completed',
+            estimated_duration=5,
+            start_timestamp=timezone.now() - timedelta(days=5)
+        )
+
+        completed_picklist = InventoryPicklist.objects.create(
+            order_id=completed_order,
+            assigned_employee_id=self.user,
+            status=True,
+            picklist_complete_timestamp=timezone.now() - timedelta(days=4)
+        )
+
+        url = reverse('completed_orders')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertIsInstance(data, list)
+        if data:
+            sample = data[0]
+            self.assertIn("date", sample)
+            self.assertIn("completed_orders", sample)
+
+    def test_completed_orders_method_not_allowed(self):
+        url = reverse('completed_orders')
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 405)
+    
+    
 
     
