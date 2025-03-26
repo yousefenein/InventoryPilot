@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo } from "react";
 export default function ThroughputTable({data}) {
     const [rows, setRows] = useState([]);
     const [page, setPage] = useState(1);
-
+    
+    /* useEffect - format data for table */
     useEffect(() => {
         setRows(
             data.map((entry, index) => ({
@@ -17,16 +18,13 @@ export default function ThroughputTable({data}) {
         );
     }, []);
 
-
-    // Apply pagination
+    /* Pagination */
     const rowsPerPage = 5;
-
     const paginatedRows = useMemo(() => {
         const start = (page - 1) * rowsPerPage;
         const end = start + rowsPerPage;
         return rows.slice(start, end);
     }, [page, rows]);
-
     const totalPages = Math.ceil(rows.length / rowsPerPage);
 
     const columns = ["Week of", "Picked", "Packed", "Shipped"];
@@ -34,7 +32,6 @@ export default function ThroughputTable({data}) {
     return (
         <div className="bg-white p-4 rounded-lg shadow-sm">
             <h2 className="text-xl font-semibold mb-4">Throughput Data</h2>
-
             <Table 
                 aria-label="Throughput Threshold Table" 
                 className="w-full"

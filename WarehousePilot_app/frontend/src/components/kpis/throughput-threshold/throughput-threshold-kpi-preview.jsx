@@ -1,26 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import NavBar from "../../navbar/App";
-import SideBar from '../../dashboard_sidebar1/App';
-import ThroughputBarGraph from './throughput-graph';
-import ThroughputDonutChart from './throughput-current-week-donut-chart';
-import ThroughputTable from './throughput-table';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import ThroughputBarGraph from "./throughput-graph";
+import { parseISO, isAfter, subWeeks, subMonths, subYears } from "date-fns";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const ThroughputThresholdDashboard = ({ userData }) => {
-    const navigate = useNavigate();
-    const [isSidebarOpen, setSidebarOpen] = useState(false);
+export default function ThroughputThresholdKpiPreview() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [data, setData] = useState([]); //formatted data for ThroughputBarGraph
-    const [donutChartData, setDonutChartData] = useState([]); //formatted data for ThroughputDonutChart
+    const navigate = useNavigate();
+    const [data, setData] = useState([]);
+    const [filteredData, setFilteredData] = useState([]); // Data filtered by timeline
+    const [range, setRange] = useState("Past Week"); // Default timeline range
+    const [isStacked, setIsStacked] = useState(false); // Stack the bars or not
 
-    /* fetchData: fetch and format data for ThroughputBarGraph */
+    /* Fetch and format data for ThroughputBarGraph */
     const fetchData = async () => {
         try {
-            // Get authorization token from local storage
             const token = localStorage.getItem("token");
             if (!token) {
                 setError("No authorization token found");
@@ -28,47 +25,58 @@ const ThroughputThresholdDashboard = ({ userData }) => {
                 return;
             }
 
-            // Backend API call to get throughput data
-            const response = await axios.get(
-                `${API_BASE_URL}/orders/`, //TODO: Change this to throughput path
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
-
-            // Format data for ThroughputBarGraph
-            const formattedData = response.data.map((item) => {
-                return {
-                    date: item.date,
-                    picked: item.picked,
-                    packed: item.packed,
-                    shipped: item.shipped,
-                };
+            const response = await axios.get(`${API_BASE_URL}/orders/`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
             });
+
+            const formattedData = response.data.map((item) => ({
+                date: item.date,
+                picked: item.picked,
+                packed: item.packed,
+                shipped: item.shipped,
+            }));
+
             setData(formattedData);
             setLoading(false);
-        }
-        catch (error) {
+        } catch (error) {
             setError(error.message);
+            setLoading(false);
         }
     };
 
-    /* formatDataForDonutChart: format data for ThroughputDonutChart component */
-    const formatDataForDonutChart = (data) => {
-        return [
-            { name: 'Picked', value: data.picked },
-            { name: 'Packed', value: data.packed },
-            { name: 'Shipped', value: data.shipped }
-        ];
+    /* Filter data based on the selected range */
+    const filterDataByRange = (data, range) => {
+        const now = new Date();
+        const period = range.trim().split(" ")[1].toLowerCase(); // Extract "week", "month", or "year"
+
+        let startDate;
+        if (period === "week") {
+            startDate = subWeeks(now, 1);
+            setIsStacked(false);
+        } else if (period === "month") {
+            startDate = subMonths(now, 1);
+            setIsStacked(true);
+        } else if (period === "year") {
+            startDate = subYears(now, 1);
+            setIsStacked(true);
+        } else {
+            throw new Error("Invalid range. Use 'week', 'month', or 'year'.");
+        }
+
+        // Filter the data by comparing parsed dates
+        return data.filter((item) => {
+            const itemDate = parseISO(item.date); // Parse the string date into a Date object
+            return itemDate >= startDate && itemDate <= now; // Check if the date is within the range
+        });
     };
 
-    /* useEffect - fetch data and set loading state */
+    /* useEffect - Fetch data on loading component */
     useEffect(() => {
         fetchData();
-        if (data.length == 0){ //TODO: Remove this if block after backend is implemented 
+        if (data.length == 0) { //TODO: Remove this if block after backend is implemented 
             setData([
                 { date: '2025-01-01', picked: 450, packed: 350, shipped: 250 },
                 { date: '2025-01-08', picked: 520, packed: 420, shipped: 320 },
@@ -124,64 +132,59 @@ const ThroughputThresholdDashboard = ({ userData }) => {
                 { date: '2025-12-24', picked: 1150, packed: 1050, shipped: 950 },
                 { date: '2025-12-31', picked: 1200, packed: 1100, shipped: 1000 }
             ]);
-            setDonutChartData(formatDataForDonutChart({ date: '2025-03-27', picked: 700, packed: 600, shipped: 500 }));
         }
-        else 
-            setDonutChartData(formatDataForDonutChart(data[data.length - 1]));
-        setLoading(false);
     }, []);
 
-    /* handleViewDetails: navigate to KPI page */
+    // useEffect - Filter data whenever `data` or `range` changes
+    useEffect(() => {
+        if (data.length > 0) {
+            const filtered = filterDataByRange(data, range);
+            setFilteredData(filtered);
+        }
+    }, [data, range]);
+
     const handleViewDetails = () => {
-        navigate('/kpi');
+        navigate("/throughput-threshold");
+    };
+
+    const handleRangeClick = (range) => {
+        setRange(range);
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <SideBar userData={userData} isOpen={isSidebarOpen} />
-
-            {/* Navbar */}
-            <div className="flex-1 sm:ml-10 sm:mt-2">
-                <NavBar />
-            </div>
-
-            {/* Header - Title and Back to KPI Page button*/}
-            <div className="flex justify-between items-center mx-10">
-                <h1 className="text-3xl font-bold mb-6">
-                    Throughput Threshold Dashboard
-                </h1>
+        <div className="bg-white p-4 rounded-lg">
+            {/* Header and View Details button */}
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Throughput Threshold</h2>
                 <button
-                    className="bg-red-600 text-white py-1 px-3 rounded"
-                    onClick={handleViewDetails}  //bg-gray-500 hover
+                    onClick={handleViewDetails}
+                    className="bg-gray-500 hover:bg-red-600 text-white py-1 px-3 rounded"
                 >
-                    Back to KPI Overview
+                    View Details
                 </button>
             </div>
 
-            {loading ? (
-                <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow-sm p-4">
-                    <div className="animate-pulse text-gray-600">Loading data...</div>
-                </div>
-            ) : (
-                <>
-                    {/* Donut Chart (This Week's Throughput Threshold) and Associated Orders */}
-                    <div className="flex flex-row justify-between sm:ml-10 sm:mt-2 mx-10 space-x-4 mb-4">
-                        <div className="flex-1">
-                            <ThroughputDonutChart data={donutChartData} />
-                        </div>
-                        <div className="flex-1">
-                            <ThroughputTable data={data}/>
-                        </div>
-                    </div>
+            {/* Timeline Range Selector */}
+            <div className="flex space-x-2 mb-4">
+                {["Past Week", "Past Month", "Past Year"].map((label) => (
+                    <button
+                        key={label}
+                        onClick={() => handleRangeClick(label)}
+                        className={`px-4 py-2 rounded ${range === label
+                            ? "bg-red-600 text-white"
+                            : "bg-gray-200 text-gray-700"
+                            }`}
+                    >
+                        {label}
+                    </button>
+                ))}
+            </div>
 
-                    {/* Week by week throughput data */}
-                    <div className="flex-1 sm:ml-10 sm:mt-2 mx-10">
-                        <ThroughputBarGraph data={data} loading={loading} title={'Throughput per Week'} isStacked={true} />
-                    </div>
-                </>
+            {loading ? (
+                <div className="text-center">Loading...</div>
+            ) : (
+                <ThroughputBarGraph data={filteredData} loading={loading} isStacked={isStacked} />
             )}
         </div>
     );
 }
-
-export default ThroughputThresholdDashboard;

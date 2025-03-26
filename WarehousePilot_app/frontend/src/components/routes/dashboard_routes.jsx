@@ -55,10 +55,9 @@ export const dashboard_routes = [
   { path: '/manufacturing_tasks', element: <ProtectedRoute element={<ManuTasksTable />} /> },
   { path: '/qa_error_list_view', element: <ProtectedRoute element={<QAErrorListView />} /> },
   { path: '/CTPO', element: <ProtectedRoute element={<CTPOTable />} /> },
-  { path: '/throughput', element: <ProtectedRoute element={<ThroughputThresholdDashboard />} /> },
+  { path: '/throughput-threshold', element: <ProtectedRoute element={<ThroughputThresholdDashboard />} /> },
   { path: "/order-picking", element: <ProtectedRoute element={<OrderPickingPage />} /> },
   { path: "/order-fullfillement-dashboard", element: <ProtectedRoute element={<OrderFulfillmentDashboard />} /> },
   { path: "/active-orders-details", element: <ProtectedRoute element={<ActiveOrdersDetails />} /> },
-
 ];
 

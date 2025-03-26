@@ -6,7 +6,7 @@ export default function ThroughputDonutChart({ data }) {
 
     const total = data.reduce((acc, cur) => acc + cur.value, 0);
 
-    // Custom tooltip to display count
+    /* Custom tooltip to display count */
     const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
             return (
@@ -20,7 +20,7 @@ export default function ThroughputDonutChart({ data }) {
         return null;
     };
 
-    // Custom label to display percentage
+    /* Custom label to display percentage */
     const customLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, payload }) => {
         const RADIAN = Math.PI / 180;
         const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
