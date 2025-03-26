@@ -15,8 +15,6 @@ const ThroughputThresholdDashboard = ({ userData }) => {
     const [error, setError] = useState(null);
     const [data, setData] = useState([]); //formatted data for ThroughputBarGraph
 
-    const COLORS = ['#FF6B6B', '#FFA94D', '#FFD66B'];
-
     /* fetchData: fetch and format data for ThroughputBarGraph */
     const fetchData = async () => {
         try {
@@ -42,7 +40,7 @@ const ThroughputThresholdDashboard = ({ userData }) => {
             // Format data for ThroughputBarGraph
             const formattedData = response.data.map((item) => {
                 return {
-                    week: item.date,
+                    date: item.date,
                     picked: item.picked,
                     packed: item.packed,
                     shipped: item.shipped,
@@ -56,45 +54,48 @@ const ThroughputThresholdDashboard = ({ userData }) => {
         }
     };
 
+    /* formatDataForDonutChart: format data for ThroughputDonutChart component */
+    const formatDataForDonutChart = (data) => {
+        return [
+            { name: 'Picked', value: data.picked },
+            { name: 'Packed', value: data.packed },
+            { name: 'Shipped', value: data.shipped }
+        ];
+    };
+
     useEffect(() => {
         fetchData();
-    }, []);
-
-    if (data.length == 0) { // TODO: Remove this when API is ready
-        setData([
-            { week: 'Week 1', picked: 400, packed: 300, shipped: 200 },
-            { week: 'Week 2', picked: 500, packed: 400, shipped: 300 },
-            { week: 'Week 3', picked: 600, packed: 500, shipped: 400 },
-            { week: 'Week 4', picked: 700, packed: 600, shipped: 500 },
-            { week: 'Week 5', picked: 600, packed: 500, shipped: 400 },
-            { week: 'Week 6', picked: 700, packed: 600, shipped: 500 },
-            { week: 'Week 7', picked: 400, packed: 300, shipped: 200 },
-            { week: 'Week 8', picked: 500, packed: 400, shipped: 300 },
-            { week: 'Week 9', picked: 600, packed: 500, shipped: 400 },
-            { week: 'Week 10', picked: 700, packed: 600, shipped: 500 },
-            { week: 'Week 11', picked: 600, packed: 500, shipped: 400 },
-            { week: 'Week 12', picked: 700, packed: 600, shipped: 500 },
-            { week: 'Week 13', picked: 400, packed: 300, shipped: 200 },
-            { week: 'Week 14', picked: 500, packed: 400, shipped: 300 },
-            { week: 'Week 15', picked: 600, packed: 500, shipped: 400 },
-            { week: 'Week 16', picked: 700, packed: 600, shipped: 500 },
-            { week: 'Week 17', picked: 600, packed: 500, shipped: 400 },
-            { week: 'Week 18', picked: 700, packed: 600, shipped: 500 },
-        ]);
+        if (data.length == 0){ //TODO: Remove this if block after backend is implemented 
+            setData([
+                { date: '2025-03-10', picked: 400, packed: 300, shipped: 200 },
+                { date: '2025-03-11', picked: 500, packed: 400, shipped: 300 },
+                { date: '2025-03-12', picked: 600, packed: 500, shipped: 400 },
+                { date: '2025-03-13', picked: 700, packed: 600, shipped: 500 },
+                { date: '2025-03-14', picked: 600, packed: 500, shipped: 400 },
+                { date: '2025-03-15', picked: 700, packed: 600, shipped: 500 },
+                { date: '2025-03-16', picked: 400, packed: 300, shipped: 200 },
+                { date: '2025-03-17', picked: 500, packed: 400, shipped: 300 },
+                { date: '2025-03-18', picked: 600, packed: 500, shipped: 400 },
+                { date: '2025-03-19', picked: 700, packed: 600, shipped: 500 },
+                { date: '2025-03-20', picked: 600, packed: 500, shipped: 400 },
+                { date: '2025-03-21', picked: 700, packed: 600, shipped: 500 },
+                { date: '2025-03-22', picked: 400, packed: 300, shipped: 200 },
+                { date: '2025-03-23', picked: 500, packed: 400, shipped: 300 },
+                { date: '2025-03-24', picked: 600, packed: 500, shipped: 400 },
+                { date: '2025-03-25', picked: 700, packed: 600, shipped: 500 },
+                { date: '2025-03-26', picked: 600, packed: 500, shipped: 400 },
+                { date: '2025-03-27', picked: 700, packed: 600, shipped: 500 },
+            ]);
+            setDonutChartData(formatDataForDonutChart({ picked: 700, packed: 600, shipped: 500 }));
+        }
+        else 
+            setDonutChartData(formatDataForDonutChart(data[data.length - 1]));
         setLoading(false);
-    }
-
-    const currentWeekThreshold = [
-        { name: 'Picked', value: data[data.length - 1].picked },
-        { name: 'Packed', value: data[data.length - 1].packed },
-        { name: 'Shipped', value: data[data.length - 1].shipped }
-    ];
-
+    }, []);
 
     const handleViewDetails = () => {
         navigate('/kpi');
     };
-
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -125,8 +126,13 @@ const ThroughputThresholdDashboard = ({ userData }) => {
             ) : (
                 <>
                     {/* Donut Chart (This Week's Throughput Threshold) and Associated Orders */}
-                    <div className="flex-1 sm:ml-10 sm:mt-2 mx-10">
-                        <ThroughputDonutChart data={currentWeekThreshold} />
+                    <div className="flex flex-row justify-between sm:ml-10 sm:mt-2 mx-10 space-x-4 mb-4">
+                        <div className="flex-1">
+                            <ThroughputDonutChart data={donutChartData} />
+                        </div>
+                        <div className="flex-1">
+                            <ThroughputTable data={data}/>
+                        </div>
                     </div>
 
                     {/* Week by week throughput data */}

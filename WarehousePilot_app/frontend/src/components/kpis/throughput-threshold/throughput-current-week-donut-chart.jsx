@@ -27,7 +27,6 @@ export default function ThroughputDonutChart({ data }) {
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-
         return (
             <text
                 x={x}
@@ -44,7 +43,7 @@ export default function ThroughputDonutChart({ data }) {
     return (
         <div className="bg-white p-4 rounded-lg shadow-sm">
             <h2 className="text-xl font-semibold mb-4">This Week's Throughput Threshold</h2>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={310}>
                 <PieChart>
                     <Pie
                         data={data}
