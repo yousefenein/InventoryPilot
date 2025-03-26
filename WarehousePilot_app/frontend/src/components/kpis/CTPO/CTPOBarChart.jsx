@@ -42,10 +42,12 @@ const CycleTimeBarChart = ({ data }) => {
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
+            <XAxis dataKey="day" />
             <YAxis />
             <Tooltip />
-            <Bar dataKey="Average Cycle Time" fill="#8884d8" />
+            <Bar dataKey="Picked" fill="#4CAF50" />
+            <Bar dataKey="Packed" fill="#FF9800" />
+            <Bar dataKey="Shipped" fill="#2196F3" />
           </BarChart>
         </ResponsiveContainer>
       </div>
