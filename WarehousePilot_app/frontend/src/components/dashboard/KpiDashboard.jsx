@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import CycleTime from "./CycleTime";
 import OrderPickingAccuracy from "./OrderPickingAccuracy";
 import WarehouseThroughput from "./WarehouseThroughput";
-// import OrderFulfillmentRate from "./OrderFulfillmentRate";
-// import StockLevelsPreview from "./StockLevelsPreview";
 import ThroughputThresholdKpiPreview from "../kpis/throughput-threshold/throughput-threshold-kpi-preview"
 import OrderFulfillmentPreview from "../kpis/OrderFulfillmentPreview"
 import SideBar from "../dashboard_sidebar1/App";
@@ -59,157 +57,111 @@ const KPIDashboard = ({ userData }) => {
   };
 
   return (
-
-    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900" >
-
+    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
       <SideBar userData={userData} isOpen={isSidebarOpen} />
       
-           
-            <div className="flex-1 sm:ml-10 sm:mt-2">
-            <NavBar />
-        {/* KPI Dashboard Content */}
+      <div className="flex-1 sm:ml-10 sm:mt-2">
+        <NavBar />
         <main className="flex-1 p-12">
-          {/* Title */}
-          {/* <h1 className="text-3xl font-bold text-center m-6">KPI Dashboard</h1> */}
-
-        {/* Overview Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          {/* Active Orders Card */}
-          <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Active Orders</h2>
-              <button
-                onClick={handleViewDetails}
-                className="bg-gray-500 hover:bg-red-600 text-white py-1 px-3 rounded"
-              >
-                View Details
-              </button>
-            </div>
-            {loading ? (
-              <p className="text-center text-gray-800 dark:text-white">Loading...</p>
-            ) : error ? (
-              <p className="text-red-500 text-center">{error}</p>
-            ) : (
-              <div className="flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white">{totalActiveOrders.toLocaleString()}</p>
-                </div>
-                <div>
-                  <LineChart width={300} height={150} data={activeOrdersData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#4A5568' : '#E2E8F0'} />
-                    <XAxis dataKey="date" hide />
-                    <YAxis hide />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="active_orders" stroke="#8884d8" dot={false} />
-                  </LineChart>
-                </div>
+          {/* Overview Section - Top 3 Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            {/* Active Orders Card */}
+            <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Active Orders</h2>
+                <button
+                  onClick={handleViewDetails}
+                  className="bg-gray-500 hover:bg-red-600 text-white py-1 px-3 rounded"
+                >
+                  View Details
+                </button>
               </div>
-            )}
-          </div>
-
-
-          {/* Completed Orders Card */}
-          <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Completed Orders</h2>
-            {loading ? (
-              <p className="text-center text-gray-800 dark:text-white">Loading...</p>
-            ) : error ? (
-              <p className="text-red-500 text-center">{error}</p>
-            ) : (
-              <div className="flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white">{totalCompletedOrders.toLocaleString()}</p>
-                  <p className="text-red-500">-25%</p>
+              {loading ? (
+                <p className="text-center text-gray-800 dark:text-white">Loading...</p>
+              ) : error ? (
+                <p className="text-red-500 text-center">{error}</p>
+              ) : (
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-white">{totalActiveOrders.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <LineChart width={300} height={150} data={activeOrdersData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#4A5568' : '#E2E8F0'} />
+                      <XAxis dataKey="date" hide />
+                      <YAxis hide />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="active_orders" stroke="#8884d8" dot={false} />
+                    </LineChart>
+                  </div>
                 </div>
-                <div>
-                  <LineChart width={300} height={150} data={completedOrdersData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#4A5568' : '#E2E8F0'} />
-                    <XAxis dataKey="date" hide />
-                    <YAxis hide />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="completed_orders" stroke="#ff4444" dot={false} />
-                  </LineChart>
+              )}
+            </div>
+
+            {/* Completed Orders Card */}
+            <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Completed Orders</h2>
+              {loading ? (
+                <p className="text-center text-gray-800 dark:text-white">Loading...</p>
+              ) : error ? (
+                <p className="text-red-500 text-center">{error}</p>
+              ) : (
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-3xl font-bold text-gray-800 dark:text-white">{totalCompletedOrders.toLocaleString()}</p>
+                    <p className="text-red-500">-25%</p>
+                  </div>
+                  <div>
+                    <LineChart width={300} height={150} data={completedOrdersData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#4A5568' : '#E2E8F0'} />
+                      <XAxis dataKey="date" hide />
+                      <YAxis hide />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="completed_orders" stroke="#ff4444" dot={false} />
+                    </LineChart>
+                  </div>
                 </div>
+              )}
+            </div>
+
+            {/* Order Picking Accuracy Card */}
+            <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Order Picking Accuracy</h2>
+              <div className="accuracy-metrics">
+                <OrderPickingAccuracy />
               </div>
-            )}
-          </div>
-
-          {/* Order Picking Accuracy Card */}
-          <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Order Picking Accuracy</h2>
-            <div className="accuracy-metrics">
-              <OrderPickingAccuracy />
             </div>
           </div>
-        </div>
 
-        {/* Graph Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Warehouse Throughput Graph */}
-          <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg flex flex-col h-full">
-            
-            
-          
-
-          {/* Graph Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            {/* Left graph */}
-            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full dark:bg-gray-800">
-             <ThroughputThresholdKpiPreview/>
+          {/* First Row of Graphs */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
+              <ThroughputThresholdKpiPreview/>
             </div>
-
-            {/* Right graph */}
-            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full dark:bg-gray-800">
-              {/* Placeholder for graph */}
+            <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <OrderFulfillmentPreview/>
-
-            </div>
             </div>
           </div>
 
-          {/* Graph Section */}
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            {/* CTPO graph */}
-            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full dark:bg-gray-800">
+          {/* Second Row of Graphs */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <CTPOPreview />
-              {/* Placeholder for graph */}
             </div>
-          </div>         
+            {/* You can add another graph here if needed */}
+          </div>
 
           {/* Details Section */}
-          <div className="mt-6 bg-white p-4 shadow rounded-lg dark:bg-gray-800">
-            <h2 className="text-xl font-semibold mb-4">Details</h2>
-            {/* Placeholder for table or additional data */}
-            <div className="h-64 bg-gray-200 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Details</h2>
+            <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
               Table/Data Placeholder
             </div>
           </div>
-        </div>
-
-          {/* Cards Container */}
-          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <CycleTime />
-            <OrderPickingAccuracy />
-            <StockLevels />
-            <WarehouseThroughput />
-            <OrderFulfillmentRate />
-            <StockLevels />
-          </div> */}
-
-           {/* Details Section */}
-        {/* <div className="mt-6 bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Details</h2>
-          <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-            Table/Data Placeholder
-          </div>
-        </div> */}
         </main>
       </div>
     </div>
-
   );
 };
 
