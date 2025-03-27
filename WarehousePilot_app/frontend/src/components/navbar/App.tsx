@@ -107,6 +107,9 @@ export default function NavBar(props: NavbarProps) {
 
         {(userRole === "admin") && (
           <>
+          <Tooltip>
+            <ThemeSwitcher/>
+          </Tooltip>
             <Tooltip content="View all Key Performance Indicators">
               <NavbarItem><Link className="text-default-500" href="/kpi" size="sm">KPI</Link></NavbarItem>
             </Tooltip>
