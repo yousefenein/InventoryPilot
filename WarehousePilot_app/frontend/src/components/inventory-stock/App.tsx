@@ -430,7 +430,7 @@ export default function InventoryTable() {
       <div className="mb-[18px] flex items-center justify-between" style={{ marginTop: "40px" }}>
         <div className="flex w-[226px] items-center gap-2">
           <h1 className="text-2xl font-[700] leading-[32px]">
-            <b>Inventory</b>
+            <b className="dark:text-white">Inventory</b>
           </h1>
           <Chip className="hidden items-center text-default-500 sm:flex" size="sm" variant="flat">
             {inventory.length}
@@ -456,7 +456,7 @@ export default function InventoryTable() {
           </Popover>
           <Popover isOpen={isAddItemPopoverOpen} onOpenChange={setIsAddItemPopoverOpen}>
             <PopoverTrigger>
-              <Button className= "bg-gray-300" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
+              <Button className= "bg-gray-600" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
                 Add Item
               </Button>
             </PopoverTrigger>
@@ -476,17 +476,15 @@ export default function InventoryTable() {
     return (
       <div className="flex flex-col justify-between gap-2 px-2 py-2 sm:flex-row">
         <Pagination
-          isCompact
-          showControls
-          showShadow
-        classNames={{
-            item: "bg-white text-black",
-            cursor: "bg-black text-white",
-                    }}
-          page={page}
-          total={pages}
-          onChange={setPage}
-        />
+                            total={pages}
+                          initialPage={1}
+                         
+                          onChange={setPage}
+                          classNames={{
+                            item: "bg-white text-black dark:bg-gray-700 dark:text-white",
+                            cursor: "bg-black text-white dark:bg-blue-600 dark:text-white",
+                          }}
+                        />
       
         <div className="flex items-center justify-end gap-6 ml-auto">
           <span className="text-small text-default-400">

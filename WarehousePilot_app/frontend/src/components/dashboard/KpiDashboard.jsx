@@ -154,14 +154,14 @@ const KPIDashboard = ({ userData }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
             {/* Left graph */}
-            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full">
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Warehouse Throughput Graph</h2>
+            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full dark:bg-gray-800 ">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white ">Warehouse Throughput Graph</h2>
               {/* Placeholder for graph */}
               <div className="h-64 bg-gray-200 flex items-center justify-center dark:bg-gray-700"></div>
             </div>
 
             {/* Right graph */}
-            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full">
+            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full dark:bg-gray-800">
               {/* Placeholder for graph */}
               <OrderFulfillmentPreview/>
 

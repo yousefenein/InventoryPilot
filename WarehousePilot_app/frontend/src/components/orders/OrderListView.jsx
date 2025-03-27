@@ -453,31 +453,29 @@ const OrderListView = () => {
   };
 
   return (
-    <div className="mt-2">
+    <div>
       
       <SideBar />
      
-      <div className="flex-1 sm:ml-10 sm:mt-2 dark:bg-gray-900">
-      <NavBar />
-      <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto dark:bg-gray-900">
+      <div className="flex-1  bg-white dark:bg-gray-900 min-h-screen"> {/* Add min-h-screen and remove sm:ml-10 */}
+        <NavBar />
+        <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto bg-white dark:bg-gray-900"> {/* Remove mt-8 */}
         <div className="flex flex-col flex-1">
           <div className="flex flex-col">
             <div className="flex flex-row justify-between items-center gap-11 mt-10">
-              <h1 className="text-2xl font-bold mb-6">Orders</h1>
+              <h1 className="text-2xl font-bold mb-6 dark:text-white">Orders</h1>
               <Chip
-                color="primary"
-                variant="shadow"
-                radius="md"
-                size="lg"
-                onClick={() => navigate("/inventory_and_manufacturing_picklist")}
-                classNames={{
-                  base: " text-lg border-small border-white/50 w-40 p-2 justify-item-center dark:bg-gray-700",
-                  content: "drop-shadow  text-white",
-                }}
-                style={{ backgroundColor: '#006FEE', color: '#fff' ,}}
-              >
-                Inventory and Manufacturing List
-              </Chip>
+  color="primary"
+  radius="sm"
+  size="lg"
+  onClick={() => navigate("/inventory_and_manufacturing_picklist")}
+  classNames={{
+    base: "text-md border-small border-white/50 w-40 p-2 justify-item-center bg-gray-200", // Changed from dark:bg-gray-700 to bg-gray-200
+    content: "drop-shadow text-gray-800", // Changed text color to gray-800
+  }}
+>
+  Inventory and Manufacturing List
+</Chip>
             </div>
 
             {/* Success message for starting the order */}
@@ -533,7 +531,7 @@ const OrderListView = () => {
                   setFilterValue(e.target.value);
                 }}
                 endContent={<SearchIcon className="text-default-400" width={16} />}
-                 className="w-full sm:w-72 dark:bg-gray-800 dark:text-white"
+                 className="w-full sm:w-72 dark:bg-transparent dark:text-white "
               />
               
               {/* Sort Dropdown */}
@@ -609,7 +607,7 @@ const OrderListView = () => {
               <>
                 <Table
                   aria-label="Inventory Pick List"
-                  className="min-w-full shadow-lg dark:bg-gray-800"
+                  className="min-w-full shadow-lg dark:bg-transparent"
                   isHeaderSticky
                   selectionMode="multiple"
                   bottomContentPlacement="outside"
