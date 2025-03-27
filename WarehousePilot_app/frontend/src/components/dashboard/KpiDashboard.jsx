@@ -5,11 +5,13 @@ import OrderPickingAccuracy from "./OrderPickingAccuracy";
 import WarehouseThroughput from "./WarehouseThroughput";
 // import OrderFulfillmentRate from "./OrderFulfillmentRate";
 // import StockLevelsPreview from "./StockLevelsPreview";
+import ThroughputThresholdKpiPreview from "../kpis/throughput-threshold/throughput-threshold-kpi-preview"
 import OrderFulfillmentPreview from "../kpis/OrderFulfillmentPreview"
 import SideBar from "../dashboard_sidebar1/App";
 import NavBar from "../navbar/App";
 import axios from "axios";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import CTPOPreview from "../kpis/CTPO/CTPOPreview";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -154,10 +156,8 @@ const KPIDashboard = ({ userData }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
             {/* Left graph */}
-            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full dark:bg-gray-800 ">
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-white ">Warehouse Throughput Graph</h2>
-              {/* Placeholder for graph */}
-              <div className="h-64 bg-gray-200 flex items-center justify-center dark:bg-gray-700"></div>
+            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full dark:bg-gray-800">
+             <ThroughputThresholdKpiPreview/>
             </div>
 
             {/* Right graph */}
@@ -169,11 +169,22 @@ const KPIDashboard = ({ userData }) => {
             </div>
           </div>
 
-          {/* Cycle Time Per Order Graph */}
-          <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg flex flex-col h-full">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Cycle Time Per Order</h2>
-            <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              Graph Placeholder
+          {/* Graph Section */}
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* CTPO graph */}
+            <div className="bg-white p-4 shadow rounded-lg flex flex-col h-full dark:bg-gray-800">
+              <CTPOPreview />
+              {/* Placeholder for graph */}
+            </div>
+          </div>         
+
+          {/* Details Section */}
+          <div className="mt-6 bg-white p-4 shadow rounded-lg dark:bg-gray-800">
+            <h2 className="text-xl font-semibold mb-4">Details</h2>
+            {/* Placeholder for table or additional data */}
+            <div className="h-64 bg-gray-200 flex items-center justify-center">
+              Table/Data Placeholder
             </div>
           </div>
         </div>
