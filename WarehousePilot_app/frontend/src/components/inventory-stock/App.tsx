@@ -179,7 +179,7 @@ export default function InventoryTable() {
         return <div className="text-default-foreground">{cellValue}</div>;
       case "status":
         return <div className="flex items-center gap-2">{statusColorMap[cellValue as StatusOptions]} {cellValue}</div>;
-      case "edit":
+        case "edit":
         return (
           <div className="flex items-center gap-2">
             <Button {...(getEditProps() as any)} ref={editRef} isIconOnly variant="flat">
@@ -424,7 +424,7 @@ export default function InventoryTable() {
     exportData,
     confirmDelete
   ]);
-  
+
   const topBar = useMemo(() => {
     return (
       <div className="mb-[18px] flex items-center justify-between" style={{ marginTop: "40px" }}>
@@ -441,11 +441,11 @@ export default function InventoryTable() {
             <PopoverTrigger>
               <Button isIconOnly variant="flat">
               <Badge
-  style={{ backgroundColor: "#b91c1c" }} // Custom red color
-  content=" "
-  shape="circle"
-  isInvisible={!unreadNotifications}
->
+                style={{ backgroundColor: "#b91c1c" }} // Custom red color
+                content=" "
+                shape="circle"
+                isInvisible={!unreadNotifications}
+              >
   <Icon icon="solar:bell-outline" width={24} />
 </Badge>
               </Button>
@@ -512,13 +512,14 @@ export default function InventoryTable() {
     <Spinner size="lg" color="default" className="ms-5"/>
     </div>;
   }
+  
 
   return (
-    <div className="mt-2">
-     
-      <SideBar /> {/* Add the SideBar component here */}
-      <div className="flex-1 px-10">
-      <NavBar />
+   <div className="flex-1 px-10 dark:bg-gray-900" style={{ minHeight: "100vh" }}>
+       
+        <SideBar /> {/* Add the SideBar component here */}
+        <div className="flex-1 mt-2 ">
+        <NavBar />
         {topBar}
         <Table
           isHeaderSticky
@@ -526,7 +527,10 @@ export default function InventoryTable() {
           bottomContent={bottomContent}
           bottomContentPlacement="outside"
           classNames={{
-            td: "before:bg-transparent",
+            wrapper: "dark:bg-gray-800",
+            th: "dark:bg-gray-700 dark:text-white",
+            tr: "dark:hover:bg-gray-700",
+            td: "dark:text-white dark:before:bg-transparent"
           }}
           selectedKeys={filterSelectedKeys}
           selectionMode="multiple"
@@ -542,7 +546,7 @@ export default function InventoryTable() {
                 key={column.uid}
                 align={column.uid === "actions" ? "end" : "start"}
                 className={cn([
-                  column.uid === "actions" ? "flex items-center justify-end px-[20px]" : "",
+                  column.uid === "actions" ? "flex items-center justify-end px-[20px]" : "", "dark:text-white"
                 ])}
               >
                 {column.name}
@@ -557,7 +561,18 @@ export default function InventoryTable() {
             )}
           </TableBody>
         </Table>
-        <ToastContainer />
+        <ToastContainer 
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
       </div>
     </div>
   );

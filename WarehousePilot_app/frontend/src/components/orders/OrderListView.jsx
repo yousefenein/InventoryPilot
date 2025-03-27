@@ -457,9 +457,9 @@ const OrderListView = () => {
       
       <SideBar />
      
-      <div className="flex-1 sm:ml-10 sm:mt-2">
+      <div className="flex-1 sm:ml-10 sm:mt-2 dark:bg-gray-900">
       <NavBar />
-      <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto ">
+      <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto dark:bg-gray-900">
         <div className="flex flex-col flex-1">
           <div className="flex flex-col">
             <div className="flex flex-row justify-between items-center gap-11 mt-10">
@@ -471,7 +471,7 @@ const OrderListView = () => {
                 size="lg"
                 onClick={() => navigate("/inventory_and_manufacturing_picklist")}
                 classNames={{
-                  base: " text-lg border-small border-white/50 w-40 p-2 justify-item-center",
+                  base: " text-lg border-small border-white/50 w-40 p-2 justify-item-center dark:bg-gray-700",
                   content: "drop-shadow  text-white",
                 }}
                 style={{ backgroundColor: '#006FEE', color: '#fff' ,}}
@@ -482,12 +482,12 @@ const OrderListView = () => {
 
             {/* Success message for starting the order */}
             {successOrderStart && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center dark:bg-green-800 dark:border-green-600 dark:text-green-100">
                 <span>{successOrderStart}</span>
                 <button
-                  onClick={() => setSuccessOrderStart(null)}
-                  className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
-                >
+                    onClick={() => setSuccessOrderStart(null)}
+                    className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2 dark:text-green-100 dark:hover:text-green-300"
+                  >
                   ×
                 </button>
               </div>
@@ -495,12 +495,12 @@ const OrderListView = () => {
 
             {/* Success message for generating the lists */}
             {successListGeneration && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center dark:bg-green-800 dark:border-green-600 dark:text-green-100">
                 <span>{successListGeneration}</span>
                 <button
-                  onClick={() => setSuccessListGeneration(null)}
-                  className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2"
-                >
+                    onClick={() => setSuccessListGeneration(null)}
+                    className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2 dark:text-green-100 dark:hover:text-green-300"
+                  >
                   ×
                 </button>
               </div>
@@ -508,7 +508,7 @@ const OrderListView = () => {
 
             {/* Error message */}
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center">
+             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center dark:bg-red-800 dark:border-red-600 dark:text-red-100">
                 <span>{error}</span>
                 <Button
                   onClick={() => setError(null)}
@@ -533,7 +533,7 @@ const OrderListView = () => {
                   setFilterValue(e.target.value);
                 }}
                 endContent={<SearchIcon className="text-default-400" width={16} />}
-                className="w-full sm:w-72"
+                 className="w-full sm:w-72 dark:bg-gray-800 dark:text-white"
               />
               
               {/* Sort Dropdown */}
@@ -543,17 +543,19 @@ const OrderListView = () => {
                     variant="flat" 
                     startContent={<Icon icon="mdi:sort" width={16} />}
                     style={{ backgroundColor: '#f3f4f6', color: '#000' }}
+                    className="dark:bg-gray-700 dark:text-white"
                   >
                     Sort by {sortDescriptor.column} ({sortDescriptor.direction})
                   </Button>
                 </DropdownTrigger>
-                <DropdownMenu aria-label="Sort options">
+                <DropdownMenu aria-label="Sort options" className="dark:bg-gray-800">
                   <DropdownItem 
                     key="order_id" 
                     onPress={() => setSortDescriptor({ 
                       column: "order_id", 
                       direction: sortDescriptor.column === "order_id" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
                     })}
+                      className="dark:hover:bg-gray-700"
                   >
                     Order ID
                   </DropdownItem>
@@ -563,6 +565,7 @@ const OrderListView = () => {
                       column: "due_date", 
                       direction: sortDescriptor.column === "due_date" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
                     })}
+                       className="dark:hover:bg-gray-700"
                   >
                     Due Date
                   </DropdownItem>
@@ -575,7 +578,8 @@ const OrderListView = () => {
                   <Button 
                     variant="flat" 
                     startContent={<Icon icon="material-symbols:view-column" width={16} />}
-                    style={{ backgroundColor: '#f3f4f6', color: '#000' }}
+                     style={{ backgroundColor: '#f3f4f6', color: '#000' }}
+                      className="dark:bg-gray-700 dark:text-white"
                   >
                     Columns
                   </Button>
@@ -586,16 +590,17 @@ const OrderListView = () => {
                   selectedKeys={visibleColumns}
                   selectionMode="multiple"
                   onSelectionChange={setVisibleColumns}
+                  className="dark:bg-gray-800"
                 >
                   {columns.map((column) => (
-                    <DropdownItem key={column.uid}>{column.name}</DropdownItem>
+                    <DropdownItem key={column.uid}    className="dark:hover:bg-gray-700">{column.name}</DropdownItem>
                   ))}
                 </DropdownMenu>
               </Dropdown>
             </div>
             </div>
             {loading ? (
-              <div className="flex justify-center items-center h-64">
+              <div className="flex justify-center items-center h-64 dark:text-white">
                 <div>Loading...
                 <Spinner size="lg" color="default" className="ms-5"/>
                 </div>
@@ -604,12 +609,15 @@ const OrderListView = () => {
               <>
                 <Table
                   aria-label="Inventory Pick List"
-                  className="min-w-full shadow-lg"
+                  className="min-w-full shadow-lg dark:bg-gray-800"
                   isHeaderSticky
                   selectionMode="multiple"
                   bottomContentPlacement="outside"
                   classNames={{
-                    td: "before:bg-transparent",
+                    wrapper: "dark:bg-gray-800",
+                    th: "dark:bg-gray-700 dark:text-white",
+                    tr: "dark:hover:bg-gray-700",
+                    td: "dark:text-white dark:before:bg-transparent"
                   }}
                   topContentPlacement="outside"
                 >
@@ -617,7 +625,7 @@ const OrderListView = () => {
                     {visibleTableColumns.map((column) => (
                       <TableColumn 
                         key={column.uid} 
-                        className="text-gray-800 font-bold text-lg"
+                        className="text-gray-800 font-bold text-lg dark:text-white"
                       >
                         {column.name}
                       </TableColumn>
@@ -637,7 +645,7 @@ const OrderListView = () => {
                   </TableBody>
                 </Table>
 
-                <div className="flex justify-between items-center mt-4">
+                <div className="flex justify-between items-center mt-4 dark:text-white">
                   <span>
                     Page {page} of {totalPages}
                   </span>
@@ -647,8 +655,8 @@ const OrderListView = () => {
                     current={page}
                     onChange={(newPage) => setPage(newPage)}
                     classNames={{
-                      item: "bg-white text-black",
-                      cursor: "#006FEE text-white",
+                      item: "bg-white text-black dark:bg-gray-700 dark:text-white",
+                      cursor: "bg-black text-white dark:bg-blue-600 dark:text-white",
                     }}
                   />
                 </div>
@@ -662,216 +670,3 @@ const OrderListView = () => {
 };
 
 export default OrderListView;
-// {/* <div className={`h-full ${theme === "dark" ? "dark" : ""}`} style={{ marginTop: "-80px", backgroundColor:"#111827" }}>
-//     <NavBar />
-//     <SideBar />
-
-//     <div className="flex flex-col flex-1 p-8 mt-8 overflow-auto bg-white dark:bg-gray-900">
-//       <div className="flex flex-col flex-1">
-//         <div className="flex flex-col">
-//           <div className="flex flex-row justify-between items-center gap-11 mt-10 mb-6">
-//             <div className="flex items-center gap-2">
-//               <h1 className="text-2xl font-bold leading-none dark:text-white">Orders</h1>
-//               <Chip className="text-default-500 sm:flex px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 dark:text-white" size="sm" variant="flat">
-//                 {orderCount}
-//               </Chip>
-//             </div>
-//             <Chip
-//               color="primary"
-//               radius="medium"
-//               size="lg"
-//               onClick={() => navigate("/inventory_and_manufacturing_picklist")}
-//               className="text-center bg-gray-800 text-white rounded-lg px-4 py-2 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200"
-//             >
-//               Inventory and Manufacturing List
-//             </Chip>
-//           </div>
-
-//           {/* Success and Error Messages */}
-//           {successOrderStart && (
-//             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center dark:bg-green-800 dark:border-green-600 dark:text-green-100">
-//               <span>{successOrderStart}</span>
-//               <button
-//                 onClick={() => setSuccessOrderStart(null)}
-//                 className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2 dark:text-green-100 dark:hover:text-green-300"
-//               >
-//                 ×
-//               </button>
-//             </div>
-//           )}
-
-//           {successListGeneration && (
-//             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center dark:bg-green-800 dark:border-green-600 dark:text-green-100">
-//               <span>{successListGeneration}</span>
-//               <button
-//                 onClick={() => setSuccessListGeneration(null)}
-//                 className="bg-transparent text-green-700 hover:text-green-900 font-semibold px-2 dark:text-green-100 dark:hover:text-green-300"
-//               >
-//                 ×
-//               </button>
-//             </div>
-//           )}
-
-//           {error && (
-//             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex justify-between items-center dark:bg-red-800 dark:border-red-600 dark:text-red-100">
-//               <span>{error}</span>
-//               <Button
-//                 onClick={() => setError(null)}
-//                 className="bg-transparent text-red-700 hover:text-red-900 font-semibold px-2 dark:text-red-100 dark:hover:text-red-300"
-//               >
-//                 ×
-//               </Button>
-//             </div>
-//           )}
-
-//           {/* Search Input */}
-//           <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-2 w-full">
-//             <Input
-//               size="md"
-//               placeholder="Search by order ID"
-//               value={filterValue}
-//               onChange={(e) => setFilterValue(e.target.value)}
-//               endContent={<SearchIcon className="text-default-400" width={16} />}
-//               className="w-full sm:w-72 bg-white dark:bg-transparent dark:text-white"
-//             />
-//           </div>
-
-//           {loading ? (
-//             <div className="flex justify-center items-center h-64">
-//               <div className="dark:text-white">Loading...
-//                 <Spinner size="lg" color="default" className="ms-5" />
-//               </div>
-//             </div>
-//           ) : (
-//             <>
-//               <Table
-//                 aria-label="Inventory Pick List"
-//                 className="min-w-full shadow-lg bg-white dark:bg-transparent"
-//                 isHeaderSticky
-//                 selectionMode="multiple"
-//                 bottomContentPlacement="outside"
-//                 classNames={{
-//                   td: "before:bg-transparent",
-//                 }}
-//                 topContentPlacement="outside"
-//               >
-//                 <TableHeader className="shadow-xl bg-white dark:bg-transparent">
-//                   <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
-//                     Order ID
-//                   </TableColumn>
-//                   <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
-//                     Estimated Duration
-//                   </TableColumn>
-//                   <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
-//                     Status
-//                   </TableColumn>
-//                   <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
-//                     Due Date
-//                   </TableColumn>
-//                   <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
-//                     Start Date
-//                   </TableColumn>
-//                   <TableColumn className="text-gray-800 dark:text-white font-bold text-lg">
-//                     Action
-//                   </TableColumn>
-//                 </TableHeader>
-
-//                 <TableBody items={paginatedRows}>
-//                   {(item) => (
-//                     <TableRow
-//                       key={item.id}
-//                       className="bg-white dark:bg-transparent dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-//                     >
-//                       <TableCell className="flex items-center dark:text-white">
-//                         {item.order_id}
-//                         <CopyText text={item.order_id.toString()} />
-//                       </TableCell>
-
-//                       <TableCell className="dark:text-white">{item.estimated_duration}</TableCell>
-
-//                       <TableCell className="flex items-center gap-2">
-//                         <span
-//                           className={`flex items-center gap-1 px-2 py-1 rounded ${
-//                             item.status === "In Progress" ? "text-red-800 dark:text-red-400" : ""
-//                           }`}
-//                         >
-//                           {item.status === "In Progress" ? (
-//                             <FaClock className="text-black dark:text-white" />
-//                           ) : (
-//                             <FaExclamationCircle className="text-red-600 text-xl dark:text-red-400" />
-//                           )}
-//                           <span>{item.status || "Not started"}</span>
-//                         </span>
-//                       </TableCell>
-
-//                       <TableCell className="items-center gap-2">
-//                         <div className="flex items-center gap-2">
-//                           <Icon
-//                             icon="solar:calendar-linear"
-//                             width={18}
-//                             className="text-gray-500 dark:text-gray-400"
-//                           />
-//                           <span className="dark:text-white">{item.due_date}</span>
-//                         </div>
-//                       </TableCell>
-
-//                       <TableCell>
-//                         {item.start_timestamp ? (
-//                           <Chip color="success" variant="dot" className="dark:bg-transparent dark:text-green-500">
-//                             {dayjs
-//                               .utc(item.start_timestamp)
-//                               .tz("America/Toronto")
-//                               .format("YYYY-MM-DD HH:mm")}
-//                           </Chip>
-//                         ) : (
-//                           <Chip color="default" variant="flat" className="dark:bg-gray-600 dark:text-white">
-//                             Not Started
-//                           </Chip>
-//                         )}
-//                       </TableCell>
-
-//                       <TableCell>
-//                         <Button
-//                           className={`${
-//                             item.status === "In Progress" ? "bg-gray-300 dark:bg-gray-600" : "bg-black dark:bg-gray-400"
-//                           } text-white dark:text-white`}
-//                           size="sm"
-//                           isDisabled={
-//                             item.status === "In Progress" || updatingOrderId !== null
-//                           }
-//                           onPress={() => handleStart(item.order_id)}
-//                           startContent={
-//                             item.status === "In Progress" ? <FaCheck /> : <FaPlay />
-//                           }
-//                         >
-//                           {item.status === "In Progress" ? "Started" : "Start"}
-//                         </Button>
-//                       </TableCell>
-//                     </TableRow>
-//                   )}
-//                 </TableBody>
-//               </Table>
-
-//               <div className="flex justify-between items-center mt-4 dark:text-white">
-//                 <span>
-//                   Page {page} of {totalPages}
-//                 </span>
-//                 <Pagination
-//                   total={totalPages}
-//                   initialPage={1}
-//                   current={page}
-//                   onChange={(newPage) => setPage(newPage)}
-//                   color="default"
-//                   classNames={{
-//                     item: "bg-white text-black dark:bg-gray-700 dark:text-white",
-//                     cursor: "bg-black text-white dark:bg-transparent dark:text-white",
-//                   }}
-//                 />
-//               </div>
-//             </>
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   </div>
-// ); */}
