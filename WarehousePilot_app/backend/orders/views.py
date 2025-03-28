@@ -519,8 +519,8 @@ class CycleTimePerOrderPreview(APIView):
                 })
 
             # Initialize counters for each day in the past month
-            past_month = (now() - timedelta(days=30)).date()
-            today = now().date()
+            past_month = (timezone.now() - timedelta(days=30)).date()
+            today = timezone.now().date()
             daily_data = defaultdict(lambda: {"picked": 0, "packed": 0, "shipped": 0})
 
             # Iterate through each processed order and count events per day
@@ -532,11 +532,23 @@ class CycleTimePerOrderPreview(APIView):
                 if order["shipped_date"] and past_month <= order["shipped_date"] <= today:
                     daily_data[order["shipped_date"]]["shipped"] += 1
 
+            # Pad the result to include all days in the past month
+            result = []
+            current_date = past_month
+            while current_date <= today:
+                result.append({
+                    "day": current_date,
+                    "picked": daily_data[current_date]["picked"],
+                    "packed": daily_data[current_date]["packed"],
+                    "shipped": daily_data[current_date]["shipped"],
+                })
+                current_date += timedelta(days=1)
+
             # Convert daily_data to a list of objects
-            result = [
-                {"day": day, "picked": counts["picked"], "packed": counts["packed"], "shipped": counts["shipped"]}
-                for day, counts in sorted(daily_data.items())
-            ]
+            # result = [
+            #     {"day": day, "picked": counts["picked"], "packed": counts["packed"], "shipped": counts["shipped"]}
+            #     for day, counts in sorted(daily_data.items())
+            # ]
 
             return Response(result, status=200)
         except Exception as e:
