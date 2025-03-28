@@ -48,7 +48,6 @@ const CTPOPreview = () => {
             },
           }
         );
-        console.log("ctpo_info", ctpo_info.data);
 
         const response = await axios.post(
           `${API_BASE_URL}/orders/ctpo_preview/`,
@@ -61,7 +60,6 @@ const CTPOPreview = () => {
           }
         );
         const result = response.data;
-        console.log("result", result);
         if (!Array.isArray(result) || result.length === 0) {
           setAllData([]);
         } else {
