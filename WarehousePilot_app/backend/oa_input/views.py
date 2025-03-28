@@ -100,20 +100,23 @@ class OAInputView(APIView):
                     logger.error(f"❌ Part with SKU '{normalized_sku}' does not exist. Skipping entry.")
                     continue  
 
-                new_parts.append(OrderPart(
-                    order_id=order,
-                    sku_color=part,  
-                    qty=row["qty"],
-                    location=row["location"],
-                    area=row["area"],
-                    final_model=row["final_model"],
-                    material_type=row["material_type"],
-                    department=row["department"],
-                    lineup_nb=row["lineup_nb"],
-                    lineup_name=row["lineup_name"],
-                    status=False,  # Default status
-                    importance=row["importance"]
-                ))
+                if not OrderPart.objects.filter(order_id=order, sku_color=part, final_model=row["final_model"]).exists():
+                    new_parts.append(OrderPart(
+                        order_id=order,
+                        sku_color=part,  
+                        qty=row["qty"],
+                        location=row["location"],
+                        area=row["area"],
+                        final_model=row["final_model"],
+                        material_type=row["material_type"],
+                        department=row["department"],
+                        lineup_nb=row["lineup_nb"],
+                        lineup_name=row["lineup_name"],
+                        status=False,  # Default status
+                        importance=row["importance"]
+                    ))
+                else:
+                    logger.info(f"⚠️ OrderPart with order_id {order.order_id} and SKU {part.sku_color} already exists. Skipping entry.")
 
             if new_parts:
                 OrderPart.objects.bulk_create(new_parts)
