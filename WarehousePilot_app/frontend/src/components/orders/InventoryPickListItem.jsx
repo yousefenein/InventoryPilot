@@ -321,8 +321,8 @@ const InventoryPicklistItem = () => {
                       <TableHeader className="shadow-xl">
                         <TableColumn className="text-gray-800 font-bold text-base">Picklist Item ID</TableColumn>
                         <TableColumn className="text-gray-800 font-bold text-base">Location</TableColumn>
-                        <TableColumn className="text-gray-800 font-bold text-base">SKU Color</TableColumn>
                         <TableColumn className="text-gray-800 font-bold text-base">Required Quantity</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">SKU Color</TableColumn>
                         <TableColumn className="text-gray-800 font-bold text-base">Lineup #</TableColumn>
                         <TableColumn className="text-gray-800 font-bold text-base">Model Type</TableColumn>
                         <TableColumn className="text-gray-800 font-bold text-base">Material Type</TableColumn>
