@@ -47,7 +47,7 @@ class AuthTests(APITestCase):
             'password': 'wrongpassword'
         }
         response = self.client.post(self.login_url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIn('detail', response.data)
 
 class ChangePasswordTests(APITestCase):

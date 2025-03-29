@@ -33,6 +33,7 @@ from django.shortcuts import get_object_or_404
 from datetime import datetime
 
 import logging
+from collections import defaultdict
 
 logger = logging.getLogger('WarehousePilot_app')
 
