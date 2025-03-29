@@ -330,24 +330,35 @@ const InventoryPickList = () => {
                       style={{
                         backgroundColor: '#b91c1c',
                         color: 'white',
-                        // opacity: 0.8,
                       }}
                       size="sm"
                       onPress={() => handleViewOrderDetails(item.order_id)}
                     >
                       Pick Order
                     </Button>
+
                     <Button
                       style={{
                         backgroundColor: '#b91c1c',
                         color: 'white',
-                        // opacity: 0.8,
                       }}
                       size="sm"
                       onPress={() => handleOpenAssignModal(item.order_id)}
                       className="ml-2"
                     >
                       Assign Staff
+                    </Button>
+
+                    <Button
+                      style={{
+                        backgroundColor: '#b91c1c',
+                        color: 'white',
+                      }}
+                      size="sm"
+                      onPress={() => navigate(`/label/all/${item.order_id}`)}
+                      className="ml-2"
+                    >
+                      View Labels
                     </Button>
                   </TableCell>
                 </TableRow>
