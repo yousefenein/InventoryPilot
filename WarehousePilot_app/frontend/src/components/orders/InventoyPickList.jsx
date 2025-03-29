@@ -354,7 +354,7 @@ const InventoryPickList = () => {
                           color: 'white',
                         }}
                         size="sm"
-                        onPress={() => navigate(`/label_maker/all/${item.order_id}`)}
+                        onPress={() => navigate(`/label/all/${item.order_id}`)}
                         className="ml-2"
                       >
                         View Labels
