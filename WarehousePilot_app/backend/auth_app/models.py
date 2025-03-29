@@ -27,7 +27,6 @@ class users(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=20)
     department = models.CharField(max_length=20)
 
-    
  # New theme preference field
     THEME_CHOICES = [
         ('light', 'Light Mode'),
@@ -36,7 +35,6 @@ class users(AbstractBaseUser, PermissionsMixin):
     theme_preference = models.CharField(
         max_length=10, choices=THEME_CHOICES, default='light'
     )
-
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
