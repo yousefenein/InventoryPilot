@@ -123,7 +123,7 @@ function InventoryPickingLogs() {
       <NavBar />
       <div className="flex-1 mt-2 dark:bg-gray-900" >
         <div className="flex-1">
-          <div className="mt-6 p-10">
+          <div className="px-10 pt-8">
             <div className="flex flex-col gap-4">
               <h1 className="text-2xl font-bold mb-6 dark:text-white">Inventory Picking Logs</h1>
 
@@ -153,21 +153,21 @@ function InventoryPickingLogs() {
                 </div>
               ) : (
                 <>
-                  {/* Table*/}
+                  {/* Table */}
                   <Table
                     aria-label="Inventory picking logs table"
                     className="min-w-full dark:bg-transparent"
                     classNames={{
                       wrapper: "dark:bg-gray-800 ",
-                      th: "dark:bg-gray-700 dark:text-white",
+                      th: "dark:bg-gray-700 dark:text-white text-center",
                       tr: "dark:hover:bg-gray-700",
-                      td: "dark:text-white dark:before:bg-transparent"
+                      td: "dark:text-white dark:before:bg-transparent text-center"
                     }}
                   >
 
                     <TableHeader>
                       {columnHeaders.map((column) => (
-                        <TableColumn key={column} className="dark:text-white">{column}</TableColumn>
+                        <TableColumn key={column} className="dark:text-white text-lg">{column}</TableColumn>
                       ))}
                     </TableHeader>
 
