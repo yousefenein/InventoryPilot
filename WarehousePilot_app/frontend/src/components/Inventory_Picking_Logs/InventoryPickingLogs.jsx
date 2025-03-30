@@ -12,8 +12,10 @@ import {
   Checkbox,
 } from "@heroui/react";
 import { SearchIcon } from "@heroui/shared-icons";
+import { Spinner } from "@heroui/spinner";
 import axios from "axios";
 import SideBar from "../dashboard_sidebar1/App";
+
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -25,9 +27,7 @@ dayjs.extend(timezone);
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-
 function InventoryPickingLogs() {
-  const [pickingData, setPickingData] = useState([]); // Data retrieved from the API
   const [rows, setRows] = useState([]); // Data formatted for the table
   const [warehouseFilter, setWarehouseFilter] = useState("");
   const [employeeFilter, setEmployeeFilter] = useState("");
@@ -36,6 +36,20 @@ function InventoryPickingLogs() {
   const [orderFilter, setOrderFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+
+
+  /* Pagination */
+  const rowsPerPage = 12;
+  const totalPages = Math.ceil(rows.length / rowsPerPage);
+  const paginatedRows = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return rows.slice(start, end);
+  }, [page, rows]);
+
+  const columnHeaders = ["Warehouse", "Date", "Time", "Employee ID", "Transaction Type", "Order #", "SKU #", "Location", "Qty Out"];
+
 
   /* fetchData: getting employee picking data from packing and formatting data for table */
   const fetchData = async () => {
@@ -44,7 +58,12 @@ function InventoryPickingLogs() {
       const token = localStorage.getItem("token");
 
       // Fetch data from the API
-      if (token) {
+      if (!token) {
+        setError("No authorization token found");
+        setLoading(false);
+        return;
+      }
+
         const response = await axios.get(
           `${API_BASE_URL}/picking_logs/`,
           {
@@ -54,24 +73,18 @@ function InventoryPickingLogs() {
             },
           }
         );
-        setPickingData(response.data);
-      }
-
-      else {
-        setError("No authorization token found");
-        setLoading(false);
-        return;
-      }
+        
 
       // Format data for the table
       setRows(
-        pickingData.map((row, index) => ({
+        response.data.map((row, index) => ({
           key: index + 1,
           warehouse: row.warehouse,
-          date: row.date,
-          time: row.time,
+          date: dayjs(row.date).format("DD/MM/YYYY"),
+          time: dayjs(row.time).format("DD/MM/YYYY HH:mm"),
           employee_id: row.employee_id,
           transaction_type: row.transaction_type,
+          order_number: row.order_number,
           sku_color: row.sku_color,
           location: row.location,
           quantity_out: row.qty_out,
@@ -100,6 +113,13 @@ function InventoryPickingLogs() {
             <div className="flex flex-col gap-4">
               <h1 className="text-2xl font-bold mb-6 dark:text-white">Inventory Picking Logs</h1>
 
+              {/* Error message */}
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+                  {error}
+                </div>
+              )}
+
               <div className="flex flex-wrap items-center gap-4 mb-6">
                 <Input
                   size="md"
@@ -124,7 +144,13 @@ function InventoryPickingLogs() {
                 />
               </div>
 
-
+              {loading ? (
+                <div className="flex justify-center items-center h-64 dark:text-white">
+                  Loading...
+                  <Spinner size="lg" color="default" className="ms-5" />
+                </div>
+              ) : (
+                <>
               {/* Table*/}
               <Table
                 aria-label="Inventory picking logs table"
@@ -136,31 +162,42 @@ function InventoryPickingLogs() {
                   td: "dark:text-white dark:before:bg-transparent"
                 }}
               >
+
                 <TableHeader>
-                  <TableColumn className="dark:text-white">Warehouse #</TableColumn>
-                  <TableColumn className="dark:text-white">Date</TableColumn>
-                  <TableColumn className="dark:text-white">Time</TableColumn>
-                  <TableColumn className="dark:text-white">Employee ID</TableColumn>
-                  <TableColumn className="dark:text-white">Transaction Type</TableColumn>
-                  <TableColumn className="dark:text-white">Order #</TableColumn>
-                  <TableColumn className="dark:text-white">SKU #</TableColumn>
-                  <TableColumn className="dark:text-white">Location</TableColumn>
-                  <TableColumn className="dark:text-white">Quantity Out</TableColumn>
+                      {columnHeaders.map((column) => (
+                        <TableColumn key={column} className="dark:text-white">{column}</TableColumn>
+                      ))}
                 </TableHeader>
-                <TableBody>
+
+                    {/* Populate table */}
+                    <TableBody items={paginatedRows}>
+                      {(item) => (
+                        <TableRow key={item.key}>
+                          <TableCell>{item.warehouse}</TableCell>
+                          <TableCell>{item.date}</TableCell>
+                          <TableCell>{item.time}</TableCell>
+                          <TableCell>{item.employee_id}</TableCell>
+                          <TableCell>{item.transaction_type}</TableCell>
+                          <TableCell>{item.order_number}</TableCell>
+                          <TableCell>{item.sku_color}</TableCell>
+                          <TableCell>{item.location}</TableCell>
+                          <TableCell>{item.quantity_out}</TableCell>
+                        </TableRow>
+                      )}
                 </TableBody>
+
               </Table>
 
               {/* Pagination*/}
-              <div className="flex justify-between items-center mt-6">
+                  <div className="flex justify-between items-center mt-4">
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Page 1 of 1
+                      Page {page} of {totalPages}
                 </span>
                 <Pagination
-                  total={1}
+                      total={totalPages}
                   initialPage={1}
-                  current={1}
-                  onChange={() => { }}
+                      current={page}
+                      onChange={(newPage) => { setPage(newPage) }}
                   className="text-gray-600 dark:text-gray-400"
                   classNames={{
                     item: "dark:bg-gray-700 dark:text-white",
@@ -168,6 +205,8 @@ function InventoryPickingLogs() {
                   }}
                 />
               </div>
+                </>
+              )}
             </div>
           </div>
         </div>
