@@ -32,21 +32,35 @@ function InventoryPickingLogs() {
   const [warehouseFilter, setWarehouseFilter] = useState("");
   const [employeeFilter, setEmployeeFilter] = useState("");
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
   const [orderFilter, setOrderFilter] = useState("");
+  const [filterValue, setFilterValue] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
 
+  /* Filter rows based on search text */
+  const filteredRows = useMemo(() => {
+    if (!filterValue.trim()) return rows;
+
+    const searchTerm = filterValue.toLowerCase();
+
+    return rows.filter((row) => {
+      const warehouseMatch = row.warehouse?.toString().includes(searchTerm);
+      const employeeMatch = row.employee_id?.toString().includes(searchTerm);
+      const orderNumberMatch = row.order_number?.toString().includes(searchTerm);
+      return warehouseMatch || employeeMatch || orderNumberMatch;
+    });
+  }, [rows, filterValue]);
 
   /* Pagination */
   const rowsPerPage = 12;
-  const totalPages = Math.ceil(rows.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
   const paginatedRows = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    return rows.slice(start, end);
-  }, [page, rows]);
+    return filteredRows.slice(start, end);
+  }, [page, filteredRows]);
 
   const columnHeaders = ["Warehouse", "Date", "Time", "Employee ID", "Transaction Type", "Order #", "SKU #", "Location", "Qty Out"];
 
@@ -64,16 +78,16 @@ function InventoryPickingLogs() {
         return;
       }
 
-        const response = await axios.get(
-          `${API_BASE_URL}/picking_logs/`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        
+      const response = await axios.get(
+        `${API_BASE_URL}/picking_logs/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
 
       // Format data for the table
       setRows(
@@ -120,28 +134,16 @@ function InventoryPickingLogs() {
                 </div>
               )}
 
-              <div className="flex flex-wrap items-center gap-4 mb-6">
+              <div className="flex items-center gap-2 mb-5">
                 <Input
                   size="md"
-                  placeholder="Search Warehouse #"
-                  value={warehouseFilter}
-                  onChange={(e) => setWarehouseFilter(e.target.value)}
-                  className="w-48 rounded border-gray-300 dark:border-gray-600 dark:text-white"
+                  placeholder="Search by warehouse, employee ID, or order #"
+                  value={filterValue}
+                  onChange={(e) => setFilterValue(e.target.value)}
+                  endContent={<SearchIcon className="text-default-400" width={16} />}
+                  className="w-1/5"
                 />
-                <Input
-                  size="md"
-                  placeholder="Search Employee ID"
-                  value={employeeFilter}
-                  onChange={(e) => setEmployeeFilter(e.target.value)}
-                  className="w-48 rounded border-gray-300 dark:border-gray-600 dark:text-white"
-                />
-                <Input
-                  size="md"
-                  placeholder="Search Order #"
-                  value={orderFilter}
-                  onChange={(e) => setOrderFilter(e.target.value)}
-                  className="w-48 rounded border-gray-300 dark:border-gray-600 dark:text-white"
-                />
+
               </div>
 
               {loading ? (
@@ -151,23 +153,23 @@ function InventoryPickingLogs() {
                 </div>
               ) : (
                 <>
-              {/* Table*/}
-              <Table
-                aria-label="Inventory picking logs table"
-                className="min-w-full dark:bg-transparent"
-                classNames={{
-                  wrapper: "dark:bg-gray-800 ",
-                  th: "dark:bg-gray-700 dark:text-white",
-                  tr: "dark:hover:bg-gray-700",
-                  td: "dark:text-white dark:before:bg-transparent"
-                }}
-              >
+                  {/* Table*/}
+                  <Table
+                    aria-label="Inventory picking logs table"
+                    className="min-w-full dark:bg-transparent"
+                    classNames={{
+                      wrapper: "dark:bg-gray-800 ",
+                      th: "dark:bg-gray-700 dark:text-white",
+                      tr: "dark:hover:bg-gray-700",
+                      td: "dark:text-white dark:before:bg-transparent"
+                    }}
+                  >
 
-                <TableHeader>
+                    <TableHeader>
                       {columnHeaders.map((column) => (
                         <TableColumn key={column} className="dark:text-white">{column}</TableColumn>
                       ))}
-                </TableHeader>
+                    </TableHeader>
 
                     {/* Populate table */}
                     <TableBody items={paginatedRows}>
@@ -184,27 +186,27 @@ function InventoryPickingLogs() {
                           <TableCell>{item.quantity_out}</TableCell>
                         </TableRow>
                       )}
-                </TableBody>
+                    </TableBody>
 
-              </Table>
+                  </Table>
 
-              {/* Pagination*/}
+                  {/* Pagination*/}
                   <div className="flex justify-between items-center mt-4">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
                       Page {page} of {totalPages}
-                </span>
-                <Pagination
+                    </span>
+                    <Pagination
                       total={totalPages}
-                  initialPage={1}
+                      initialPage={1}
                       current={page}
                       onChange={(newPage) => { setPage(newPage) }}
-                  className="text-gray-600 dark:text-gray-400"
-                  classNames={{
-                    item: "dark:bg-gray-700 dark:text-white",
-                    cursor: "bg-black text-white dark:bg-black dark:text-white"
-                  }}
-                />
-              </div>
+                      className="text-gray-600 dark:text-gray-400"
+                      classNames={{
+                        item: "dark:bg-gray-700 dark:text-white",
+                        cursor: "bg-black text-white dark:bg-black dark:text-white"
+                      }}
+                    />
+                  </div>
                 </>
               )}
             </div>
