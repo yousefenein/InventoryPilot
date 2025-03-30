@@ -14,47 +14,86 @@ import {
 import { SearchIcon } from "@heroui/shared-icons";
 import axios from "axios";
 import SideBar from "../dashboard_sidebar1/App";
-import Header from "../dashboard_sidebar/Header";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import NavBar from "../navbar/App";
 import { useNavigate } from "react-router-dom";
+import { time } from "framer-motion";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
-function InventoryPickingLogs(){
-    const [userData, setUserData] = useState(null);
-    const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState("");
-    const [warehouseFilter, setWarehouseFilter] = useState("");
-    const [employeeFilter, setEmployeeFilter] = useState("");
-    const [orderFilter, setOrderFilter] = useState("");
-  
-    useEffect(() => {
-      const fetchUserData = async () => {
-        const token = localStorage.getItem("token");
-        if (token) {
-          try {
-            const response = await axios.get(`${API_BASE_URL}/auth/profile/`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            setUserData(response.data);
-          } catch (error) {
-            console.error("Error fetching user data:", error);
+function InventoryPickingLogs() {
+  const [pickingData, setPickingData] = useState([]); // Data retrieved from the API
+  const [rows, setRows] = useState([]); // Data formatted for the table
+  const [warehouseFilter, setWarehouseFilter] = useState("");
+  const [employeeFilter, setEmployeeFilter] = useState("");
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [orderFilter, setOrderFilter] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  /* fetchData: getting employee picking data from packing and formatting data for table */
+  const fetchData = async () => {
+    try {
+      // Get authorization token
+      const token = localStorage.getItem("token");
+
+      // Fetch data from the API
+      if (token) {
+        const response = await axios.get(
+          `${API_BASE_URL}/picking_logs/`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
-        }
-      };
-      fetchUserData();
-    }, []);
-  
+        );
+        setPickingData(response.data);
+      }
+
+      else {
+        setError("No authorization token found");
+        setLoading(false);
+        return;
+      }
+
+      // Format data for the table
+      setRows(
+        pickingData.map((row, index) => ({
+          key: index + 1,
+          warehouse: row.warehouse,
+          date: row.date,
+          time: row.time,
+          employee_id: row.employee_id,
+          transaction_type: row.transaction_type,
+          sku_color: row.sku_color,
+          location: row.location,
+          quantity_out: row.qty_out,
+        }))
+      );
+      setLoading(false);
+    }
+    catch (error) {
+      console.error("Error fetching employee picking data:", error);
+      setError("Failed to fetch employee picking data");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
     <div className="dark:bg-gray-900 min-h-screen" >
-     <SideBar />
-     <NavBar />
+      <SideBar />
+      <NavBar />
       <div className="flex-1 mt-2 dark:bg-gray-900" >
         <div className="flex-1">
           <div className="mt-6 p-10">
@@ -98,7 +137,7 @@ function InventoryPickingLogs(){
                 }}
               >
                 <TableHeader>
-                <TableColumn className="dark:text-white">Warehouse #</TableColumn>
+                  <TableColumn className="dark:text-white">Warehouse #</TableColumn>
                   <TableColumn className="dark:text-white">Date</TableColumn>
                   <TableColumn className="dark:text-white">Time</TableColumn>
                   <TableColumn className="dark:text-white">Employee ID</TableColumn>
@@ -121,7 +160,7 @@ function InventoryPickingLogs(){
                   total={1}
                   initialPage={1}
                   current={1}
-                  onChange={() => {}}
+                  onChange={() => { }}
                   className="text-gray-600 dark:text-gray-400"
                   classNames={{
                     item: "dark:bg-gray-700 dark:text-white",
