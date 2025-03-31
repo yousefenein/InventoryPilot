@@ -68,6 +68,16 @@ class OAInputView(APIView):
             df = df[list(COLUMN_MAPPING.keys())].rename(columns=COLUMN_MAPPING)
             logger.info(f"📋 Columns after renaming: {list(df.columns)}")
 
+            # Clean and validate all columns before anything else
+            df["order_id"] = pd.to_numeric(df["order_id"], errors="coerce")
+            df["due_date"] = pd.to_datetime(df["due_date"], errors="coerce")
+            df["qty"] = pd.to_numeric(df["qty"], errors="coerce")
+
+            original_count = df.shape[0]
+            df = df.dropna()
+            removed_count = original_count - df.shape[0]
+            logger.info(f" Removed {removed_count} invalid/missing rows. Remaining: {df.shape[0]}")
+
             # ✅ Insert Orders into `Orders` Table
             unique_orders = df[['order_id', 'due_date', 'client_name', 'project_type']].drop_duplicates()
             new_orders = []
