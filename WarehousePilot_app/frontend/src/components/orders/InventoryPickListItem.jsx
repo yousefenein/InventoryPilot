@@ -11,16 +11,118 @@ import {
   Button,
   Modal,
   ModalContent,
-  ModalBody,
-  Tab,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
 } from "@heroui/react";
 import { SearchIcon } from "@heroui/shared-icons";
 import { useNavigate, useParams } from "react-router-dom";
 import SideBar from "../dashboard_sidebar1/App";
 import NavBar from "../navbar/App";
 import axios from "axios";
+import { Icon } from "@iconify/react";
+import { Spinner } from "@heroui/spinner";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Define columns for the inventory table
+const inventoryColumns = [
+  {
+    uid: "picklist_item_id",
+    name: "Picklist Item ID",
+    sortable: true,
+  },
+  {
+    uid: "area",
+    name: "Area",
+    sortable: true,
+  },
+  {
+    uid: "lineup_nb",
+    name: "Lineup #",
+    sortable: false,
+  },
+  {
+    uid: "model_nb",
+    name: "Model Type",
+    sortable: true,
+  },
+  {
+    uid: "material_type",
+    name: "Type",
+    sortable: true,
+  },
+  {
+    uid: "sku_color",
+    name: "SKU",
+    sortable: false,
+  },
+  {
+    uid: "location",
+    name: "Location",
+    sortable: false,
+  },
+  {
+    uid: "quantity",
+    name: "QTY",
+    sortable: true,
+  },
+  
+  {
+    uid: "department",
+    name: "Department",
+    sortable: true,
+  },
+  {
+    uid: "required_quantity",
+    name: "Required Quantity",
+    sortable: true,
+  },
+  {
+    uid: "picked_quantity",
+    name: "Picked Quantity",
+    sortable: false,
+  },
+  {
+    uid: "status",
+    name: "Status",
+    sortable: false,
+  },
+  {
+    uid: "picked_at",
+    name: "Picked At",
+    sortable: false,
+  },
+  {
+    uid: "action",
+    name: "Action",
+    sortable: false,
+  },
+  {
+    uid: "label",
+    name: "Label",
+    sortable: false,
+  },
+];
+
+// Function to get default visible columns
+const getVisibleColumns = () => {
+  return [
+    "order_id",
+    "area",
+    "lineup_nb",
+    "model_nb",
+    "material_type",
+    "sku_color",
+    "location",
+    "quantity",
+    "picklist_item_id",
+    "status",
+    "action",
+    "label",
+  ];
+};
 
 const InventoryPicklistItem = () => {
   const { order_id } = useParams();
@@ -33,11 +135,17 @@ const InventoryPicklistItem = () => {
   const [filterValue, setFilterValue] = useState("");
   const [page, setPage] = useState(1);
   const [inventoryPage, setInventoryPage] = useState(1);
-
-  const [items, setItems] = useState([]);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [typeFilter, setTypeFilter] = useState("All");
 
+  // Added for new features
+  const [sortDescriptor, setSortDescriptor] = useState({
+    column: "area",
+    direction: "ascending",
+  });
+  const [visibleColumns, setVisibleColumns] = useState(new Set(getVisibleColumns()));
+  
   const navigate = useNavigate();
   const rowsPerPage = 8;
 
@@ -51,53 +159,57 @@ const InventoryPicklistItem = () => {
   const [inventoryError, setInventoryError] = useState(null);
   const [manufacturingError, setManufacturingError] = useState(null);
 
-  // Modify your fetchOrderItems function to handle the new department data
-const fetchOrderItems = async (order_id) => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("No authorization token found");
+  // Fetch order items function
+  const fetchOrderItems = async (order_id) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No authorization token found");
 
-    const [inventoryResponse, manufacturingResponse] = await Promise.all([
-      axios
-        .get(
-          `${API_BASE_URL}/orders/inventory_picklist_items/${order_id}/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        )
-        .catch((error) => {
-          setInventoryError("No inventory items found for this order");
-          return { data: [] };
-        }),
-      axios
-        .get(
-          `${API_BASE_URL}/manufacturingLists/manufacturing_list_item/${order_id}/`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        )
-        .catch((error) => {
-          setManufacturingError(
-            "No manufacturing items found for this order"
-          );
-          return { data: [] };
-        }),
-    ]);
+      const [inventoryResponse, manufacturingResponse] = await Promise.all([
+        axios
+          .get(
+            `${API_BASE_URL}/orders/inventory_picklist_items/${order_id}/`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          )
+          .catch((error) => {
+            setInventoryError("No inventory items found for this order");
+            return { data: [] };
+          }),
+        axios
+          .get(
+            `${API_BASE_URL}/manufacturingLists/manufacturing_list_item/${order_id}/`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          )
+          .catch((error) => {
+            setManufacturingError(
+              "No manufacturing items found for this order"
+            );
+            return { data: [] };
+          }),
+      ]);
 
-    // Log the response to check the structure
-    console.log("Inventory items data:", inventoryResponse.data);
-    
-    // The response data now includes department field from the backend
-    // No need to modify this part as your component already handles department field
-    setInventoryItems(inventoryResponse.data);
-    setManufacturingItems(manufacturingResponse.data);
-    setLoading(false);
-  } catch (err) {
-    console.error("Error fetching order items:", err);
-    setError("Failed to fetch order items");
-    setLoading(false);
-  }
-};
+      console.log("Inventory items data:", inventoryResponse.data);
+      
+      // Add order_id to each inventory item for sorting and filtering
+      const inventoryItemsWithOrderId = inventoryResponse.data.map(item => ({
+        ...item,
+        order_id: order_id
+      }));
+      
+      setInventoryItems(inventoryItemsWithOrderId);
+      setManufacturingItems(manufacturingResponse.data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching order items:", err);
+      setError("Failed to fetch order items");
+      setLoading(false);
+    }
+  };
+  
   useEffect(() => {
     fetchOrderItems(order_id);
   }, [order_id]);
@@ -119,7 +231,45 @@ const fetchOrderItems = async (order_id) => {
     );
   }, [inventoryItems, filterValue]);
 
-  // Filter rows for manufacturing items based on search text
+  // Sort inventory items
+  // Sort inventory items
+const sortedInventoryItems = useMemo(() => {
+  if (!filteredInventoryItems.length) return [];
+  
+  const itemsCopy = [...filteredInventoryItems];
+  
+  itemsCopy.sort((a, b) => {
+    // First sort by the selected column and direction
+    const col = sortDescriptor.column;
+    const dir = sortDescriptor.direction === "ascending" ? 1 : -1;
+    
+    // Special case for material_type - always sort Metal before Plastic regardless of direction
+    if (col === "material_type") {
+      if (a.material_type === "Metal" && b.material_type === "Plastic") return -1 * dir;
+      if (a.material_type === "Plastic" && b.material_type === "Metal") return 1 * dir;
+      
+      // If both are the same type or neither is Metal/Plastic, use regular string comparison
+      const valA = (a[col] || "").toString().toLowerCase();
+      const valB = (b[col] || "").toString().toLowerCase();
+      return valA.localeCompare(valB) * dir;
+    }
+    
+    // Handle different column types for other columns
+    if (col === "picklist_item_id" || col === "quantity") {
+      const valA = parseInt(a[col]) || 0;
+      const valB = parseInt(b[col]) || 0;
+      return (valA - valB) * dir;
+    } else {
+      const valA = (a[col] || "").toString().toLowerCase();
+      const valB = (b[col] || "").toString().toLowerCase();
+      return valA.localeCompare(valB) * dir;
+    }
+  });
+  
+  return itemsCopy;
+}, [filteredInventoryItems, sortDescriptor]);
+
+  // Filter rows for manufacturing items
   const filteredManufacturingItems = useMemo(() => {
     if (!filterValue.trim()) return manufacturingItems;
     const searchTerm = filterValue.toLowerCase();
@@ -134,12 +284,38 @@ const fetchOrderItems = async (order_id) => {
     );
   }, [manufacturingItems, filterValue]);
 
-  const totalInventoryPages = Math.ceil(
-    filteredInventoryItems.length / rowsPerPage
+  // Apply pagination for inventory items
+  const paginatedInventoryItems = useMemo(() => {
+    const start = (inventoryPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return sortedInventoryItems.slice(start, end);
+  }, [inventoryPage, sortedInventoryItems]);
+
+  // Apply pagination for manufacturing items
+  const paginatedManufacturingItems = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return filteredManufacturingItems.slice(start, end);
+  }, [page, filteredManufacturingItems]);
+
+  // Calculate total pages
+  const totalInventoryPages = Math.max(
+    1,
+    Math.ceil(sortedInventoryItems.length / rowsPerPage)
   );
-  const totalManufacturingPages = Math.ceil(
-    filteredManufacturingItems.length / rowsPerPage
+  const totalManufacturingPages = Math.max(
+    1,
+    Math.ceil(filteredManufacturingItems.length / rowsPerPage)
   );
+  
+  // Visible columns logic
+  const visibleTableColumns = useMemo(() => {
+    if (visibleColumns === "all") return inventoryColumns;
+    
+    return inventoryColumns.filter(
+      (column) => Array.from(visibleColumns).includes(column.uid)
+    );
+  }, [visibleColumns]);
   
   const handlePickedQuantityChange = (picklistItemId, value) => {
     const newQuantity = parseInt(value, 10) || 0;
@@ -214,22 +390,82 @@ const fetchOrderItems = async (order_id) => {
     }
   };
 
-  // Apply pagination for inventory items
-  const paginatedInventoryItems = useMemo(() => {
-    const start = (inventoryPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    return filteredInventoryItems.slice(start, end);
-  }, [inventoryPage, filteredInventoryItems]);
-
-  // Apply pagination for manufacturing items
-  const paginatedManufacturingItems = useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    return filteredManufacturingItems.slice(start, end);
-  }, [page, filteredManufacturingItems]);
-
   const handleLabelClick = (picklistItemId) => {
     navigate(`/label/${picklistItemId}`);
+  };
+
+  // Render cell content
+  const renderCell = (item, columnKey) => {
+    const cellValue = item[columnKey];
+    
+    switch (columnKey) {
+      case "order_id":
+        return <div>{order_id}</div>;
+      case "picklist_item_id":
+        return <div>{item.picklist_item_id}</div>;
+      case "location":
+        return <div>{item.location || 'N/A'}</div>;
+      case "department":
+        return <div>{item.department !== null && item.department !== undefined ? item.department : 'N/A'}</div>;
+      case "sku_color":
+        return <div>{item.sku_color || 'N/A'}</div>;
+      case "area":
+        return <div>{item.area || 'N/A'}</div>;
+      case "lineup_nb":
+        return <div>{item.lineup_nb || 'N/A'}</div>;
+      case "model_nb":
+        return <div>{item.model_nb || 'N/A'}</div>;
+      case "material_type":
+        return <div>{item.material_type || 'N/A'}</div>;
+      case "quantity":
+        return <div>{item.quantity}</div>;
+      case "picked_quantity":
+        return (
+          <Input
+            type="number"
+            min="0"
+            size="sm"
+            value={pickedQuantities[item.picklist_item_id] || ""}
+            onChange={(e) =>
+              handlePickedQuantityChange(item.picklist_item_id, e.target.value)
+            }
+            disabled={item.status} 
+          />
+        );
+      case "status":
+        return <div>{item.status ? "Picked" : "To Pick"}</div>;
+      case "picked_at":
+        return <div>{item.picked_at ? new Date(item.picked_at).toLocaleString() : 'Not picked yet'}</div>;
+      case "action":
+        return (
+          item.status ? (
+            <span>Picked</span>
+          ) : (
+            <input
+              type="checkbox"
+              checked={pickedQuantities[item.picklist_item_id] === item.quantity}
+              onChange={() => openPickModal(item)}
+              style={{
+                cursor: "pointer", 
+              }}
+            />
+          )
+        );
+      case "label":
+        return (
+          <Button 
+            style={{
+              backgroundColor: '#b91c1c',
+              color: 'white',
+            }}
+            size="sm"
+            onPress={() => handleLabelClick(item.picklist_item_id)}>
+            View Label
+          </Button>
+        );
+      default:
+        return cellValue;
+    }
   };
 
   return (
@@ -249,17 +485,76 @@ const fetchOrderItems = async (order_id) => {
               </div>
             )}
 
-            <div className="mb-6 flex items-center gap-2">
+            {/* Search, Sort and Column Visibility Controls */}
+            <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
               <Input
                 size="md"
                 placeholder="Search items"
                 value={filterValue}
                 onChange={(e) => setFilterValue(e.target.value)}
-                endContent={
-                  <SearchIcon className="text-default-400" width={16} />
-                }
-                className="w-72"
+                endContent={<SearchIcon className="text-default-400" width={16} />}
+                className="w-full sm:w-72"
               />
+              
+              {/* Sort Dropdown */}
+              {/* Sort Dropdown */}
+<Dropdown>
+  <DropdownTrigger>
+    <Button 
+      variant="flat" 
+      startContent={<Icon icon="mdi:sort" width={16} />}
+      style={{ backgroundColor: '#f3f4f6', color: '#000' }}
+    >
+      Sort by {sortDescriptor.column} ({sortDescriptor.direction})
+    </Button>
+  </DropdownTrigger>
+  <DropdownMenu aria-label="Sort options">
+    {inventoryColumns
+      .filter(col => col.sortable)
+      .map(column => (
+        <DropdownItem 
+          key={column.uid} 
+          onPress={() => setSortDescriptor({ 
+            column: column.uid, 
+            direction: sortDescriptor.column === column.uid && 
+                     sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
+          })}
+        >
+          {column.name}
+          {column.uid === "material_type" && (
+            <span className="ml-2 text-gray-500 text-xs">
+              (Metal always before Plastic)
+            </span>
+          )}
+        </DropdownItem>
+      ))
+    }
+  </DropdownMenu>
+</Dropdown>
+              
+              {/* Column Visibility Dropdown */}
+              <Dropdown closeOnSelect={false}>
+                <DropdownTrigger>
+                  <Button 
+                    variant="flat" 
+                    startContent={<Icon icon="material-symbols:view-column" width={16} />}
+                    style={{ backgroundColor: '#f3f4f6', color: '#000' }}
+                  >
+                    Columns
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu 
+                  disallowEmptySelection
+                  aria-label="Column Visibility"
+                  selectedKeys={visibleColumns}
+                  selectionMode="multiple"
+                  onSelectionChange={setVisibleColumns}
+                >
+                  {inventoryColumns.map((column) => (
+                    <DropdownItem key={column.uid}>{column.name}</DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
 
               <Button
                 style={{
@@ -287,7 +582,9 @@ const fetchOrderItems = async (order_id) => {
 
             {loading ? (
               <div className="flex justify-center items-center h-64">
-                <div>Loading...</div>
+                <div>Loading...
+                  <Spinner size="lg" color="default" className="ms-5"/>
+                </div>
               </div>
             ) : (
               <div>
@@ -314,81 +611,25 @@ const fetchOrderItems = async (order_id) => {
                         topContentPlacement="outside"
                       >
                         <TableHeader className="shadow-xl">
-                          <TableColumn className="text-gray-800 font-bold text-base">Picklist Item ID</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Location</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Department</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">SKU Color</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Area</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Lineup #</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Model Type</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Material Type</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Required Quantity</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Picked Quantity</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Status</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Picked At</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Action</TableColumn>
-                          <TableColumn className="text-gray-800 font-bold text-base">Label</TableColumn>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedInventoryItems.map((item) => (
-                            <TableRow key={item.picklist_item_id}>
-                              <TableCell>{item.picklist_item_id}</TableCell>
-                              <TableCell>{item.location}</TableCell>
-                              <TableCell>
-                                {/* Display department data, converting null/undefined to 'N/A' */}
-                                {item.department !== null && item.department !== undefined ? item.department : 'N/A'}
-                              </TableCell>
-                              <TableCell>{item.sku_color}</TableCell>
-                              <TableCell>{item.area || 'N/A'}</TableCell>
-                              <TableCell>{item.lineup_nb || 'N/A'}</TableCell>
-                              <TableCell>{item.model_nb || 'N/A'}</TableCell>
-                              <TableCell>{item.material_type || 'N/A'}</TableCell>
-                              <TableCell>{item.quantity}</TableCell>
-                              <TableCell style={{width:"150px", paddingRight:"50px"}}>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  size="sm"
-                                  value={pickedQuantities[item.picklist_item_id] || ""}
-                                  onChange={(e) =>
-                                    handlePickedQuantityChange(item.picklist_item_id, e.target.value)
-                                  }
-                                  disabled={item.status} 
-                                />
-                              </TableCell>
-                              <TableCell>
-                                {item.status ? "Picked" : "To Pick"}
-                              </TableCell>
-                              <TableCell>
-                                {item.picked_at ? new Date(item.picked_at).toLocaleString() : 'Not picked yet'}
-                              </TableCell>
-                              <TableCell>
-                                {item.status ? (
-                                  <span>Picked</span>
-                                ) : (
-                                  <input
-                                    type="checkbox"
-                                    checked={pickedQuantities[item.picklist_item_id] === item.quantity}
-                                    onChange={() => openPickModal(item)}
-                                    style={{
-                                      cursor: "pointer", 
-                                    }}
-                                  />
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <Button 
-                                  style={{
-                                    backgroundColor: '#b91c1c',
-                                    color: 'white',
-                                  }}
-                                  size="sm"
-                                  onPress={() => handleLabelClick(item.picklist_item_id)}>
-                                  View Label
-                                </Button>
-                              </TableCell>
-                            </TableRow>
+                          {visibleTableColumns.map((column) => (
+                            <TableColumn 
+                              key={column.uid} 
+                              className="text-gray-800 font-bold text-base"
+                            >
+                              {column.name}
+                            </TableColumn>
                           ))}
+                        </TableHeader>
+                        <TableBody items={paginatedInventoryItems}>
+                          {(item) => (
+                            <TableRow key={item.picklist_item_id}>
+                              {visibleTableColumns.map((column) => (
+                                <TableCell key={`${item.picklist_item_id}-${column.uid}`}>
+                                  {renderCell(item, column.uid)}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          )}
                         </TableBody>
                       </Table>
 
@@ -481,7 +722,7 @@ const fetchOrderItems = async (order_id) => {
                   ) : paginatedManufacturingItems.length > 0 ? (
                     <>
                       <Table
-                        aria-label="Rows actions table example with dynamic content"
+                        aria-label="Manufacturing List Items"
                         removeWrapper
                         className="bg-gray-200 rounded-lg border-collapse"
                         css={{

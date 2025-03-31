@@ -342,7 +342,15 @@ const InventoryPickList = () => {
               {item.due_date}
             </div>
           ) : (
-            <span className="text-gray-400 italic">Not set</span>
+           
+            <Chip
+                  className="text-black-400 italic"
+                  color="default"
+                  size="sm"
+                  variant="flat"
+                >
+                  Not set
+                </Chip>
           );
           case "already_filled":
             return item.already_filled ? "Yes" : "No";
