@@ -160,17 +160,18 @@ const InventoryPickList = () => {
   }, [filteredRows, sortDescriptor]);
   
   // Apply pagination
-  const paginatedRows = useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
 
-    // If the filtered list has fewer pages, reset page number
-    if (start >= sortedFilteredRows.length) {
-      setPage(1); // Reset to first page if page number is out of range
-    }
+const paginatedRows = useMemo(() => {
+  const start = (page - 1) * rowsPerPage;
+  const end = start + rowsPerPage;
 
-    return sortedFilteredRows.slice(start, end);
-  }, [page, sortedFilteredRows]);
+  // If the filtered list has fewer pages, reset page number
+  if (start >= sortedFilteredRows.length) {
+    setPage(1); // Reset to first page if page number is out of range
+  }
+
+  return sortedFilteredRows.slice(start, end);
+}, [page, sortedFilteredRows]);
 
   // Calculate total pages
   const totalPages = Math.max(
