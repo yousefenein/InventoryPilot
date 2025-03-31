@@ -170,12 +170,14 @@ const InventoryPickList = () => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
 
-
     // If the filtered list has fewer pages, reset page number
     if (start >= sortedFilteredRows.length) {
-      setPage(1); // Reset to first page if page number is out of rang
+      setPage(1); // Reset to first page if page number is out of range
+      return sortedFilteredRows.slice(0, rowsPerPage);
+    }
+    
     return sortedFilteredRows.slice(start, end);
-  }, [page, sortedFilteredRows]);
+  }, [page, sortedFilteredRows, rowsPerPage]);
 
   // Calculate total pages
   const totalPages = Math.max(
@@ -261,7 +263,6 @@ const InventoryPickList = () => {
   };
 
   // Filter staff by staffSearchTerm
-
   const filteredStaffList = useMemo(() => {
     if (!staffSearchTerm.trim()) return staffList;
     const lower = staffSearchTerm.toLowerCase();
@@ -330,54 +331,51 @@ const InventoryPickList = () => {
             <CopyText text={item.order_id.toString()} />
           </div>
         );
-        case "due_date":
-          return item.due_date ? (
-            <div className="flex items-center gap-2">
-              <Icon
-                icon="solar:calendar-linear"
-                width={18}
-                className="text-gray-500"
-              />
-              {item.due_date}
-            </div>
-          ) : (
-           
+      case "due_date":
+        return item.due_date ? (
+          <div className="flex items-center gap-2">
+            <Icon
+              icon="solar:calendar-linear"
+              width={18}
+              className="text-gray-500"
+            />
+            {item.due_date}
+          </div>
+        ) : (
+          <Chip
+            className="text-black-400 italic"
+            color="default"
+            size="sm"
+            variant="flat"
+          >
+            Not set
+          </Chip>
+        );
+      case "already_filled":
+        return item.already_filled ? "Yes" : "No";
+      case "assigned_to":
+        return (
+          item.assigned_to ? (
             <Chip
-                  className="text-black-400 italic"
-                  color="default"
-                  size="sm"
-                  variant="flat"
-                >
-                  Not set
-                </Chip>
-          );
-          case "already_filled":
-            return item.already_filled ? "Yes" : "No";
-          case "assigned_to":
-            return (
-              item.assigned_to ? (
-                <Chip
-                  className="capitalize"
-                  color="success"
-                  size="sm"
-                  variant="flat"
-                >
-                  {item.assigned_to}
-                </Chip>
-              ) : (
-                <Chip
-                  className="capitalize"
-                  color="default"
-                  size="sm"
-                  variant="flat"
-                >
-                  Unassigned
-                </Chip>
-              )
-            );
-          case "actions":
-      
-      
+              className="capitalize"
+              color="success"
+              size="sm"
+              variant="flat"
+            >
+              {item.assigned_to}
+            </Chip>
+          ) : (
+            <Chip
+              className="capitalize"
+              color="default"
+              size="sm"
+              variant="flat"
+            >
+              Unassigned
+            </Chip>
+          )
+        );
+      case "actions":
         return (
           <>
             <Button
@@ -410,386 +408,223 @@ const InventoryPickList = () => {
 
   return (
     <div>
-    <div className="flex-1  bg-white dark:bg-gray-900 min-h-screen"> {/* Add min-h-screen and remove sm:ml-10 */}
-         <NavBar />
-         <div className="flex flex-col flex-1 p-8 overflow-auto bg-white dark:bg-gray-900"> {/* Remove mt-8 */}
-         <div className="flex flex-col flex-1">
-           <div className="flex flex-col">
-             <div className="flex flex-row justify-between items-center  "></div>
-        <h1 className="text-2xl font-bold mb-6 dark:text-white">Inventory Pick List</h1>
-        <h6 className="text-md font-bold dark:text-white">
-          Few examples to test the different cases of orders being picked
-        </h6>
-        <p className="dark:text-white">
-          Order have both inventory picklist and manufacturing list: 90171, 89851, 89672
-        </p>
-        <p className="dark:text-white">
-          Order have inventory picklist and no manufacturing list: 80555
-        </p>
-        <p className="dark:text-white">Order have none: 89345</p>
-        <br />
+      <div className="flex-1 bg-white dark:bg-gray-900 min-h-screen">
+        <NavBar />
+        <div className="flex flex-col flex-1 p-8 overflow-auto bg-white dark:bg-gray-900">
+          <div className="flex flex-col flex-1">
+            <div className="flex flex-col">
+              <div className="flex flex-row justify-between items-center"></div>
+              <h1 className="text-2xl font-bold mb-6 dark:text-white">Inventory Pick List</h1>
+              <h6 className="text-md font-bold dark:text-white">
+                Few examples to test the different cases of orders being picked
+              </h6>
+              <p className="dark:text-white">
+                Order have both inventory picklist and manufacturing list: 90171, 89851, 89672
+              </p>
+              <p className="dark:text-white">
+                Order have inventory picklist and no manufacturing list: 80555
+              </p>
+              <p className="dark:text-white">Order have none: 89345</p>
+              <br />
  
-          
-      {/* Search, Sort and Column Visibility Controls */}
-      <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
-        <Input
-          size="md"
-          placeholder="Search by order ID, due date, or assignment"
-          value={filterValue}
-          onChange={(e) => setFilterValue(e.target.value)}
-          endContent={<SearchIcon className="text-default-400" width={16} />}
-          className="w-full sm:w-72"
-        />
-        
-        {/* Sort Dropdown */}
-        <Dropdown>
-          <DropdownTrigger>
-            <Button 
-              variant="flat" 
-              startContent={<Icon icon="mdi:sort" width={16} />}
-              style={{ backgroundColor: '#f3f4f6', color: '#000' }}
-            >
-              Sort by {sortDescriptor.column} ({sortDescriptor.direction})
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu aria-label="Sort options">
-            <DropdownItem 
-              key="order_id" 
-              onPress={() => setSortDescriptor({ 
-                column: "order_id", 
-                direction: sortDescriptor.column === "order_id" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
-              })}
-            >
-              Order ID
-            </DropdownItem>
-            <DropdownItem 
-              key="due_date" 
-              onPress={() => setSortDescriptor({ 
-                column: "due_date", 
-                direction: sortDescriptor.column === "due_date" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
-              })}
-            >
-              Due Date
-            </DropdownItem>
-            
-          </DropdownMenu>
-        </Dropdown>
-        
-        {/* Column Visibility Dropdown */}
-        <Dropdown closeOnSelect={false}>
-          <DropdownTrigger>
-            <Button 
-              variant="flat" 
-              startContent={<Icon icon="material-symbols:view-column" width={16} />}
-              style={{ backgroundColor: '#f3f4f6', color: '#000' }}
-            >
-              Columns
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu 
-            disallowEmptySelection
-            aria-label="Column Visibility"
-            selectedKeys={visibleColumns}
-            selectionMode="multiple"
-            onSelectionChange={setVisibleColumns}
-          >
-            {columns.map((column) => (
-              <DropdownItem key={column.uid}>{column.name}</DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
-        
-        <Button
-          color="default"
-          variant="faded"
-          onPress={() => navigate("/orders")}
-        >
-          Go back
-        </Button>
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center items-center h-64 text-sm">
-          Loading...
-          <Spinner size="lg" color="default" className="ms-5"/>
-        </div>
-      ) : (
-        <>
-          <Table
-            aria-label="Inventory Pick List"
-            className="min-w-full shadow-lg"
-            isHeaderSticky
-            bottomContentPlacement="outside"
-            selectionMode="multiple"
-            classNames={{
-              td: "before:bg-transparent",
-            }}
-            topContentPlacement="outside"
-            sortDescriptor={sortDescriptor}
-            onSortChange={setSortDescriptor}
-          >
-            <TableHeader className="shadow-xl">
-              {visibleTableColumns.map((column) => (
-                <TableColumn 
-                  key={column.uid} 
-                  className="text-gray-800 font-bold text-lg"
-                  allowsSorting={column.sortable}
+              {/* Search, Sort and Column Visibility Controls */}
+              <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full">
+                <Input
+                  size="md"
+                  placeholder="Search by order ID, due date, or assignment"
+                  value={filterValue}
+                  onChange={(e) => setFilterValue(e.target.value)}
+                  endContent={<SearchIcon className="text-default-400" width={16} />}
+                  className="w-full sm:w-72"
+                />
+                
+                {/* Sort Dropdown */}
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button 
+                      variant="flat" 
+                      startContent={<Icon icon="mdi:sort" width={16} />}
+                      style={{ backgroundColor: '#f3f4f6', color: '#000' }}
+                    >
+                      Sort by {sortDescriptor.column} ({sortDescriptor.direction})
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu aria-label="Sort options">
+                    <DropdownItem 
+                      key="order_id" 
+                      onPress={() => setSortDescriptor({ 
+                        column: "order_id", 
+                        direction: sortDescriptor.column === "order_id" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
+                      })}
+                    >
+                      Order ID
+                    </DropdownItem>
+                    <DropdownItem 
+                      key="due_date" 
+                      onPress={() => setSortDescriptor({ 
+                        column: "due_date", 
+                        direction: sortDescriptor.column === "due_date" && sortDescriptor.direction === "ascending" ? "descending" : "ascending" 
+                      })}
+                    >
+                      Due Date
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
+                
+                {/* Column Visibility Dropdown */}
+                <Dropdown closeOnSelect={false}>
+                  <DropdownTrigger>
+                    <Button 
+                      variant="flat" 
+                      startContent={<Icon icon="material-symbols:view-column" width={16} />}
+                      style={{ backgroundColor: '#f3f4f6', color: '#000' }}
+                    >
+                      Columns
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu 
+                    disallowEmptySelection
+                    aria-label="Column Visibility"
+                    selectedKeys={visibleColumns}
+                    selectionMode="multiple"
+                    onSelectionChange={setVisibleColumns}
+                  >
+                    {columns.map((column) => (
+                      <DropdownItem key={column.uid}>{column.name}</DropdownItem>
+                    ))}
+                  </DropdownMenu>
+                </Dropdown>
+                
+                <Button
+                  color="default"
+                  variant="faded"
+                  onPress={() => navigate("/orders")}
                 >
-                  {column.name}
-                </TableColumn>
-              ))}
-            </TableHeader>
+                  Go back
+                </Button>
+              </div>
 
-            <TableBody items={paginatedRows}>
-              {(item) => (
-                <TableRow key={item.id}>
-                  {visibleTableColumns.map((column) => (
-                    <TableCell key={`${item.id}-${column.uid}`}>
-                      {renderCell(item, column.uid)}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-          <div className="flex justify-between items-center mt-4">
-            <span>
-              Page {page} of {totalPages}
-            </span>
-            <Pagination
-              total={totalPages}
-              initialPage={1}
-              current={page}
-              onChange={(newPage) => setPage(newPage)}
-              color="default"
-              classNames={{
-                item: "bg-white text-black",
-                cursor: "bg-black text-white",
-              }}
-            />
-          </div>
-        </>
-      )}
-      
-      {/* Staff Assignment Modal */}
-      <Modal isOpen={assignModalOpen} onClose={handleCloseModal} isDismissable={false}>
-        <ModalContent>
-          <div className="p-4">
-            <h2 className="text-xl font-semibold mb-4">Assign Staff</h2>
-
-            {/* Search bar for staff */}
-            <Input
-              size="md"
-              placeholder="Search staff"
-              value={staffSearchTerm}
-              onChange={(e) => setStaffSearchTerm(e.target.value)}
-              className="mb-3"
-            />
-=======
-        {/* Error message */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 dark:bg-red-800 dark:border-red-600 dark:text-red-100">
-            {error}
-          </div>
-        )}
-
-        {/* Search Input */}
-        <div className="mb-6 flex items-center gap-2">
-          <Input
-            size="md"
-            placeholder="Search orders"
-            value={filterValue}
-            onChange={(e) => setFilterValue(e.target.value)}
-            endContent={<SearchIcon className="text-default-400" width={16} />}
-            className="w-72 bg-white dark:bg-transparent dark:text-white"
-          />
-         <Button
-  color="default"
-  variant="faded"
-  onPress={() => navigate("/orders")}
-  className="dark:bg-transparent dark:text-white dark:border-transparent"
->
-  Go back
-</Button>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center h-64 text-sm dark:text-white">
-            Loading...
-            <Spinner size="lg" color="default" className="ms-5" />
-          </div>
-        ) : (
-          <>
-           <Table
-  aria-label="Inventory Pick List"
-  className="min-w-full shadow-lg dark:bg-transparent"
-  isHeaderSticky
-  bottomContentPlacement="outside"
-  selectionMode="multiple"
-  classNames={{
-    wrapper: "dark:bg-gray-800",
-    th: "dark:bg-gray-700 dark:text-white",
-    tr: "dark:hover:bg-gray-700",
-    td: "dark:text-white dark:before:bg-transparent"
-  }}
-  topContentPlacement="outside"
->
-              <TableHeader>
-                <TableColumn className="text-gray-800 font-bold text-lg dark:text-white">
-                  Order ID
-                </TableColumn>
-                <TableColumn className="text-gray-800 font-bold text-lg dark:text-white">
-                  Due Date
-                </TableColumn>
-                <TableColumn className="text-gray-800 font-bold text-lg dark:text-white">
-                  Already Filled
-                </TableColumn>
-                <TableColumn className="text-gray-800 font-bold text-lg dark:text-white">
-                  Assigned To
-                </TableColumn>
-                <TableColumn className="text-gray-800 font-bold text-lg dark:text-white">
-                  Action
-                </TableColumn>
-              </TableHeader>
-
-              <TableBody items={paginatedRows}>
-                {(item) => (
-                  <TableRow key={item.id} className="bg-white dark:bg-transparent">
-                    <TableCell className="dark:text-white">
-                      {item.order_id}
-                      <CopyText text={item.order_id.toString()} />
-                    </TableCell>
-                    <TableCell className="flex items-center gap-2 dark:text-white">
-                      <Icon
-                        icon="solar:calendar-linear"
-                        width={18}
-                        className="text-gray-500 dark:text-gray-400"
-                      />
-                      {item.due_date}
-                    </TableCell>
-                    <TableCell className="dark:text-white">
-                      {item.already_filled ? "Yes" : "No"}
-                    </TableCell>
-                    <TableCell>
-                      {item.assigned_to ? (
-                        <Chip
-                          className="capitalize"
-                          color="success"
-                          size="sm"
-                          variant="flat"
+              {loading ? (
+                <div className="flex justify-center items-center h-64 text-sm">
+                  Loading...
+                  <Spinner size="lg" color="default" className="ms-5"/>
+                </div>
+              ) : (
+                <>
+                  <Table
+                    aria-label="Inventory Pick List"
+                    className="min-w-full shadow-lg"
+                    isHeaderSticky
+                    bottomContentPlacement="outside"
+                    selectionMode="multiple"
+                    classNames={{
+                      td: "before:bg-transparent",
+                    }}
+                    topContentPlacement="outside"
+                    sortDescriptor={sortDescriptor}
+                    onSortChange={setSortDescriptor}
+                  >
+                    <TableHeader className="shadow-xl">
+                      {visibleTableColumns.map((column) => (
+                        <TableColumn 
+                          key={column.uid} 
+                          className="text-gray-800 font-bold text-lg"
+                          allowsSorting={column.sortable}
                         >
-                          {item.assigned_to}
-                        </Chip>
-                      ) : (
-                        <Chip
-                          className="capitalize"
-                          color="default"
-                          size="sm"
-                          variant="flat"
-                        >
-                          Unassigned
-                        </Chip>
+                          {column.name}
+                        </TableColumn>
+                      ))}
+                    </TableHeader>
+
+                    <TableBody items={paginatedRows}>
+                      {(item) => (
+                        <TableRow key={item.id}>
+                          {visibleTableColumns.map((column) => (
+                            <TableCell key={`${item.id}-${column.uid}`}>
+                              {renderCell(item, column.uid)}
+                            </TableCell>
+                          ))}
+                        </TableRow>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        style={{ backgroundColor: "#b91c1c", color: "white" }}
-                        size="sm"
-                        onPress={() => handleViewOrderDetails(item.order_id)}
-                      >
-                        Pick Order
-                      </Button>
-                      <Button
-                        style={{ backgroundColor: "#b91c1c", color: "white" }}
-                        size="sm"
-                        onPress={() => handleOpenAssignModal(item.order_id)}
-                        className="ml-2"
-                      >
-                        Assign Staff
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                    </TableBody>
+                  </Table>
 
-
-            <div className="flex justify-between items-center mt-4 dark:text-white">
-              <span>
-                Page {page} of {totalPages}
-              </span>
-              <Pagination
-  total={totalPages}
-  initialPage={1}
-  current={page}
-  onChange={(newPage) => setPage(newPage)}
-  classNames={{
-    item: "bg-white text-black dark:bg-gray-700 dark:text-white",
-    cursor: "bg-black text-white dark:bg-blue-600 dark:text-white",
-  }}
-/>
+                  <div className="flex justify-between items-center mt-4">
+                    <span>
+                      Page {page} of {totalPages}
+                    </span>
+                    <Pagination
+                      total={totalPages}
+                      initialPage={1}
+                      current={page}
+                      onChange={(newPage) => setPage(newPage)}
+                      color="default"
+                      classNames={{
+                        item: "bg-white text-black",
+                        cursor: "bg-black text-white",
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+              
+              {/* Staff Assignment Modal */}
+              <Modal isOpen={assignModalOpen} onClose={handleCloseModal} isDismissable={false}>
+                <ModalContent className="dark:bg-gray-800">
+                  <div className="p-4">
+                    <h2 className="text-xl font-semibold mb-4 dark:text-white">Assign Staff</h2>
+                    <Input
+                      size="md"
+                      placeholder="Search staff"
+                      value={staffSearchTerm}
+                      onChange={(e) => setStaffSearchTerm(e.target.value)}
+                      className="mb-3 dark:bg-gray-700 dark:text-white"
+                    />
+                    <Select
+                      label="Assign Staff"
+                      placeholder="Select a staff member"
+                      value={selectedStaffId ? selectedStaffId.toString() : undefined}
+                      onChange={(newVal) => setSelectedStaffId(Number(newVal.target.value))}
+                      className="w-full dark:bg-gray-700 dark:text-white"
+                    >
+                      {filteredStaffList
+                        .filter((staff) => staff.role === "staff")
+                        .map((staff) => {
+                          const fullName = `${staff.first_name} ${staff.last_name}`;
+                          return (
+                            <SelectItem 
+                              key={staff.user_id} 
+                              value={staff.user_id}
+                              className="dark:hover:bg-gray-700"
+                            >
+                              {fullName}
+                            </SelectItem>
+                          );
+                        })}
+                    </Select>
+                    <div className="flex justify-end mt-6 gap-4">
+                      <Button 
+                        onPress={handleCloseModal} 
+                        color="default"
+                        className="dark:bg-gray-700 dark:text-white"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onPress={handleConfirmAssign} 
+                        style={{ backgroundColor: "#b91c1c", color: "white" }}
+                      >
+                        Confirm
+                      </Button>
+                    </div>
+                  </div>
+                </ModalContent>
+              </Modal>
             </div>
-          </>
-        )}
-
-        {/* Staff Assignment Modal */}
-        <Modal isOpen={assignModalOpen} onClose={handleCloseModal} isDismissable={false}>
-  <ModalContent className="dark:bg-gray-800">
-    <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4 dark:text-white">Assign Staff</h2>
-      <Input
-        size="md"
-        placeholder="Search staff"
-        value={staffSearchTerm}
-        onChange={(e) => setStaffSearchTerm(e.target.value)}
-        className="mb-3 dark:bg-gray-700 dark:text-white"
-      />
-      <Select
-        label="Assign Staff"
-        placeholder="Select a staff member"
-        value={selectedStaffId ? selectedStaffId.toString() : undefined}
-        onChange={(newVal) => setSelectedStaffId(Number(newVal.target.value))}
-        className="w-full dark:bg-gray-700 dark:text-white"
-      >
-        {filteredStaffList
-          .filter((staff) => staff.role === "staff")
-          .map((staff) => {
-            const fullName = `${staff.first_name} ${staff.last_name}`;
-            return (
-              <SelectItem 
-                key={staff.user_id} 
-                value={staff.user_id}
-                className="dark:hover:bg-gray-700"
-              >
-                {fullName}
-              </SelectItem>
-            );
-          })}
-      </Select>
-      <div className="flex justify-end mt-6 gap-4">
-        <Button 
-          onPress={handleCloseModal} 
-          color="default"
-          className="dark:bg-gray-700 dark:text-white"
-        >
-          Cancel
-        </Button>
-        <Button 
-          onPress={handleConfirmAssign} 
-          style={{ backgroundColor: "#b91c1c", color: "white" }}
-        >
-          Confirm
-        </Button>
+          </div>
+        </div>
       </div>
     </div>
-  </ModalContent>
-</Modal>
-      </div>
-      </div>
-      </div>
-</div>
-</div>
   );
 };
 
