@@ -76,6 +76,14 @@ return [
     icon: "heroicons-outline:cog",
     title: "Manufacturing Tasks",
   }] : [])
+
+,
+...(userRole === 'admin' || userRole === 'manager' ? [{
+  key: "InventoryPickingLogs",
+  href: "/inventory-picking-logs",
+  icon: "mdi:file-document-multiple-outline",
+  title: "Inventory Picking Logs",
+}] : [])
 ,
 {
   key: "account_management",
