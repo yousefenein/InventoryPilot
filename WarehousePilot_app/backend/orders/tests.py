@@ -7,18 +7,18 @@ This file includes:
 
 """
 
-
 from django.urls import reverse
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIClient
 from .models import Orders, OrderPart
-from inventory.models import Inventory
 from parts.models import Part
 from rest_framework import status
 from datetime import date  
-from inventory.models import  InventoryPicklist, InventoryPicklistItem
+from inventory.models import Inventory, InventoryPicklist, InventoryPicklistItem
 from auth_app.models import users
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from unittest.mock import patch
+from datetime import timedelta
+from django.utils import timezone
 
 # Create your tests here.
 class GenerateListsTests(APITestCase):
@@ -113,13 +113,6 @@ class GenerateListsTests(APITestCase):
         print('no manuList test case')
         print(response.data)
         pass   
-
-
-
-
-
-
-
 
 
 class InventoryPicklistItemsViewTest(APITestCase):
@@ -220,11 +213,6 @@ class InventoryPicklistItemsViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['error'], "No picklist found for the given order")
         print("test_get_inventory_picklist_items_no_picklist passed.")
-        
-        
-        
-
-
 
 
 class InventoryPicklistViewTest(APITestCase):
@@ -321,3 +309,131 @@ class InventoryPicklistViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         print("Passed: test_unauthenticated_access")
+
+
+class CycleTimePerOrderViewTests(APITestCase):
+    # setUp(): used to set up values shared between tests.
+    def setUp(self):
+        # Create a test user with test values
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )
+
+        # Create an API client instance
+        self.client = APIClient()
+
+        # Authenticate the user
+        refresh = RefreshToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+
+        # Backend URL for the InventoryPickingLogging endpoint
+        self.url = reverse('cycle_time_per_order') 
+
+    @patch('orders.models.Orders.objects.all')
+    @patch('inventory.models.InventoryPicklist.objects.all')
+    @patch('inventory.models.InventoryPicklistItem.objects.all')
+    # test_get_fully_completed_order(): Test the successful retrieval of cycle time data for a fully completed order
+    def test_get_fully_completed_order(self, mock_picklist_item, mock_picklist, mock_orders):
+        # Arrange: Mocking Orders, InventoryPicklist, and InventoryPicklistItem models
+        mock_orders.return_value.values.return_value.filter.return_value = [
+            {
+                'order_id': 1,
+                'start_timestamp': timezone.now() - timedelta(days=5),
+                'end_timestamp': timezone.now() - timedelta(days=3),
+                'ship_date': (timezone.now() - timedelta(days=1)).date()
+            }
+        ]
+        mock_picklist.return_value.values.return_value.filter.return_value.first.return_value = {
+            'picklist_complete_timestamp': timezone.now() - timedelta(days=4),
+            'picklist_id': 1,
+            'order_id': 1
+        }
+        mock_picklist_item.return_value.values.return_value.filter.return_value.order_by.return_value = [
+            {
+                'picked_at': timezone.now() - timedelta(days=4, hours=2), 
+                'picklist_id': 1
+            },
+            {
+                'picked_at': timezone.now() - timedelta(days=6, hours=2), 
+                'picklist_id': 1
+            }
+        ]
+
+        # Act: Make a GET request to CycleTimePerOrderView        
+        response = self.client.get(self.url)
+
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['order_id'], 1)
+        self.assertEqual(response.data[0]['pick_time'], 1)  
+        self.assertEqual(response.data[0]['pack_time'], 1)  
+        self.assertEqual(response.data[0]['ship_time'], 2)  
+        self.assertEqual(response.data[0]['cycle_time'], 4)  
+        self.assertEqual(response.data[0]['status'], 'Shipped')
+
+    @patch('orders.models.Orders.objects.all')
+    @patch('inventory.models.InventoryPicklist.objects')
+    # test_get_order_with_no_picklist(): Test the case when there are no picklists available for an order
+    def test_get_order_with_no_picklist(self, mock_picklist, mock_orders):        
+        # Arrange: Mocking Orders and InventoryPicklist models to simulate no picklist
+        mock_orders.return_value.values.return_value.filter.return_value = [
+            {
+                'order_id': 1,
+                'start_timestamp': timezone.now() - timedelta(days=5),
+                'end_timestamp': timezone.now() - timedelta(days=3),
+                'ship_date': (timezone.now() - timedelta(days=1)).date()
+            }
+        ]
+        mock_picklist.all.return_value.values.return_value.filter.return_value.first.side_effect = InventoryPicklist.DoesNotExist
+        
+        # Act: Make a GET request to CycleTimePerOrderView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    @patch('orders.models.Orders.objects')
+    @patch('inventory.models.InventoryPicklist.objects')
+    @patch('inventory.models.InventoryPicklistItem.objects')
+    # test_get_order_not_fully_picked(): Test the case when an order is not fully picked
+    def test_get_order_not_fully_picked(self, mock_picklist_item, mock_picklist, mock_orders):
+        # Arrange: Mocking Orders, InventoryPicklist, and InventoryPicklistItem models where not all items are picked
+        mock_orders.all.return_value.values.return_value.filter.return_value = [
+            {
+                'order_id': 1,
+                'start_timestamp': timezone.now() - timedelta(days=5)
+            }
+        ]
+        mock_picklist.all.return_value.values.return_value.filter.return_value.first.return_value = {
+            'picklist_complete_timestamp': None,
+            'picklist_id': 1,
+            'order_id': 1
+        }
+        mock_picklist_item.all.return_value.values.return_value.filter.return_value.order_by.return_value = [
+            {
+                'picked_at': timezone.now() - timedelta(days=4), 
+                'picklist_id': 1
+            },
+            {
+                'picked_at': None, 
+                'picklist_id': 1
+            }
+        ]
+        
+        # Act: Make a GET request to CycleTimePerOrderView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
