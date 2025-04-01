@@ -382,8 +382,8 @@ class InventoryPicklistItemsView(APIView):
             )
 
 class CycleTimePerOrderView(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #authentication_classes = [JWTAuthentication]
+    #permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -400,27 +400,25 @@ class CycleTimePerOrderView(APIView):
                 status = "N/A"
 
                 try:
-                    # Fetch the completion timestamps of picking, packing, and shipping for order of order_id
-                    picklist_completion = InventoryPicklist.objects.all().values('picklist_complete_timestamp', 'picklist_id').filter(order_id=id).first()
-                    pack_completion = order['end_timestamp']
-                    ship_completion = order['ship_date']
-
+                    # Fetch the completion timestamps of picking for order of order_id
+                    picklist_data = InventoryPicklist.objects.all().values('picklist_complete_timestamp', 'picklist_id').filter(order_id=id).first()
+                    
                     # If picklist_completion_timestamp is None, check if all items are picked to then set the value of it
                     try:
-                        if not picklist_completion['picklist_complete_timestamp']:
-                            timestamps = InventoryPicklistItem.objects.all().values('picked_at').filter(picklist_id=picklist_completion['picklist_id']).order_by('-picked_at')
+                        if picklist_data['picklist_complete_timestamp'] is None:
+                            timestamps = InventoryPicklistItem.objects.all().values('picked_at').filter(picklist_id=picklist_data['picklist_id']).order_by('-picked_at')
                             is_completely_picked = True
                             for timestamp in timestamps:
                                 if timestamp['picked_at'] is None:
-                                    picklist_completion['picklist_complete_timestamp'] = timestamp['picked_at']
+                                    picklist_data['picklist_complete_timestamp'] = timestamp['picked_at']
                                     is_completely_picked = False
                                     break
                             if is_completely_picked:
-                                picklist_completion['picklist_complete_timestamp'] = timestamps[0]['picked_at']
+                                picklist_data['picklist_complete_timestamp'] = timestamps[0]['picked_at']
                             else:
                                 continue
                     except Exception as e:
-                        logger.debug(f"The picklist for order %s appears to not be fully", id)
+                        logger.info(f"The picklist for order %s appears to not be fully picked", id)
                         continue
 
                     picking_duration = 0
@@ -428,20 +426,19 @@ class CycleTimePerOrderView(APIView):
                     shipping_duration = 0
 
                     # Skip orders that have not been fully picked
-                    if picklist_completion is None or picklist_completion['picklist_complete_timestamp'] is None:
+                    if picklist_data is None or picklist_data['picklist_complete_timestamp'] is None:
                         continue
 
                     # Check if picklist completion is within the past month and has been completed
-                    elif (picklist_completion['picklist_complete_timestamp'].date() > past_month and picklist_completion['picklist_complete_timestamp'].date() is not None): 
+                    elif (picklist_data['picklist_complete_timestamp'].date() > past_month and picklist_data['picklist_complete_timestamp'].date() is not None): 
                         # Calculate the picking duration
-                        picking_duration = abs((picklist_completion['picklist_complete_timestamp'].date() - order['start_timestamp'].date()).days)
+                        picking_duration = abs((picklist_data['picklist_complete_timestamp'].date() - order['start_timestamp'].date()).days)
                         # Update current order with picking time duration
                         current_order["pick_time"] = picking_duration
                         status = "Picked"
 
                     # Check if order hasn't been packed
                     if  order['end_timestamp'] is None:
-                        logger.debug("Order %s has not been packed", id)
                         # Update current order with packing and shipping duration, cycle time, and status
                         current_order["pack_time"] = 0
                         current_order["ship_time"] = 0
@@ -452,7 +449,7 @@ class CycleTimePerOrderView(APIView):
                         continue       
                     else:
                         # Calculate packing duration
-                        packing_duration = abs((order['end_timestamp'].date() - picklist_completion['picklist_complete_timestamp'].date()).days)
+                        packing_duration = abs((order['end_timestamp'].date() - picklist_data['picklist_complete_timestamp'].date()).days)
                         # Update current order with packing time duration
                         current_order["pack_time"] = packing_duration
                         status = "Packed"
@@ -477,8 +474,6 @@ class CycleTimePerOrderView(APIView):
                     # Update current order with cycle time and status
                     current_order["cycle_time"] = picking_duration + packing_duration + shipping_duration
                     current_order["status"] = status        
-
-                    logger.debug("Current order: %s", current_order) # Debugging: Log current order
 
                     # Add order to return list
                     orders.append(current_order)

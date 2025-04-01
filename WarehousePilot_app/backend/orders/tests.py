@@ -437,3 +437,156 @@ class CycleTimePerOrderViewTests(APITestCase):
         # Assert: Check response status and data
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
+
+    @patch('orders.models.Orders.objects')
+    @patch('inventory.models.InventoryPicklist.objects')
+    @patch('inventory.models.InventoryPicklistItem.objects')
+    # test_get_order_picked_but_not_packed(): Test the case when an order is picked but not packed
+    def test_get_order_picked_but_not_packed(self, mock_picklist_item, mock_picklist, mock_orders):        
+        # Arrange: Mocking Orders, InventoryPicklist, and InventoryPicklistItem models where order is picked but not packed
+        mock_orders.all.return_value.values.return_value.filter.return_value = [
+            {
+                'order_id': 1,
+                'start_timestamp': timezone.now() - timedelta(days=5),
+                'end_timestamp': None,
+                'ship_date': None
+            }
+        ]
+        mock_picklist.all.return_value.values.return_value.filter.return_value.first.return_value = {
+            'picklist_complete_timestamp': timezone.now() - timedelta(days=4),
+            'picklist_id': 1,
+            'order_id': 1,
+        }
+        mock_picklist_item.all.return_value.values.return_value.filter.return_value.order_by.return_value = [
+            {
+                'picked_at': timezone.now() - timedelta(days=4), 
+                'picklist_id': 1
+            },
+        ]
+        
+        # Act: Make a GET request to CycleTimePerOrderView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['order_id'], 1)
+        self.assertEqual(response.data[0]['pick_time'], 1)
+        self.assertEqual(response.data[0]['pack_time'], 0)
+        self.assertEqual(response.data[0]['ship_time'], 0)
+        self.assertEqual(response.data[0]['cycle_time'], 1)
+        self.assertEqual(response.data[0]['status'], 'Picked')
+
+    @patch('orders.models.Orders.objects')
+    @patch('inventory.models.InventoryPicklist.objects')
+    @patch('inventory.models.InventoryPicklistItem.objects')
+    # test_get_order_packed_but_not_shipped(): Test the case when an order is picked and packed but not shipped
+    def test_get_order_packed_but_not_shipped(self, mock_picklist_item, mock_picklist, mock_orders):
+        # Arrange: Mocking Orders, InventoryPicklist, and InventoryPicklistItem models where order is not shipped
+        mock_orders.all.return_value.values.return_value.filter.return_value = [
+            {
+                'order_id': 1,
+                'start_timestamp': timezone.now() - timedelta(days=5),
+                'end_timestamp': timezone.now() - timedelta(days=3),
+                'ship_date': None
+            }
+        ]
+        mock_picklist.all.return_value.values.return_value.filter.return_value.first.return_value = {
+            'picklist_complete_timestamp': timezone.now() - timedelta(days=4),
+            'picklist_id': 1,
+            'order_id': 1
+        }
+        mock_picklist_item.all.return_value.values.return_value.filter.return_value.order_by.return_value = [
+            {
+                'picked_at': timezone.now() - timedelta(days=4), 
+                'picklist_id': 1
+            }
+        ]
+        
+        # Act: Make a GET request to CycleTimePerOrderView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['order_id'], 1)
+        self.assertEqual(response.data[0]['pick_time'], 1)
+        self.assertEqual(response.data[0]['pack_time'], 1)
+        self.assertEqual(response.data[0]['ship_time'], 0)
+        self.assertEqual(response.data[0]['cycle_time'], 2)
+        self.assertEqual(response.data[0]['status'], 'Packed')
+
+    @patch('orders.models.Orders.objects')
+    @patch('inventory.models.InventoryPicklist.objects')
+    @patch('inventory.models.InventoryPicklistItem.objects')
+    # test_get_order_with_no_picklist_timestamp__fully_picked(): Test the case when an order's picklist completion timestamp not set but all items are picked
+    def test_get_order_with_no_picklist_timestamp__fully_picked(self, mock_picklist_item, mock_picklist, mock_orders):   
+        # Arrange: Mocking Orders, InventoryPicklist, and InventoryPicklistItem models where picklist timestamp is None but all items are picked
+        mock_orders.all.return_value.values.return_value.filter.return_value = [
+            {
+                'order_id': 1,
+                'start_timestamp': timezone.now() - timedelta(days=5),
+                'end_timestamp': timezone.now() - timedelta(days=3),
+                'ship_date': (timezone.now() - timedelta(days=1)).date()
+            }
+        ]
+        mock_picklist.all.return_value.values.return_value.filter.return_value.first.return_value = {
+            'picklist_complete_timestamp': None,
+            'picklist_id': 1,
+            'order_id': 1
+
+        }
+        mock_picklist_item.all.return_value.values.return_value.filter.return_value.order_by.return_value = [
+            {
+                'picked_at': timezone.now() - timedelta(days=4, hours=2)
+            },
+            {
+                'picked_at': timezone.now() - timedelta(days=4, hours=1)
+            }
+        ]
+        
+        # Act: Make a GET request to CycleTimePerOrderView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['order_id'], 1)
+        self.assertEqual(response.data[0]['status'], 'Shipped')
+
+    @patch('orders.models.Orders.objects')
+    @patch('inventory.models.InventoryPicklist.objects')
+    # test_get_order_past_month(): Test the case when an order is older than the past month
+    def test_get_order_past_month(self, mock_picklist, mock_orders):
+        # Arrange: Mocking Orders, InventoryPicklist, and InventoryPicklistItem models where order is older the past month       
+        mock_orders.all.return_value.values.return_value.filter.return_value = [
+            {
+                'order_id': 1,
+                'start_timestamp': timezone.now() - timedelta(days=35)
+            }
+        ]
+        mock_picklist.all.return_value.values.return_value.filter.return_value.first.return_value = {
+            'picklist_complete_timestamp': timezone.now() - timedelta(days=32),
+            'picklist_id': 1,
+            'order_id': 1
+        }
+        
+        # Act: Make a GET request to CycleTimePerOrderView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    @patch('orders.models.Orders.objects')
+    # test_no_orders_found(): Test the case when no orders are found
+    def test_no_orders_found(self, mock_orders):
+        # Arrange: Mocking Orders to return an empty list
+        mock_orders.all.return_value.values.return_value.filter.return_value = []
+        
+        # Act: Make a GET request to CycleTimePerOrderView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
