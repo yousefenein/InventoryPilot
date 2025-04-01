@@ -3,8 +3,8 @@
 This file includes:
 - Tests for generating manufacturing and inventory lists (`GenerateListsTests`).
 - Tests for retrieving inventory picklist items (`InventoryPicklistItemsViewTest`).
--Tests for retrieving inventory picklist ( A.K.A orders that have been started )
-
+- Tests for retrieving inventory picklist ( A.K.A orders that have been started )
+- Tests for cycle time per order (`CycleTimePerOrderViewTests`).
 """
 
 from django.urls import reverse
