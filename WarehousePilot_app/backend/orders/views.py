@@ -401,10 +401,25 @@ class CycleTimePerOrderView(APIView):
 
                 try:
                     # Fetch the completion timestamps of picking, packing, and shipping for order of order_id
-                    picklist_completion = InventoryPicklist.objects.all().values('picklist_complete_timestamp').filter(order_id=id).first()
+                    picklist_completion = InventoryPicklist.objects.all().values('picklist_complete_timestamp', 'picklist_id').filter(order_id=id).first()
                     pack_completion = Orders.objects.all().values('end_timestamp').filter(order_id=id).first()
                     ship_completion = Orders.objects.all().values('ship_date').filter(order_id=id).first()
-                    
+
+                    # If picklist_completion_timestamp is None, check if all items are picked to then set the value of it
+                    try:
+                        if not picklist_completion['picklist_complete_timestamp']:
+                            timestamps = InventoryPicklistItem.objects.all().values('picked_at').filter(picklist_id=picklist_completion['picklist_id']).order_by('-picked_at')
+                            is_completely_picked = True
+                            for timestamp in timestamps:
+                                if timestamp['picked_at'] is None:
+                                    picklist_completion['picklist_complete_timestamp'] = timestamp['picked_at']
+                                    is_completely_picked = False
+                                    break
+                            if is_completely_picked:
+                                picklist_completion['picklist_complete_timestamp'] = timestamps[0]['picked_at']
+                    except Exception as e:
+                        logger.debug(f"The picklist for order %s appears to not be fully", id)
+
                     picking_duration = 0
                     packing_duration = 0
                     shipping_duration = 0
