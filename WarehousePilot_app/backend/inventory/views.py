@@ -98,6 +98,29 @@ def add_inventory_item(request):
         #logger.error("Failed to add inventory item: %s (add_inventory_item)", str(e))
         return JsonResponse({"error": str(e)}, status=500)
 
+@csrf_exempt
+@require_POST
+def update_inventory_item(request):
+    try:
+        data = json.loads(request.body)
+        item_id = data.get("inventory_id")
+        if not item_id:
+            return JsonResponse({"error": "Inventory ID is required"}, status=400)
+
+        item = Inventory.objects.get(inventory_id=item_id)
+        item.warehouse_number = data.get("warehouse_number", item.warehouse_number)
+        item.sku_color_id = data.get("sku_color_id", item.sku_color_id)
+        item.location = data.get("location", item.location)
+        item.qty = data.get("qty", item.qty)
+        item.amount_needed = data.get("amount_needed", item.amount_needed)
+        item.save()
+
+        return JsonResponse({"message": "Item updated successfully"}, status=200)
+    except Inventory.DoesNotExist:
+        return JsonResponse({"error": "Item not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 def get_csrf_token(request):
     return JsonResponse({'csrfToken': get_token(request)})
 
