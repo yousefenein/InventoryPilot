@@ -15,4 +15,5 @@ urlpatterns = [
     path('assign_order/<int:order_id>', AssignOrderView.as_view(), name='assign_order'),
     path('assigned_inventory_picklist/', AssignedPicklistView.as_view(), name='assigned_inventory_picklist'),
     path('inventory_picklist_items/<int:picklist_item_id>/pick/', PickPicklistItemView.as_view(), name='pick_picklist_item'),
+    path('update_inventory_item', views.update_inventory_item, name='update_inventory_item'),
 ]

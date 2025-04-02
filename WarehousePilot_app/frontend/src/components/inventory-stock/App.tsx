@@ -44,7 +44,7 @@ import {ArrowUpIcon} from "./arrow-up";
 
 import {useMemoizedCallback} from "./use-memoized-callback";
 
-import {columns, INITIAL_VISIBLE_COLUMNS, fetchInventoryData, statusColorMap, deleteInventoryItems} from "./data";
+import {columns, INITIAL_VISIBLE_COLUMNS, fetchInventoryData, statusColorMap, deleteInventoryItems, editInventoryItem} from "./data";
 import NotifCard from "../notifications/notifications-card/App";
 import { AddItemForm } from "./add-item-form";
 import { ToastContainer, toast } from "react-toastify";
@@ -186,10 +186,31 @@ export default function InventoryTable() {
     setEditFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleEditSave = () => {
+  const handleEditSave = async () => {
     if (editingItem) {
-
-      setEditingItem(null);
+      try {
+        await editInventoryItem({
+          inventory_id: editingItem.inventory_id,
+          warehouse_number: editFormData.warehouse_number,
+          sku_color_id: editFormData.sku_color_id,
+          location: editFormData.location,
+          qty: parseInt(editFormData.qty, 10),
+          amount_needed: parseInt(editFormData.amount_needed, 10),
+        });
+        setInventory((prevInventory) =>
+          prevInventory.map((item) =>
+            item.inventory_id === editingItem.inventory_id
+              ? { ...item, ...editFormData, qty: parseInt(editFormData.qty, 10), amount_needed: parseInt(editFormData.amount_needed, 10) }
+              : item
+          )
+        );
+        toast.success("Item updated successfully!");
+      } catch (error) {
+        console.error("Failed to update inventory item", error);
+        toast.error("Failed to update item.");
+      } finally {
+        setEditingItem(null);
+      }
     }
   };
 
