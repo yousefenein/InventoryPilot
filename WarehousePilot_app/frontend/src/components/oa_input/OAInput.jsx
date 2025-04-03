@@ -71,8 +71,8 @@ const OAInput = () => {
   return (
     <div>
     <SideBar/>
-    <div className="flex flex-col items-center justify-center h-screen">
-    <Card className="max-w-[1000px] w-full h-[500px] flex flex-col justify-between">
+    <div className="flex flex-col items-center justify-center h-screen dark:bg-gray-900">
+    <Card className="max-w-[1000px] w-full h-[500px] flex flex-col justify-between dark:bg-gray-700">
       <CardHeader className="flex justify-center items-center">
         <p className="text-2xl font-bold text-center">Upload OA Report File</p>
       </CardHeader>
