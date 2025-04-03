@@ -38,8 +38,8 @@ const CycleTimeBarChart = ({ data }) => {
   const chartData = prepareChartData(data);
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm">
-      <h3 className="text-lg font-medium mb-4">Cycle Time Per Order</h3>
+    <div className="bg-white p-4 rounded-lg shadow-sm dark:bg-transparent">
+      <h3 className="text-lg font-medium mb-4 dark:text-white">Cycle Time Per Order</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart

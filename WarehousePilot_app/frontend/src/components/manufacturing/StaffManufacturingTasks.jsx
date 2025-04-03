@@ -15,11 +15,12 @@ import {
 import { SearchIcon } from "@heroui/shared-icons";
 import axios from "axios";
 import SideBar from "../dashboard_sidebar1/App";
+import NavBar from "../navbar/App";
 import Header from "../dashboard_sidebar/Header";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import NavBar from "../navbar/App";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 dayjs.extend(utc);
@@ -126,15 +127,15 @@ const StaffManufacturingTasks = () => {
   const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
 
   return (
-    <div style={{ marginTop: "-80px" }}>
-        <NavBar />
+    
+    <div  className="fixed inset-0 bg-white dark:bg-gray-900 overflow-auto">    
+    <NavBar />
         <SideBar /> {/* Add the SideBar component here */}
         <div className="flex-1 p-6 mt-8" style={{ padding: "40px" }}>
-
       <div className="flex-1">
-        <div className="mt-4 p-8">
+      <div className="mt-4 p-8">
           <div className="flex flex-col gap-6">
-            <h1 className="text-2xl font-bold mb-6">Manufacturing Tasks</h1>
+            <h1 className="text-2xl font-bold mb-6 dark:text-white">Manufacturing Tasks</h1>
 
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -159,7 +160,14 @@ const StaffManufacturingTasks = () => {
               </div>
             ) : (
               <>
-                <Table aria-label="Manufacturing tasks" className="min-w-full">
+                <Table aria-label="Manufacturing tasks" className="min-w-full"
+                 classNames={{
+                  wrapper: "dark:bg-gray-800 ",
+                  th: "dark:bg-gray-700 dark:text-white text-center",
+                  tr: "dark:hover:bg-gray-700",
+                  td: "dark:text-white dark:before:bg-transparent text-center"
+                }}
+                >
                   <TableHeader>
                     <TableColumn>Manu_id</TableColumn>
                     <TableColumn>qty</TableColumn>
@@ -223,9 +231,9 @@ const StaffManufacturingTasks = () => {
               </>
             )}
           </div>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 };
