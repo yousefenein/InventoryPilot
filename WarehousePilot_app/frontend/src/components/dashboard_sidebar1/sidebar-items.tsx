@@ -15,6 +15,14 @@ return [
     icon: "solar:home-2-linear",
     title: "Dashboard",
 },
+...(userRole === 'admin' ? [
+{
+  key: "OA Report Input",
+  href: "/oa_input",
+  icon: "solar:file-text-outline",
+  title: "OA Report Input",
+},]:[])
+,
   ...(userRole === 'admin' || userRole === 'manager' ? 
   [{
     key: "kpi",
@@ -76,6 +84,14 @@ return [
     icon: "heroicons-outline:cog",
     title: "Manufacturing Tasks",
   }] : [])
+
+,
+...(userRole === 'admin' || userRole === 'manager' ? [{
+  key: "InventoryPickingLogs",
+  href: "/inventory-picking-logs",
+  icon: "mdi:file-document-multiple-outline",
+  title: "Inventory Picking Logs",
+}] : [])
 ,
 {
   key: "account_management",
