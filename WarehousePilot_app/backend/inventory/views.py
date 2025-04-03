@@ -238,10 +238,13 @@ class PickPicklistItemView(APIView):
              #logger.error("Unauthorized user - only staff users can access picklist picking")
             return Response({"error": "Not allowed. You need login as a staff "}, status=403)
 
+        manually_picked = request.data.get("manually_picked", False)  
+
         # Only set picked_at if it's not already picked
         if not item.status:
             item.status = True
             item.picked_at = timezone.now()  # <-- set the pick time
+            item.manually_picked = manually_picked  
             item.save()
             #logger.info("Item %s has been successfully picked", picklist_item_id)
 

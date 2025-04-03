@@ -55,6 +55,52 @@ const InventoryPicklistItem = () => {
   const [inventoryError, setInventoryError] = useState(null);
   const [manufacturingError, setManufacturingError] = useState(null);
 
+  const [scannedSku, setScannedSku] = useState(""); // Add state for scanned SKU
+  const [skuError, setSkuError] = useState(null); // Add state for SKU error
+
+  const [manualPickModalOpen, setManualPickModalOpen] = useState(false); // State for manual pick modal
+
+  const openManualPickModal = () => {
+    setManualPickModalOpen(true);
+  };
+
+  const closeManualPickModal = () => {
+    setManualPickModalOpen(false);
+  };
+
+  const handleManualPickConfirm = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No authorization token found");
+        return;
+      }
+  
+      await axios.patch(
+        `${API_BASE_URL}/inventory/inventory_picklist_items/${selectedItem.picklist_item_id}/pick/`,
+        { manually_picked: true }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      setInventoryItems((prev) =>
+        prev.map((it) =>
+          it.picklist_item_id === selectedItem.picklist_item_id
+            ? { ...it, status: true, manually_picked: true }
+            : it
+        )
+      );
+      closeManualPickModal();
+    } catch (err) {
+      console.error("Error confirming manual pick:", err.response?.data || err.message);
+      setError("Failed to confirm manual pick.");
+    }
+  };
+
   // Fetch both inventory and manufacturing items for the given order
   const fetchOrderItems = async (order_id) => {
     try {
@@ -215,6 +261,15 @@ const InventoryPicklistItem = () => {
   
   };
 
+  const handleSkuScan = () => {
+    if (scannedSku.trim() === selectedItem.sku_color) {
+      setSkuError(null);
+      handleConfirmPick();
+    } else {
+      setSkuError("Scanned SKU does not match the requested item. Please try again.");
+    }
+  };
+
   // Apply pagination for inventory items
   const paginatedInventoryItems = useMemo(() => {
     const start = (inventoryPage - 1) * rowsPerPage;
@@ -239,10 +294,10 @@ const InventoryPicklistItem = () => {
       <SideBar isOpen={isSidebarOpen} />
        
            
-        <div className="flex-1 sm:ml-10 sm:mt-2">
+        <div className="flex-1" style={{ width: "-webkit-fill-available" }}>
           <NavBar />
 
-      <div className="flex-1 sm:ml-8">
+      <div className="flex-1" style={{ width: "auto" }}>
         <div className="mt-16 p-8">
           <h1 className="text-2xl font-bold mb-6">Order {order_id} Details</h1>
 
@@ -371,7 +426,16 @@ const InventoryPicklistItem = () => {
                                 />
                             </TableCell>
                             <TableCell>
-                              {item.status ? "Picked" : "To Pick"}
+                              {item.status ? (
+                                <>
+                                  Picked
+                                  {item.manually_picked && (
+                                    <span className="ml-2 text-red-500 font-semibold">(Manual)</span>
+                                  )}
+                                </>
+                              ) : (
+                                "To Pick"
+                              )}
                             </TableCell>
                             <TableCell>
                               {item.picked_at ? new Date(item.picked_at).toLocaleString() : 'Not picked yet'}
@@ -439,8 +503,67 @@ const InventoryPicklistItem = () => {
                           Pick Item Confirmation
                         </h2>
                         <p>
-                          Do you want to pick this{" "}
-                          <b>{selectedItem.sku_color}</b> item?
+                          Please scan the SKU for the <b>{selectedItem.sku_color}</b> item to confirm.
+                        </p>
+                        {selectedItem.area && (
+                          <p className="mt-2">
+                            <b>Area:</b> {selectedItem.area}
+                          </p>
+                        )}
+                        {selectedItem.lineup_nb && (
+                          <p>
+                            <b>Lineup:</b> {selectedItem.lineup_nb}
+                          </p>
+                        )}
+                        {selectedItem.model_nb && (
+                          <p>
+                            <b>Model:</b> {selectedItem.model_nb}
+                          </p>
+                        )}
+                        {selectedItem.material_type && (
+                          <p>
+                            <b>Material:</b> {selectedItem.material_type}
+                          </p>
+                        )}
+
+                        <div className="mt-4">
+                          <Input
+                            type="text"
+                            placeholder="Scan SKU here"
+                            value={scannedSku}
+                            onChange={(e) => setScannedSku(e.target.value)}
+                            size="md"
+                          />
+                          {skuError && (
+                            <p className="text-red-600 mt-2">{skuError}</p>
+                          )}
+                        </div>
+
+                        <div className="flex justify-end mt-6 gap-4">
+                          <Button onPress={closePickModal} color="default">
+                            Cancel
+                          </Button>
+                          <Button onPress={handleSkuScan} color="primary">
+                            Confirm Pick
+                          </Button>
+                          <Button onPress={openManualPickModal} color="warning">
+                            Manual Pick
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </ModalContent>
+              </Modal>
+
+              <Modal isOpen={manualPickModalOpen} onClose={closeManualPickModal}>
+                <ModalContent>
+                  <div className="p-4">
+                    {selectedItem && (
+                      <>
+                        <h2 className="text-xl font-semibold mb-4">Manual Pick Confirmation</h2>
+                        <p>
+                          Do you want to manually pick this <b>{selectedItem.sku_color}</b> item?
                         </p>
                         {selectedItem.area && (
                           <p className="mt-2">
@@ -464,10 +587,10 @@ const InventoryPicklistItem = () => {
                         )}
 
                         <div className="flex justify-end mt-6 gap-4">
-                          <Button onPress={closePickModal} color="default">
+                          <Button onPress={closeManualPickModal} color="default">
                             Cancel
                           </Button>
-                          <Button onPress={handleConfirmPick} color="primary">
+                          <Button onPress={handleManualPickConfirm} color="primary">
                             Yes, Pick
                           </Button>
                         </div>
