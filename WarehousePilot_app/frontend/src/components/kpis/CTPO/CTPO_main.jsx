@@ -23,6 +23,7 @@ import { Icon } from "@iconify/react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import SideBar from "../../dashboard_sidebar1/App";
+import NavBar from "../../navbar/App";
 import ProgressBar from "./progressbar";
 import DelayedOrdersNotifCard from "./DelayedOrderAlerts/App"
 
@@ -36,6 +37,7 @@ const CTPO = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const rowsPerPage = 8;
 
@@ -114,6 +116,8 @@ const CTPO = () => {
     fetchOrders();
   }, []);
 
+
+
   const handleViewOrderDetails = (order_id) => {
     navigate(`/manufacturing_list_item/${order_id}`);
   };
@@ -125,15 +129,31 @@ const CTPO = () => {
 
   const CTPO_COLUMNS = ["Order ID", "Status", "Cycle Time"];
 
+  const COLORS = isDarkMode ? ["#8884d8", "#ff4444"] : ["#8B0000", "#A52A2A"];
+
+  const handleViewDetails = () => {
+    navigate('/kpi');
+  };
   return (
     <div className="h-full w-full">
       <div className="w-screen flex-1">
 
         <SideBar />
-        <main className="flex p-6 h-screen w-screen">
-          <div className="mt-2 p-8 w-screen">
+        {/* Navbar */}
+        <NavBar />
+        
+        <main className="flex p-4 h-screen w-screen">
+          <div className="mt-2 p-6 w-screen">
+          <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold mb-6">Cycle Time Per Order Statistics</h1>
-
+            <button
+            className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600'} text-white py-1 px-3 rounded`}
+            onClick={handleViewDetails}
+          >
+            Back to KPI Overview
+          </button>
+          </div>
+          
             {/* Error message */}
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
@@ -219,6 +239,7 @@ const CTPO = () => {
             )}
           </div>
         </main>
+        
       </div>
     </div>
   );
