@@ -3,7 +3,7 @@ from django.urls import path
 from . import views
 from .views import InventoryView
 from auth_app.views import ProfileView
-from inventory.views import AssignOrderView, AssignedPicklistView, PickPicklistItemView
+from inventory.views import AssignOrderView, AssignedPicklistView, PickPicklistItemView, RepickPicklistItemView
 
 urlpatterns = [
     path("", views.get_inventory, name="get_inventory"),
@@ -16,4 +16,5 @@ urlpatterns = [
     path('assigned_inventory_picklist/', AssignedPicklistView.as_view(), name='assigned_inventory_picklist'),
     path('inventory_picklist_items/<int:picklist_item_id>/pick/', PickPicklistItemView.as_view(), name='pick_picklist_item'),
     path('update_inventory_item', views.update_inventory_item, name='update_inventory_item'),
+    path('inventory_picklist_items/<int:picklist_item_id>/repick/', RepickPicklistItemView.as_view(), name='repick-picklist-item'),
 ]
