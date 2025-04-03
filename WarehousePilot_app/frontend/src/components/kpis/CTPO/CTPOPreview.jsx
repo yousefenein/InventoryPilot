@@ -122,7 +122,7 @@ const CTPOPreview = () => {
         <h2 className="text-xl font-semibold">Cycle Time Per Order</h2>
         <button
           onClick={handleDetailsClick}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-gray-500 hover:bg-red-600 text-white py-1 px-3 rounded"
         >
           View Details
         </button>
@@ -136,7 +136,7 @@ const CTPOPreview = () => {
             onClick={() => handleRangeClick(label)}
             className={`px-4 py-2 rounded ${
               range === label
-                ? "bg-blue-500 text-white"
+                ? "bg-red-600 dark:bg-red-700 text-white"
                 : "bg-gray-200 text-gray-700"
             }`}
           >

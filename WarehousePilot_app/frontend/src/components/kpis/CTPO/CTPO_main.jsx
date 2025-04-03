@@ -141,19 +141,19 @@ const CTPO = () => {
         <SideBar />
         {/* Navbar */}
         <NavBar />
-        
+
         <main className="flex p-4 h-screen w-screen">
           <div className="mt-2 p-6 w-screen">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold mb-6">Cycle Time Per Order Statistics</h1>
-            <button
-            className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600'} text-white py-1 px-3 rounded`}
-            onClick={handleViewDetails}
-          >
-            Back to KPI Overview
-          </button>
-          </div>
-          
+            <div className="flex justify-between items-center mb-4">
+              <h1 className="text-2xl font-bold mb-6">Cycle Time Per Order Statistics</h1>
+              <button
+                className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600'} text-white py-1 px-3 rounded`}
+                onClick={handleViewDetails}
+              >
+                Back to KPI Overview
+              </button>
+            </div>
+
             {/* Error message */}
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
@@ -224,22 +224,28 @@ const CTPO = () => {
                   </TableBody>
                 </Table>
 
+                {/* Pagination*/}
                 <div className="flex justify-between items-center mt-4">
-                  <span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
                     Page {page} of {totalPages}
                   </span>
                   <Pagination
                     total={totalPages}
                     initialPage={1}
                     current={page}
-                    onChange={(newPage) => setPage(newPage)}
+                    onChange={(newPage) => { setPage(newPage) }}
+                    className="text-gray-600 dark:text-gray-400"
+                    classNames={{
+                      item: "dark:bg-gray-700 dark:text-white",
+                      cursor: "bg-black text-white dark:bg-black dark:text-white"
+                    }}
                   />
                 </div>
               </>
             )}
           </div>
         </main>
-        
+
       </div>
     </div>
   );

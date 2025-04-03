@@ -95,7 +95,7 @@ const OrderFulfillmentPreview = () => {
         </h2>
         <button
           onClick={handleDetailsClick}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+          className="bg-gray-500 hover:bg-red-600 text-white py-1 px-3 rounded"
         >
           View Details
         </button>
@@ -109,7 +109,7 @@ const OrderFulfillmentPreview = () => {
             onClick={() => handleRangeClick(label)}
             className={`px-4 py-2 rounded transition-colors ${
               range === label
-                ? "bg-blue-500 text-white"
+                ? "bg-red-600 dark:bg-red-700 text-white"
                 : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
             }`}
           >
