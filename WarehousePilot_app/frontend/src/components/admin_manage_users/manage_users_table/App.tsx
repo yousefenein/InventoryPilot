@@ -492,7 +492,7 @@ export default function ManageUsersTable() {
 
   const topBar = useMemo(() => {
     return (
-      <div className="mb-[18px] flex items-center justify-between dark:text-white" style={{ marginTop: '40px' }}>
+      <div className="flex items-center justify-between dark:text-white" style={{ marginTop: '40px' }}>
         <div className="flex w-[226px] items-center gap-2">
           <h1 className="text-2xl font-[700] leading-[32px] dark:text-white">Staff</h1>
           <Chip className="hidden items-center text-default-500 dark:text-gray-300 sm:flex" size="sm" variant="flat">
@@ -555,10 +555,11 @@ export default function ManageUsersTable() {
   }, [filterSelectedKeys, page, pages, filteredItems.length, onPreviousPage, onNextPage]);
 
   return (
-    <div className="dark:bg-gray-900 min-h-screen" style={{ marginTop: "-80px" }}> 
-      <NavBar />
+    <div className="flex flex-col min-h-screen dark:bg-gray-900">
+    <NavBar />
+    <div className="flex flex-1">
       <SideBar />
-      <div className="flex-1 p-6 dark:bg-gray-900" style={{ padding: '40px' }}>
+      <div className="flex-1 p-10 overflow-auto">
         {topBar}
         <Table
           isHeaderSticky
@@ -566,7 +567,7 @@ export default function ManageUsersTable() {
           bottomContent={bottomContent}
           bottomContentPlacement="outside"
           classNames={{
-            wrapper: "dark:bg-gray-800",
+            wrapper: "dark:bg-gray-800 max-h-[calc(100vh-180px)]", // Added max-height
             th: "dark:bg-gray-800 dark:text-white",
             tr: "dark:bg-gray-800 dark:hover:bg-gray-700",
             td: "before:bg-transparent dark:text-white",
@@ -617,6 +618,7 @@ export default function ManageUsersTable() {
         </TableBody>
       </Table>
       <ToastContainer />
+    </div>
     </div>
     </div>
   );

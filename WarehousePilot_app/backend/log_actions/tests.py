@@ -44,7 +44,7 @@ class InventoryPickingLoggingTests(TestCase):
     def test_get_inventory_picking_logging_success(self, mock_inventory, mock_picklist_item, mock_picklist):
         # Arrange: Mocking InventoryPicklist, InventoryPicklistItem, and Inventory models
         mock_picklist.return_value.values.return_value.filter.return_value.order_by.return_value = [
-            {'picklist_id': 1, 'warehouse_nb': '499', 'assigned_employee_id': 123}
+            {'picklist_id': 1, 'warehouse_nb': '499', 'order_id': 5, 'assigned_employee_id': 123}
         ]
         mock_picklist_item.return_value.filter.return_value.values.return_value = [
             {'picklist_id': 1, 'picked_at': timezone.now(), 'location': 'A1', 'sku_color': 'red', 'amount': 10}
@@ -96,7 +96,7 @@ class InventoryPickingLoggingTests(TestCase):
     def test_get_inventory_picking_logging_missing_data(self, mock_inventory, mock_picklist_item, mock_picklist):
         # Arrange: Mocking InventoryPicklist with missing warehouse_nb, InventoryPicklistItem with missing location, and Inventory models
         mock_picklist.return_value.values.return_value.filter.return_value.order_by.return_value = [
-            {'picklist_id': 1, 'warehouse_nb': None, 'assigned_employee_id': 123}
+            {'picklist_id': 1, 'warehouse_nb': None, 'order_id': 5, 'assigned_employee_id': 123}
         ]
         mock_picklist_item.return_value.filter.return_value.values.return_value = [
             {'picklist_id': 1, 'picked_at': timezone.now(), 'location': None, 'sku_color': 'red', 'amount': 10}

@@ -22,6 +22,7 @@ from django.db.models import Sum
 from django.db.models import Q
 from django.db.models import F
 from rest_framework import status
+from collections import defaultdict
 
 from django.http import JsonResponse
 from django.db import connection
@@ -33,6 +34,7 @@ from django.shortcuts import get_object_or_404
 from datetime import datetime
 
 import logging
+from collections import defaultdict
 
 logger = logging.getLogger('WarehousePilot_app')
 
@@ -76,13 +78,14 @@ class GenerateInventoryAndManufacturingListsView(APIView):
             inventoryPicklistItems = []
             manuListItems = []
             for s in inventorySkus: #loop through the unique matching inventory sku set
+                part_obj = Part.objects.get(sku_color=s)
                 # find the total of the quantity of each unique sku in inventory, aggregating all the inventory objects with the same sku together
-                totalInventoryQty = Inventory.objects.filter(sku_color=Part.objects.get(sku_color=s)).aggregate(total=Sum('qty'))['total']
+                totalInventoryQty = Inventory.objects.filter(sku_color=part_obj).aggregate(total=Sum('qty'))['total']                
                 logger.debug(f"total inventory qty: {totalInventoryQty}")
                 ##orderQty = OrderPart.objects.get(order_id=order, sku_color=s).__getattribute__("qty")
-                orderQty = OrderPart.objects.filter(order_id=order, sku_color=s).aggregate(total=Sum('qty'))['total']
+                orderQty = OrderPart.objects.filter(order_id=order, sku_color=part_obj).aggregate(total=Sum('qty'))['total']                
                 logger.debug(f"total order qty: {orderQty}")
-
+                order_part_details = OrderPart.objects.filter(order_id=order, sku_color=part_obj).first()
                 #if inventory amount exceeds needed amount, only the needed amount will be chosen, and if needed amount exceeds available amount, only the available amount is chosen
                 manuListItemQty = 0
                 if orderQty <= totalInventoryQty:
@@ -94,27 +97,47 @@ class GenerateInventoryAndManufacturingListsView(APIView):
                     #create a manufacturing list item with the remaining amount needed for the order
                     manuListItemQty = orderQty - picklistQty
                     logger.debug(f"manuList qty: {manuListItemQty}")
-                    manuListItems.append(ManufacturingListItem(manufacturing_list_id=manufacturingList, sku_color=Part.objects.get(sku_color=s), amount=manuListItemQty))
-                    for x in Inventory.objects.filter(sku_color=s):
+                    manuListItems.append(ManufacturingListItem(manufacturing_list_id=manufacturingList, sku_color=part_obj, amount=manuListItemQty))
+                    for x in Inventory.objects.filter(sku_color=part_obj):
                         x.amount_needed=manuListItemQty
                         x.save()
                 
                 #add the picklist item with the appropriate amount to the list of inventory picklist items
-                matchingInventoryItems = Inventory.objects.filter(sku_color=Part.objects.get(sku_color=s)).order_by('qty')
+                matchingInventoryItems = Inventory.objects.filter(sku_color=part_obj).order_by('qty')
                 index = 0
                 while picklistQty > 0 and index < matchingInventoryItems.count():
                     inventoryLocationQty = matchingInventoryItems[index].qty
-                    if picklistQty <= inventoryLocationQty:
-                        inventoryPicklistItems.append(InventoryPicklistItem(picklist_id = inventoryPicklist, sku_color=Part.objects.get(sku_color=s), amount = picklistQty, status = False, location = matchingInventoryItems[index]))
-                        amount_needed = matchingInventoryItems[index].__getattribute__('amount_needed')
-                        amount_needed = amount_needed + picklistQty
-                        matchingInventoryItems[index].__setattr__('amount_needed', amount_needed)    
-                    else:
-                        inventoryPicklistItems.append(InventoryPicklistItem(picklist_id = inventoryPicklist, sku_color=Part.objects.get(sku_color=s), amount = inventoryLocationQty, status = False, location = matchingInventoryItems[index]))
-                        matchingInventoryItems[index].__setattr__('amount_needed', inventoryLocationQty)
-                    picklistQty = picklistQty - inventoryLocationQty
-                    index += 1
-                
+                    # Desired location name from the OrderPart
+                    preferred_location_name = order_part_details.location
+
+                    # Try to find a matching Inventory object with that location and sku
+                    location = Inventory.objects.filter(
+                        sku_color=part_obj,
+                        location=preferred_location_name
+                    ).order_by('qty').first()
+
+                    # Fallback if not found: use the next best match
+                    if not location:
+                        location = matchingInventoryItems[index]
+                    amount_to_pick = min(picklistQty, inventoryLocationQty)
+                    
+                    inventoryPicklistItems.append(InventoryPicklistItem(
+                        picklist_id=inventoryPicklist,
+                        sku_color=part_obj,
+                        amount=amount_to_pick,
+                        status=False,
+                        location=location,
+                        area=order_part_details.area,
+                        lineup_nb=order_part_details.lineup_nb,
+                        model_nb=order_part_details.final_model,
+                        material_type=order_part_details.material_type
+                    ))
+
+                    location.amount_needed += amount_to_pick
+                    location.save()
+
+                    picklistQty -= amount_to_pick
+                    index += 1                
             #bulk create all the inventory picklist items in the database
             InventoryPicklistItem.objects.bulk_create(inventoryPicklistItems)
             #'''
@@ -359,15 +382,15 @@ class InventoryPicklistItemsView(APIView):
             )
 
 class CycleTimePerOrderView(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    #authentication_classes = [JWTAuthentication]
+    #permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
             past_month = (datetime.now() - timedelta(days=30)).date() # Get the date from 30 days ago
 
             # Query to get the timestamps from each order
-            fetched_orders = Orders.objects.all().values('order_id', 'start_timestamp').filter(start_timestamp__isnull=False)
+            fetched_orders = Orders.objects.all().values('order_id', 'start_timestamp', 'end_timestamp', 'ship_date').filter(start_timestamp__isnull=False)
             orders = []
 
             # Calculate cycle time for each order
@@ -377,30 +400,45 @@ class CycleTimePerOrderView(APIView):
                 status = "N/A"
 
                 try:
-                    # Fetch the completion timestamps of picking, packing, and shipping for order of order_id
-                    picklist_completion = InventoryPicklist.objects.all().values('picklist_complete_timestamp').filter(order_id=id).first()
-                    pack_completion = Orders.objects.all().values('end_timestamp').filter(order_id=id).first()
-                    ship_completion = Orders.objects.all().values('ship_date').filter(order_id=id).first()
+                    # Fetch the completion timestamps of picking for order of order_id
+                    picklist_data = InventoryPicklist.objects.all().values('picklist_complete_timestamp', 'picklist_id').filter(order_id=id).first()
                     
+                    # If picklist_completion_timestamp is None, check if all items are picked to then set the value of it
+                    try:
+                        if picklist_data['picklist_complete_timestamp'] is None:
+                            timestamps = InventoryPicklistItem.objects.all().values('picked_at').filter(picklist_id=picklist_data['picklist_id']).order_by('-picked_at')
+                            is_completely_picked = True
+                            for timestamp in timestamps:
+                                if timestamp['picked_at'] is None:
+                                    picklist_data['picklist_complete_timestamp'] = timestamp['picked_at']
+                                    is_completely_picked = False
+                                    break
+                            if is_completely_picked:
+                                picklist_data['picklist_complete_timestamp'] = timestamps[0]['picked_at']
+                            else:
+                                continue
+                    except Exception as e:
+                        logger.info(f"The picklist for order %s appears to not be fully picked", id)
+                        continue
+
                     picking_duration = 0
                     packing_duration = 0
                     shipping_duration = 0
 
                     # Skip orders that have not been fully picked
-                    if picklist_completion is None or picklist_completion['picklist_complete_timestamp'] is None:
+                    if picklist_data is None or picklist_data['picklist_complete_timestamp'] is None:
                         continue
 
                     # Check if picklist completion is within the past month and has been completed
-                    elif (picklist_completion['picklist_complete_timestamp'].date() > past_month and picklist_completion['picklist_complete_timestamp'].date() is not None): 
+                    elif (picklist_data['picklist_complete_timestamp'].date() > past_month and picklist_data['picklist_complete_timestamp'].date() is not None): 
                         # Calculate the picking duration
-                        picking_duration = abs((picklist_completion['picklist_complete_timestamp'].date() - order['start_timestamp'].date()).days)
+                        picking_duration = abs((picklist_data['picklist_complete_timestamp'].date() - order['start_timestamp'].date()).days)
                         # Update current order with picking time duration
                         current_order["pick_time"] = picking_duration
                         status = "Picked"
 
                     # Check if order hasn't been packed
-                    if  pack_completion['end_timestamp'] is None:
-                        logger.debug("Order %s has not been packed", id)
+                    if  order['end_timestamp'] is None:
                         # Update current order with packing and shipping duration, cycle time, and status
                         current_order["pack_time"] = 0
                         current_order["ship_time"] = 0
@@ -411,13 +449,13 @@ class CycleTimePerOrderView(APIView):
                         continue       
                     else:
                         # Calculate packing duration
-                        packing_duration = abs((pack_completion['end_timestamp'].date() - picklist_completion['picklist_complete_timestamp'].date()).days)
+                        packing_duration = abs((order['end_timestamp'].date() - picklist_data['picklist_complete_timestamp'].date()).days)
                         # Update current order with packing time duration
                         current_order["pack_time"] = packing_duration
                         status = "Packed"
                     
                     # Check if order hasn't been shipped
-                    if ship_completion['ship_date'] is None:
+                    if order['ship_date'] is None:
                         logger.debug("Order %s has not been shipped", id)
                         # Update current order with shipping duration, cycle time, and status
                         current_order["ship_time"] = 0
@@ -428,7 +466,7 @@ class CycleTimePerOrderView(APIView):
                         continue
                     else:
                         # Calculate shipping duration
-                        shipping_duration = abs((ship_completion['ship_date'] - pack_completion['end_timestamp'].date()).days)
+                        shipping_duration = abs((order['ship_date'] - order['end_timestamp'].date()).days)
                         # Update current order with packing time duration
                         current_order["ship_time"] = shipping_duration
                         status = "Shipped"
@@ -437,13 +475,12 @@ class CycleTimePerOrderView(APIView):
                     current_order["cycle_time"] = picking_duration + packing_duration + shipping_duration
                     current_order["status"] = status        
 
-                    logger.debug("Current order: %s", current_order) # Debugging: Log current order
-
                     # Add order to return list
                     orders.append(current_order)
 
-                except InventoryPicklist.DoesNotExist:
-                    logger.warning("Picklist could not be found for order %s (CycleTimePerOrderView)", id)
+                except Exception as e:
+                    logger.warning("Failed to process order %s's picklist information (CycleTimePerOrderView)", id)
+                    continue
                 
             # Send cycle times as response
             logger.info("Successfully calculated cycle time per order for the past month")
@@ -479,82 +516,77 @@ class CycleTimePerOrderPreview(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def post(self, request):
         try:
-            past_month = (datetime.now() - timedelta(days=30)).date()  # Get the date from 30 days ago
-            today = datetime.now().date()  # Current date
+            # Get the input array from the request body
+            input_data = request.data  # Expecting an array of orders
+            if not isinstance(input_data, list):
+                return Response({"error": "Invalid input format. Expected a list of objects."}, status=400)
 
-            # Query to get the timestamps from each order
-            fetched_orders = Orders.objects.filter(start_timestamp__isnull=False).values(
-                'order_id', 'start_timestamp'
-            )
-            orders = []
+            # Initialize the result array
+            processed_orders = []
 
-            # Calculate cycle time for each order
-            for order in fetched_orders:
-                id = order['order_id']
+            # Process each order
+            for order in input_data:
+                order_id = order.get("order_id")
+                pick_time = order.get("pick_time", 0)
+                pack_time = order.get("pack_time", 0)
+                ship_time = order.get("ship_time", 0)
+                status = order.get("status")
+
+                # Get the start date from the Orders model
                 try:
-                    picklist_completion = InventoryPicklist.objects.filter(order_id=id).values(
-                        'picklist_complete_timestamp'
-                    ).first()
-                    pack_completion = Orders.objects.filter(order_id=id).values('end_timestamp').first()
-                    ship_completion = Orders.objects.filter(order_id=id).values('ship_date').first()
+                    order_obj = Orders.objects.get(order_id=order_id)
+                    start_date = order_obj.start_timestamp.date()
+                except Orders.DoesNotExist:
+                    continue  # Skip if the order doesn't exist
 
-                    if not picklist_completion or not picklist_completion['picklist_complete_timestamp']:
-                        continue  # Skip orders that haven't been picked
+                # Calculate dates based on the status
+                picked_date = start_date + timedelta(days=pick_time)
+                packed_date = picked_date + timedelta(days=pack_time) if status in ["Packed", "Shipped"] else None
+                shipped_date = packed_date + timedelta(days=ship_time) if status == "Shipped" else None
 
-                    picking_duration = abs(
-                        (picklist_completion['picklist_complete_timestamp'].date() - order['start_timestamp'].date()).days
-                    )
-                    packing_duration = (
-                        abs(
-                            (pack_completion['end_timestamp'].date() - picklist_completion['picklist_complete_timestamp'].date()).days
-                        )
-                        if pack_completion and pack_completion['end_timestamp']
-                        else 0
-                    )
-                    shipping_duration = (
-                        abs(
-                            (ship_completion['ship_date'] - pack_completion['end_timestamp'].date()).days
-                        )
-                        if ship_completion and ship_completion['ship_date']
-                        else 0
-                    )
+                # Append the processed order
+                processed_orders.append({
+                    "id": order_id,
+                    "picked_date": picked_date,
+                    "packed_date": packed_date,
+                    "shipped_date": shipped_date,
+                })
 
-                    cycle_time = picking_duration + packing_duration + shipping_duration
-                    completion_date = (
-                        ship_completion['ship_date']
-                        if ship_completion and ship_completion['ship_date']
-                        else picklist_completion['picklist_complete_timestamp'].date()
-                    )
+            # Initialize counters for each day in the past month
+            past_month = (timezone.now() - timedelta(days=30)).date()
+            today = timezone.now().date()
+            daily_data = defaultdict(lambda: {"picked": 0, "packed": 0, "shipped": 0})
 
-                    # Only include orders completed in the past month
-                    if past_month <= completion_date <= today:
-                        orders.append({"date": completion_date, "cycle_time": cycle_time})
+            # Iterate through each processed order and count events per day
+            for order in processed_orders:
+                if order["picked_date"] and past_month <= order["picked_date"] <= today:
+                    daily_data[order["picked_date"]]["picked"] += 1
+                if order["packed_date"] and past_month <= order["packed_date"] <= today:
+                    daily_data[order["packed_date"]]["packed"] += 1
+                if order["shipped_date"] and past_month <= order["shipped_date"] <= today:
+                    daily_data[order["shipped_date"]]["shipped"] += 1
 
-                except Exception as e:
-                    logger.warning(f"Error processing order {id}: {e}")
-                    continue
+            # Pad the result to include all days in the past month
+            result = []
+            current_date = past_month
+            while current_date <= today:
+                result.append({
+                    "day": current_date,
+                    "picked": daily_data[current_date]["picked"],
+                    "packed": daily_data[current_date]["packed"],
+                    "shipped": daily_data[current_date]["shipped"],
+                })
+                current_date += timedelta(days=1)
 
-            # Group orders by day
-            daily_data = defaultdict(list)
-            for order in orders:
-                daily_data[order["date"]].append(order["cycle_time"])
+            # Convert daily_data to a list of objects
+            # result = [
+            #     {"day": day, "picked": counts["picked"], "packed": counts["packed"], "shipped": counts["shipped"]}
+            #     for day, counts in sorted(daily_data.items())
+            # ]
 
-            # Calculate average cycle time for each day
-            daily_avg = [
-                {"date": day, "avg_cycle_time": sum(times) / len(times)}
-                for day, times in daily_data.items()
-            ]
-
-            # Sort results by date
-            daily_avg.sort(key=lambda x: x["date"])
-
-            # Return the response
-            logger.info("Successfully calculated average cycle time per day for the past month")
-            return Response(daily_avg, status=200)
-
+            return Response(result, status=200)
         except Exception as e:
-            logger.error("Failed to calculate average cycle time per day (CycleTimePerOrderView)")
-            return Response({"error": str(e)}, status=500)
+            return Response({"error": str(e)}, status=500)       
 

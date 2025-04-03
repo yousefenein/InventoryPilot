@@ -22,7 +22,7 @@ import CopyText from "../orders/copy-text";
 import { Icon } from "@iconify/react";
 import { Chip } from "@heroui/react";
 import { useTheme } from "../../context/ThemeContext";
-import SideBar from "../dashboard_sidebar1/App";
+// import SideBar from "../dashboard_sidebar1/App";
 import NavBar from "../navbar/App";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -199,11 +199,11 @@ const InventoryPickList = () => {
   };
 
   return (
-    <div>
-    <div className="flex-1  bg-white dark:bg-gray-900 min-h-screen"> {/* Add min-h-screen and remove sm:ml-10 */}
+
+<div className="fixed inset-0 bg-white dark:bg-gray-900 overflow-auto">
          <NavBar />
-         <div className="flex flex-col flex-1 p-8 overflow-auto bg-white dark:bg-gray-900"> {/* Remove mt-8 */}
-         <div className="flex flex-col flex-1">
+         <div className="p-8"> 
+         <div className="flex flex-col flex-1 dark:bg-gray-900">
            <div className="flex flex-col">
              <div className="flex flex-row justify-between items-center  "></div>
         <h1 className="text-2xl font-bold mb-6 dark:text-white">Inventory Pick List</h1>
@@ -326,19 +326,38 @@ const InventoryPickList = () => {
                     </TableCell>
                     <TableCell>
                       <Button
-                        style={{ backgroundColor: "#b91c1c", color: "white" }}
+                        style={{
+                          backgroundColor: '#b91c1c',
+                          color: 'white',
+                        }}
                         size="sm"
                         onPress={() => handleViewOrderDetails(item.order_id)}
                       >
                         Pick Order
                       </Button>
+
                       <Button
-                        style={{ backgroundColor: "#b91c1c", color: "white" }}
+                        style={{
+                          backgroundColor: '#b91c1c',
+                          color: 'white',
+                        }}
                         size="sm"
                         onPress={() => handleOpenAssignModal(item.order_id)}
                         className="ml-2"
                       >
                         Assign Staff
+                      </Button>
+
+                      <Button
+                        style={{
+                          backgroundColor: '#b91c1c',
+                          color: 'white',
+                        }}
+                        size="sm"
+                        onPress={() => navigate(`/label/all/${item.order_id}`)}
+                        className="ml-2"
+                      >
+                        View Labels
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -420,7 +439,7 @@ const InventoryPickList = () => {
       </div>
       </div>
 </div>
-</div>
+
   );
 };
 

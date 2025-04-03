@@ -149,7 +149,7 @@ const KPIDashboard = ({ userData }) => {
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <CTPOPreview />
             </div>
-            {/* You can add another graph here if needed */}
+         
           </div>
 
           {/* Details Section */}
