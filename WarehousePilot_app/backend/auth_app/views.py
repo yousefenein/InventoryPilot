@@ -164,12 +164,22 @@ class PasswordResetRequestView(APIView):
         logger.info(f"{request.data.get('email')}")
         email = request.data.get("email")
 
-        # Check if the email exists in the database
-        if not serializer.validate_email(email):
-            print("Serializer errors:", serializer.errors)  # Debugging
-            return Response(serializer.errors, status=400)
+        # Check if the email is valid
+        validated_email = serializer.validate_email(email)
 
         # Generate the password reset token and send the email
-        serializer.save(email)
+        serializer.send_reset_email(validated_email)
 
-        return Response({"detail": "Password reset email sent."})
+        return Response({"detail": "Password reset email sent."}, status=status.HTTP_200_OK)
+
+class PasswordResetView(APIView):
+    def post(self, request):
+        serializer = PasswordResetSerializer(data=request.data)
+
+        # Validate the token and user id from link
+        validated_user = serializer.validate_token(request.data)
+        new_password = request.data.get("new_password")
+
+        # Sets the new password for the user
+        serializer.set_new_password(validated_user, new_password)
+        return Response({"detail": "Password has been reset successfully."})
