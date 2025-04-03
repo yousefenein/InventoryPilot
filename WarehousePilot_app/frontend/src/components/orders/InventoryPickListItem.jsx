@@ -69,11 +69,7 @@ const inventoryColumns = [
     sortable: true,
   },
   
-  {
-    uid: "department",
-    name: "Department",
-    sortable: true,
-  },
+  
   {
     uid: "required_quantity",
     name: "Required Quantity",
@@ -232,7 +228,7 @@ const InventoryPicklistItem = () => {
   }, [inventoryItems, filterValue]);
 
   // Sort inventory items
-  // Sort inventory items
+// Sort inventory items
 const sortedInventoryItems = useMemo(() => {
   if (!filteredInventoryItems.length) return [];
   
@@ -496,8 +492,9 @@ const sortedInventoryItems = useMemo(() => {
                 className="w-full sm:w-72"
               />
               
-              {/* Sort Dropdown */}
-              {/* Sort Dropdown */}
+            
+             
+{/* Sort Dropdown */}
 <Dropdown>
   <DropdownTrigger>
     <Button 
