@@ -342,6 +342,118 @@ const InventoryPickList = () => {
             {item.due_date}
           </div>
         ) : (
+          <>
+           <Table
+  aria-label="Inventory Pick List"
+  className="min-w-full shadow-lg dark:bg-transparent"
+  isHeaderSticky
+  bottomContentPlacement="outside"
+  selectionMode="multiple"
+  classNames={{
+    wrapper: "dark:bg-gray-800",
+    th: "dark:bg-gray-700 dark:text-white",
+    tr: "dark:hover:bg-gray-700",
+    td: "dark:text-white dark:before:bg-transparent"
+  }}
+  topContentPlacement="outside"
+>
+              <TableHeader>
+                <TableColumn className="text-gray-800 font-bold text-lg dark:text-white">
+                  Order ID
+                </TableColumn>
+                <TableColumn className="text-gray-800 font-bold text-lg dark:text-white">
+                  Due Date
+                </TableColumn>
+                <TableColumn className="text-gray-800 font-bold text-lg dark:text-white">
+                  Already Filled
+                </TableColumn>
+                <TableColumn className="text-gray-800 font-bold text-lg dark:text-white">
+                  Assigned To
+                </TableColumn>
+                <TableColumn className="text-gray-800 font-bold text-lg dark:text-white">
+                  Action
+                </TableColumn>
+              </TableHeader>
+
+              <TableBody items={paginatedRows}>
+                {(item) => (
+                  <TableRow key={item.id} className="bg-white dark:bg-transparent">
+                    <TableCell className="dark:text-white">
+                      {item.order_id}
+                      <CopyText text={item.order_id.toString()} />
+                    </TableCell>
+                    <TableCell className="flex items-center gap-2 dark:text-white">
+                      <Icon
+                        icon="solar:calendar-linear"
+                        width={18}
+                        className="text-gray-500 dark:text-gray-400"
+                      />
+                      {item.due_date}
+                    </TableCell>
+                    <TableCell className="dark:text-white">
+                      {item.already_filled ? "Yes" : "No"}
+                    </TableCell>
+                    <TableCell>
+                      {item.assigned_to ? (
+                        <Chip
+                          className="capitalize"
+                          color="success"
+                          size="sm"
+                          variant="flat"
+                        >
+                          {item.assigned_to}
+                        </Chip>
+                      ) : (
+                        <Chip
+                          className="capitalize"
+                          color="default"
+                          size="sm"
+                          variant="flat"
+                        >
+                          Unassigned
+                        </Chip>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        style={{
+                          backgroundColor: '#b91c1c',
+                          color: 'white',
+                        }}
+                        size="sm"
+                        onPress={() => handleViewOrderDetails(item.order_id)}
+                      >
+                        Pick Order
+                      </Button>
+
+                      <Button
+                        style={{
+                          backgroundColor: '#b91c1c',
+                          color: 'white',
+                        }}
+                        size="sm"
+                        onPress={() => handleOpenAssignModal(item.order_id)}
+                        className="ml-2"
+                      >
+                        Assign Staff
+                      </Button>
+
+                      <Button
+                        style={{
+                          backgroundColor: '#b91c1c',
+                          color: 'white',
+                        }}
+                        size="sm"
+                        onPress={() => navigate(`/label/all/${item.order_id}`)}
+                        className="ml-2"
+                      >
+                        View Labels
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           <Chip
             className="text-black-400 italic"
             color="default"

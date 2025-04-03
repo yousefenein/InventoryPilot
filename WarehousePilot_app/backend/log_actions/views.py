@@ -23,7 +23,7 @@ class InventoryPickingLogging(APIView):
 
         try:
             # Fetch all the picklists
-            picklists = InventoryPicklist.objects.all().values('picklist_id', 'warehouse_nb', 'assigned_employee_id').filter(assigned_employee_id__isnull=False).order_by('-picklist_id')
+            picklists = InventoryPicklist.objects.all().values('picklist_id', 'warehouse_nb', 'assigned_employee_id', 'order_id').filter(assigned_employee_id__isnull=False).order_by('-picklist_id')
 
             try:
                 for picklist in picklists:
@@ -31,6 +31,7 @@ class InventoryPickingLogging(APIView):
                     id = picklist['picklist_id']
                     warehouse = '499' if picklist['warehouse_nb'] is None else picklist['warehouse_nb']
                     employee_id = picklist['assigned_employee_id']
+                    order_id = 'N/A' if picklist['order_id'] is None else picklist['order_id']
 
                     # Fetch all the picklist items for each picklist
                     picklist_items = InventoryPicklistItem.objects.all().filter(picklist_id=id, status=True).values('picked_at', 'location', 'sku_color', 'amount')
@@ -48,6 +49,7 @@ class InventoryPickingLogging(APIView):
                                 'time': None if item['picked_at'] is None else item['picked_at'],
                                 'employee_id': employee_id,
                                 'transaction_type': 'Picking',
+                                'order_number': order_id,
                                 'sku_color': item['sku_color'],
                                 'location': location['location'] if item['location'] is None else item['location'],
                                 'qty_out': item['amount']

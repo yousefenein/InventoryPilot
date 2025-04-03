@@ -580,58 +580,109 @@ const sortedInventoryItems = useMemo(() => {
               </Button>
             </div>
 
-            {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <div>Loading...
-                  <Spinner size="lg" color="default" className="ms-5"/>
-                </div>
-              </div>
-            ) : (
-              <div>
-                {/* Inventory Items Section */}
-                <div className="mb-8">
-                  <h2 className="text-lg font-semibold mb-4">
-                    Inventory Pick List Items
-                  </h2>
-                  {inventoryError ? (
-                    <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded">
-                      {inventoryError}
-                    </div>
-                  ) : paginatedInventoryItems.length > 0 ? (
-                    <>
-                      <Table  
-                        aria-label="Inventory Pick List"
-                        className="min-w-full shadow-lg"
-                        isHeaderSticky
-                        selectionMode="multiple"
-                        bottomContentPlacement="outside"
-                        classNames={{
-                          td: "before:bg-transparent", 
-                        }}
-                        topContentPlacement="outside"
-                      >
-                        <TableHeader className="shadow-xl">
-                          {visibleTableColumns.map((column) => (
-                            <TableColumn 
-                              key={column.uid} 
-                              className="text-gray-800 font-bold text-base"
-                            >
-                              {column.name}
-                            </TableColumn>
-                          ))}
-                        </TableHeader>
-                        <TableBody items={paginatedInventoryItems}>
-                          {(item) => (
-                            <TableRow key={item.picklist_item_id}>
-                              {visibleTableColumns.map((column) => (
-                                <TableCell key={`${item.picklist_item_id}-${column.uid}`}>
-                                  {renderCell(item, column.uid)}
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div>Loading...</div>
+            </div>
+          ) : (
+            <div>
+              {/* Inventory Items Section */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4">
+                  Inventory Pick List Items
+                </h2>
+                {inventoryError ? (
+                  <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded">
+                    {inventoryError}
+                  </div>
+                ) : paginatedInventoryItems.length > 0 ? (
+                  <>
+                    <Table  
+                     aria-label="Inventory Pick List"
+                     className="min-w-full shadow-lg"
+                     isHeaderSticky
+                     selectionMode="multiple"
+                     bottomContentPlacement="outside"
+                     classNames={{
+                        td: "before:bg-transparent", 
+                      }}
+                      topContentPlacement="outside"
+                    
+                    
+                    >
+                      <TableHeader className="shadow-xl">
+                        <TableColumn className="text-gray-800 font-bold text-base">Picklist Item ID</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Location</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">SKU Color</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Area</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Lineup #</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Model Type</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Material Type</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Required Quantity</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Picked Quantity</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Status</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Picked At</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Action</TableColumn>
+                        <TableColumn className="text-gray-800 font-bold text-base">Label</TableColumn>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedInventoryItems.map((item) => (
+                          <TableRow key={item.picklist_item_id}>
+                            <TableCell>{item.picklist_item_id}</TableCell>
+                            <TableCell>{item.location}</TableCell>
+                            <TableCell>{item.sku_color}</TableCell>
+                            <TableCell>{item.area || 'N/A'}</TableCell>
+                            <TableCell>{item.lineup_nb || 'N/A'}</TableCell>
+                            <TableCell>{item.model_nb || 'N/A'}</TableCell>
+                            <TableCell>{item.material_type || 'N/A'}</TableCell>
+                            <TableCell>{item.quantity}</TableCell>
+                            <TableCell style={{width:"150px", paddingRight:"50px"}}>
+                              <Input
+                                type="number"
+                                min="0"
+                                size="sm"
+                                value={pickedQuantities[item.picklist_item_id] || ""}
+                                onChange={(e) =>
+                                  handlePickedQuantityChange(item.picklist_item_id, e.target.value)
+                                }
+                                disabled={item.status} 
+                                />
+                            </TableCell>
+                            <TableCell>
+                              {item.status ? "Picked" : "To Pick"}
+                            </TableCell>
+                            <TableCell>
+                              {item.picked_at ? new Date(item.picked_at).toLocaleString() : 'Not picked yet'}
+                            </TableCell>
+                            <TableCell>
+                              {item.status ? (
+                                <span>Picked</span>
+                              ) : (
+                                <input
+                                  type="checkbox"
+                                  checked={pickedQuantities[item.picklist_item_id] === item.quantity} // ✅ Checkbox turns blue when correct
+                                  onChange={() => openPickModal(item)}
+                                  style={{
+                                    cursor: "pointer", 
+                                  }}
+                                />
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                              style={{
+                               backgroundColor: '#b91c1c',
+                               color: 'white',
+                              }}
+                               size="sm"
+                                onPress={() => handleLabelClick(item.picklist_item_id)}>
+                                View Label
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
 
                       <div className="flex justify-between items-center mt-4">
                         <span>
