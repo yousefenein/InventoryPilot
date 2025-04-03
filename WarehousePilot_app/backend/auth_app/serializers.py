@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers, status
 from auth_app.models import users
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -6,6 +6,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from backend.settings import FRONTEND_URL, EMAIL_HOST_USER
 import logging
+from rest_framework.response import Response
 
 logger = logging.getLogger('WarehousePilot_app')
 
@@ -20,18 +21,32 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
     # validate_email(): checks if email exists in db
     def validate_email(self, value):
-        if not users.objects.filter(email=value).exists():
-            raise serializers.ValidationError("User with this email does not exist.")
-        return value
+        try:
+            if not users.objects.filter(email=value).exists():
+                raise serializers.ValidationError("User with this email does not exist.")
+            logger.info(f"Validation complete: User with email {value} exists (PasswordResetRequestSerializer)")
+            return value
 
-    # save(): generates a password reset token and sends the email
-    def save(self, email):
-        email = email.strip()
+        except users.DoesNotExist:
+            logger.error(f"User with email {value} does not exist (PasswordResetRequestSerializer)")
+            return Response({"error": "User with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        
+        except Exception as e:
+            logger.error(f"Error validating email: {e} (PasswordResetRequestSerializer)")
+            return Response({"error": "An error occurred while validating the email."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # send_reset_email(): generates a password reset token and sends the email
+    def send_reset_email(self, email):
         user = users.objects.get(email=email)
 
-        # Generate password reset token
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.user_id))  # Use user_id (your PK)
+        # Generate password reset token and encode user ID
+        try:
+            token = default_token_generator.make_token(user) 
+            uid = urlsafe_base64_encode(force_bytes(user.user_id))
+        
+        except Exception as e:
+            logger.error(f"Error generating token: {e} (PasswordResetRequestSerializer)")
+            return Response({"error": "An error occurred while generating the token."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         # Preparing values for email
         reset_url = f"{FRONTEND_URL}/reset-password/{uid}/{token}/"
@@ -153,11 +168,11 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
                     <p>To reset your password, click the button below:</p>
                     
-                    <a href="{FRONTEND_URL}/{uid}/{token}" class="button">Reset Password</a>
+                    <a href="{FRONTEND_URL}/reset-password/{uid}/{token}" class="button">Reset Password</a>
                     
                     <p>If the button doesn't work, copy and paste this link into your browser:</p>
                     
-                    <p class="link-text">{FRONTEND_URL}/{uid}/{token}</p>
+                    <p class="link-text">{FRONTEND_URL}/reset-password/{uid}/{token}</p>
                     
                     <p>This link will expire in 24 hours for security reasons.</p>
                     
@@ -175,12 +190,69 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         </html>
         """
 
-        # Send email
-        send_mail(
-            subject=subject,
-            message=text_content,
-            html_message=html_content,
-            from_email=EMAIL_HOST_USER,
-            recipient_list=[email],
-            fail_silently=False,
-        )
+        # Sending the email
+        try:
+            send_mail(
+                subject=subject,
+                message=text_content,
+                html_message=html_content,
+                from_email=EMAIL_HOST_USER,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            logger.info(f"Password reset email sent to {email} (PasswordResetRequestSerializer)")
+        
+        except Exception as e:
+            logger.error(f"Error sending email: {e} (PasswordResetRequestSerializer)")
+            return Response({"error": "An error occurred while sending the email."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class PasswordResetSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, min_length=8)
+    token = serializers.CharField(write_only=True)
+    uidb64 = serializers.CharField(write_only=True)
+
+    # validate_token(): checks validity of token and uid from the link
+    def validate_token(self, data):
+        # Decode the uidb64 and check if the user exists
+        try:
+            uid = force_str(urlsafe_base64_decode(data['uidb64']))
+            user = users.objects.get(user_id=uid)
+        
+        except (TypeError, ValueError, OverflowError):
+            logger.error("Failed to decode UID or invalid UID format (PasswordResetSerializer)")
+            return Response({"error": "Invalid uid"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        except users.DoesNotExist:
+            logger.error(f"User with user_id {uid} does not exist.")
+            return Response({"error": "User does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        
+        except Exception as e:
+            logger.error(f"Error retrieving user: {e} (PasswordResetSerializer)")
+            return Response({"error": "An error occurred while retrieving the user."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Check if the token is valid
+        try:
+            if not default_token_generator.check_token(user, data['token']):
+                raise serializers.ValidationError("Invalid or expired reset link")
+            logger.info(f"Validation complete: Token is valid for user {user.username} (PasswordResetSerializer)")
+            return user
+        
+        except Exception as e:
+            logger.error(f"Error validating token: {e} (PasswordResetSerializer)")
+            return Response({"error": "An error occurred while validating the token."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # save(): sets the new password for the user
+    def set_new_password(self, user, password):
+        try:
+            # Validate password length
+            if len(password) < 8:
+                raise serializers.ValidationError("Password must be at least 8 characters long")
+            
+            # Set the new password for the user
+            user.set_password(password)
+            user.save()
+            logger.info(f"Password reset successful for user {user.username} (PasswordResetSerializer)")
+        
+        except Exception as e:
+            logger.error(f"Error saving new password: {e} (PasswordResetSerializer)")
+            return Response({"error": "An error occurred while saving the new password."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
