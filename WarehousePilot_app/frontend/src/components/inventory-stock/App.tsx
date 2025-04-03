@@ -512,7 +512,7 @@ export default function InventoryTable() {
   }, [filterSelectedKeys, page, pages, filteredItems.length, onPreviousPage, onNextPage]);
 
   if (loading) {
-    return <div className="loading-container">Loading... This may take a minute
+    return <div className="loading-container dark:bg-gray-900">Loading... This may take a minute
     <Spinner size="lg" color="default" className="ms-5"/>
     </div>;
   }

@@ -26,7 +26,7 @@ import { useNavigate } from "react-router-dom";
 import CopyText from "../orders/copy-text";
 import { Icon } from "@iconify/react";
 import { useTheme } from "../../context/ThemeContext";
-import SideBar from "../dashboard_sidebar1/App";
+// import SideBar from "../dashboard_sidebar1/App";
 import NavBar from "../navbar/App";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -221,11 +221,34 @@ const InventoryPickList = () => {
     setAssigningOrderId(null);
   };
 
+
   const filteredStaffList = useMemo(() => {
     if (!staffSearchTerm.trim()) return staffList;
     const lower = staffSearchTerm.toLowerCase();
     return staffList.filter((staff) => (staff.first_name + staff.last_name).toLowerCase().includes(lower));
   }, [staffList, staffSearchTerm]);
+
+  return (
+
+<div className="fixed inset-0 bg-white dark:bg-gray-900 overflow-auto">
+         <NavBar />
+         <div className="p-8"> 
+         <div className="flex flex-col flex-1 dark:bg-gray-900">
+           <div className="flex flex-col">
+             <div className="flex flex-row justify-between items-center  "></div>
+        <h1 className="text-2xl font-bold mb-6 dark:text-white">Inventory Pick List</h1>
+        <h6 className="text-md font-bold dark:text-white">
+          Few examples to test the different cases of orders being picked
+        </h6>
+        <p className="dark:text-white">
+          Order have both inventory picklist and manufacturing list: 90171, 89851, 89672
+        </p>
+        <p className="dark:text-white">
+          Order have inventory picklist and no manufacturing list: 80555
+        </p>
+        <p className="dark:text-white">Order have none: 89345</p>
+        <br />
+
 
   return (
     <div className="flex-1 bg-white dark:bg-gray-900 min-h-screen">
@@ -341,6 +364,15 @@ const InventoryPickList = () => {
         </Modal>
       </div>
     </div>
+
+  </ModalContent>
+</Modal>
+      </div>
+      </div>
+      </div>
+</div>
+
+
   );
 };
 
