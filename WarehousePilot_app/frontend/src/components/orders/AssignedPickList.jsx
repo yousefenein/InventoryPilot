@@ -94,13 +94,13 @@ const AssignedPickList = () => {
   };
 
   return (
-    <div style={{ marginTop: "-50px" }}>
+    <div  className="fixed inset-0 bg-white dark:bg-gray-900 overflow-auto">
         <NavBar />
         <SideBar /> {/* Add the SideBar component here */}
         <div className="flex-1 p-6" style={{ padding: "20px" }}>
       <div className="flex-1">
         <div className="mt-16 p-8">
-          <h1 className="text-2xl font-bold mb-6">My Assigned Pick List</h1>
+          <h1 className="text-2xl font-bold mb-6 dark:text-white">My Assigned Pick List</h1>
 
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
@@ -125,7 +125,16 @@ const AssignedPickList = () => {
             </div>
           ) : (
             <>
-              <Table aria-label="Assigned Pick List" className="min-w-full">
+              <Table aria-label="Assigned Pick List" className="min-w-full"
+              
+              classNames={{
+                wrapper: "dark:bg-gray-800 ",
+                th: "dark:bg-gray-700 dark:text-white text-center",
+                tr: "dark:hover:bg-gray-700",
+                td: "dark:text-white dark:before:bg-transparent text-center"
+              }}
+              
+              >
                 <TableHeader>
                   <TableColumn>Order ID</TableColumn>
                   <TableColumn>Due Date</TableColumn>
