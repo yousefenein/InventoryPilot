@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import OrderFulfillmentChart from './OrderFulfillmentChart';
 import OrderFulfillmentTable from './OrderFulfillmentTable';
 import OrderFulfillmentBarChart from './OrderFulfillmentBarChart';
 import NavBar from "../navbar/App";
+import SideBar from "../dashboard_sidebar1/App";
 
 const API_BASE_URL = "http://127.0.0.1:8000/kpi_dashboard"; // Update with your backend URL
 
 const OrderFulfillmentDashboard = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [currentPeriod, setCurrentPeriod] = useState(null);
   const [filterType, setFilterType] = useState('month');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
 
   useEffect(() => {
     fetchData();
@@ -84,54 +89,71 @@ const OrderFulfillmentDashboard = () => {
 
   const formatPeriodDate = (dateStr) => {
     if (!dateStr) return "N/A";
-    
+
     const date = new Date(dateStr);
-    const options = { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    const options = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     };
-    
+
     if (filterType === 'month') {
       // For monthly, you can hide day if you prefer:
       // options.day = undefined;
     } else if (filterType === 'week') {
-      return `Week of ${date.toLocaleDateString(undefined, { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
+      return `Week of ${date.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
       })}`;
     }
-    
+
     return date.toLocaleDateString(undefined, options);
+  };
+  const COLORS = isDarkMode ? ["#8884d8", "#ff4444"] : ["#8B0000", "#A52A2A"];
+
+  const handleViewDetails = () => {
+    navigate('/kpi');
   };
 
   return (
+
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Sidebar */}
+      <SideBar />
       {/* Navbar */}
       <NavBar />
 
       <div className="max-w-screen mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+            Order Fulfillment Dashboard
+          </h2>
+          <button
+            className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600'} text-white py-1 px-3 rounded`}
+            onClick={handleViewDetails}
+          >
+            Back to KPI Overview
+          </button>
+        </div>
         <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-700/50">
           {/* Filter controls */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-              Order Fulfillment Dashboard
-            </h2>
+
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full md:w-auto">
-              <select 
-                value={filterType} 
-                onChange={(e) => setFilterType(e.target.value)} 
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
                 className="border rounded-md px-2 py-1 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
               >
                 <option value="day">Daily</option>
                 <option value="week">Weekly</option>
                 <option value="month">Monthly</option>
               </select>
-              <input 
-                type="date" 
-                value={selectedDate} 
-                onChange={(e) => setSelectedDate(e.target.value)} 
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
                 className="border rounded-md px-2 py-1 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
               />
             </div>
@@ -151,8 +173,8 @@ const OrderFulfillmentDashboard = () => {
               {/* Donut Chart & Table with aggregated data */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <OrderFulfillmentChart currentPeriod={currentPeriod} />
-                <OrderFulfillmentTable 
-                  currentPeriod={currentPeriod} 
+                <OrderFulfillmentTable
+                  currentPeriod={currentPeriod}
                   formatPeriodDate={formatPeriodDate}
                   filterType={filterType}
                 />
