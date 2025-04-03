@@ -4,6 +4,9 @@
 # ChangePasswordView: Allows authenticated users to update their password.
 # ProfileView: Retrieves profile details of the currently authenticated user.
 # RetrieveUsers: Fetches a list of all users from the database.
+# ThemePreferenceView: Manages the theme preference of the user (light or dark mode)
+# PasswordResetRequestView: Initiates the password reset process by sending an email with a reset link.
+# PasswordResetView: Completes the password reset process using the token and new password provided by the user.
 
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -17,7 +20,7 @@ from rest_framework import status
 from django.contrib.auth.hashers import check_password
 from .models import users
 from django.contrib.auth import update_session_auth_hash
-from .serializers import StaffSerializer
+from .serializers import StaffSerializer, PasswordResetRequestSerializer, PasswordResetSerializer
 import logging
 from django_ratelimit.decorators import ratelimit
 
@@ -130,7 +133,6 @@ class RetrieveUsers(APIView):
             logger.error("Failed to retrieve all users data from the database (auth)")
             return Response({"error": str(e)}, status=500)
 
-
 class ThemePreferenceView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -155,3 +157,19 @@ class ThemePreferenceView(APIView):
 
         logger.info(f"User {user.username} successfully updated their theme preference to {theme}.")
         return Response({"detail": f"Theme preference updated to {theme}"}, status=status.HTTP_200_OK)
+
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data.get("email"))
+        logger.info(f"{request.data.get('email')}")
+        email = request.data.get("email")
+
+        # Check if the email exists in the database
+        if not serializer.validate_email(email):
+            print("Serializer errors:", serializer.errors)  # Debugging
+            return Response(serializer.errors, status=400)
+
+        # Generate the password reset token and send the email
+        serializer.save(email)
+
+        return Response({"detail": "Password reset email sent."})
