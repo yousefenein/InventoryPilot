@@ -34,7 +34,8 @@
       "react-qr-barcode-scanner": "^2.0.0",
       "react-router-dom": "^6.28.0",
       "recharts": "^2.15.1",
-      "serve": "^14.2.4"
+      "serve": "^14.2.4",
+      "zxcvbn": "^4.4.2"
    },
    "devDependencies": {
       "@babel/core": "^7.26.0",

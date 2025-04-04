@@ -241,13 +241,9 @@ class PasswordResetSerializer(serializers.Serializer):
             logger.error(f"Error validating token: {e} (PasswordResetSerializer)")
             return Response({"error": "An error occurred while validating the token."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # save(): sets the new password for the user
+    # set_new_password(): sets the new password for the user
     def set_new_password(self, user, password):
-        try:
-            # Validate password length
-            if len(password) < 8:
-                raise serializers.ValidationError("Password must be at least 8 characters long")
-            
+        try:            
             # Set the new password for the user
             user.set_password(password)
             user.save()

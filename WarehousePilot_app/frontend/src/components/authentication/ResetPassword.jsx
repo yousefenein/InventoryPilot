@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import './authentication.css';
+import zxcvbn from 'zxcvbn';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -16,9 +17,23 @@ function ResetPassword() {
 
     console.log('UID:', uid, 'Token:', token); //debugging
 
+    // checkBasicRequirements(): Check if password has at least 8 characters and contains upper/lowercase, numbers, symbols using regex
+    const checkBasicRequirements = (password) => {
+        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/; // At least 8 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+        return regex.test(password);
+    };
+
+    // validatePasswordStrength(): Check if password is strong using zxcvbn library (common passwords, etc.)
+    const validatePasswordStrength = (password) => {
+        const result = zxcvbn(password);
+        return result.score >= 3; // Score ranges from 0 (weak) to 4 (strong)
+    };
+
+    // handleResetPassword(): Handle password reset form submission
     const handleResetPassword = async (e) => {
         e.preventDefault();
 
+        // Check if password and confirm password match
         if (password !== confirmPassword) {
             setError('Passwords do not match');
             setShake(true);
@@ -26,13 +41,25 @@ function ResetPassword() {
             return;
         }
 
-        if (password.length < 8) {
-            setError('Password must be at least 8 characters');
+        // Check if password meets basic requirements
+        if (!checkBasicRequirements(password)) {
+            setError(
+                'Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+            );
             setShake(true);
             setTimeout(() => setShake(false), 500);
             return;
         }
 
+        // Check if password is not a weak or common password
+        if (!validatePasswordStrength(password)) {
+            setError('Password is too weak or common. Please choose a stronger password.');
+            setShake(true);
+            setTimeout(() => setShake(false), 500);
+            return;
+        }
+
+        // Send password reset request to the server
         try {
             await axios.post(`${API_BASE_URL}/auth/password-reset/`, {
                 uidb64: uid,

@@ -161,7 +161,6 @@ class ThemePreferenceView(APIView):
 class PasswordResetRequestView(APIView):
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data.get("email"))
-        logger.info(f"{request.data.get('email')}")
         email = request.data.get("email")
 
         # Check if the email is valid

@@ -20,7 +20,6 @@ function ForgotPassword() {
     setIsLoading(true);
     setError('');
     setMessage('');
-    console.log(email) // Debugging
 
     // Check if email field is empty
     if (!email) {
