@@ -118,7 +118,7 @@ function InventoryPickingLogs() {
   }, []);
 
   return (
-    <div className="dark:bg-gray-900 min-h-screen" >
+    <div className="fixed inset-0 bg-white dark:bg-gray-900 overflow-auto" >
       <SideBar />
       <NavBar />
       <div className="flex-1 mt-2 dark:bg-gray-900" >

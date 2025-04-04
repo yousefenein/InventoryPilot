@@ -96,7 +96,7 @@ export default function NavBar(props: NavbarProps) {
         {/* Conditionally Rendered Navbar Items */}
         <Tooltip content="Dashboard Details">
         <NavbarItem>
-            <ThemeSwitcher />
+            {/* <ThemeSwitcher /> */}
           </NavbarItem>
         <NavbarItem>
           <Link className="text-default-500" href="/dashboard" size="sm">
@@ -125,6 +125,9 @@ export default function NavBar(props: NavbarProps) {
 
         {(userRole === "manager") && (
           <>
+           <Tooltip>
+            <ThemeSwitcher/>
+          </Tooltip>
             <Tooltip content="View all Key Performance Indicators">
               <NavbarItem><Link className="text-default-500" href="/kpi" size="sm">KPI</Link></NavbarItem>
             </Tooltip>
@@ -143,6 +146,9 @@ export default function NavBar(props: NavbarProps) {
 
         {userRole === "staff" && (
           <>
+           <Tooltip>
+            <ThemeSwitcher/>
+          </Tooltip>
             <NavbarItem><Link className="text-default-500" href="/staff_manufacturing_tasks" size="sm">Assigned Tasks</Link></NavbarItem>
             <NavbarItem><Link className="text-default-500" href="/assigned_picklist" size="sm">Assigned Picklist</Link></NavbarItem>
           </>
@@ -150,6 +156,9 @@ export default function NavBar(props: NavbarProps) {
 
         {userRole === "qa" && (
           <>
+           <Tooltip>
+            <ThemeSwitcher/>
+          </Tooltip>
             <Tooltip content="Quality Control Monitoring">
               <NavbarItem><Link className="text-default-500" href="/qa_error_list_view" size="sm">QA Tasks</Link></NavbarItem>
             </Tooltip>
@@ -161,6 +170,7 @@ export default function NavBar(props: NavbarProps) {
 
         {/* Account & Logout/Login Button */}
         {userRole && 
+        
         <Tooltip content="Account Management">
           <NavbarItem><Link className="text-default-500" href="/account_management" size="sm">Account</Link>
           </NavbarItem>

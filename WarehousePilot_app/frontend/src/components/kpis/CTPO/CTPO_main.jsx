@@ -126,13 +126,13 @@ const CTPO = () => {
   const CTPO_COLUMNS = ["Order ID", "Status", "Cycle Time"];
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full dark:bg-gray-900">
       <div className="w-screen flex-1">
 
         <SideBar />
         <main className="flex p-6 h-screen w-screen">
           <div className="mt-2 p-8 w-screen">
-            <h1 className="text-2xl font-bold mb-6">Cycle Time Per Order Statistics</h1>
+            <h1 className="text-2xl font-bold mb-6 dark:text-white">Cycle Time Per Order Statistics</h1>
 
             {/* Error message */}
             {error && (
@@ -182,7 +182,16 @@ const CTPO = () => {
               </div>
             ) : (
               <>
-                <Table aria-label="CTPO" className="min-w-full w-full">
+                <Table aria-label="CTPO" className="min-w-full w-full"
+                
+                
+                classNames={{
+                  wrapper: "dark:bg-gray-800",
+                  th: "dark:bg-gray-700 dark:text-white",
+                  tr: "dark:hover:bg-gray-700",
+                  td: "dark:text-white dark:before:bg-transparent"
+                }}
+                >
                   <TableHeader>
                     {CTPO_COLUMNS.map((column) => (
                       <TableColumn key={column}>{column}</TableColumn>
