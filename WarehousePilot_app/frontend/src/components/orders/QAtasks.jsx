@@ -227,7 +227,7 @@ const QATasks = () => {
   const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
 
   return (
-    <div className="dark:bg-gray-900 min-h-screen" style={{ marginTop: "-80px" }}>
+    <div className="fixed inset-0 bg-white dark:bg-gray-900 overflow-auto" style={{ marginTop: "-80px" }}>
       <NavBar />
       <SideBar />
       <div className="flex-1 p-6 mt-8 dark:bg-gray-900" style={{ padding: "40px" }}>

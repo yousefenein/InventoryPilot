@@ -1,12 +1,15 @@
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Count, Q, Min
+from django.db.models import Count, Q, Min, Sum
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models.functions import TruncDate
 import logging
 from inventory.models import InventoryPicklist, InventoryPicklistItem
+from orders.models import Orders, OrderPart
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated, BasePermission
 
 def order_picking_accuracy(request):
     if request.method == 'GET':
@@ -358,3 +361,65 @@ class ActiveOrdersDetailsView(APIView):
         except Exception as e:
             logger.error(f"Failed to fetch active orders details: {str(e)}")
             return Response({"error": str(e)}, status=500)        
+
+
+class ThroughputView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Get the current date and calculate the start date (1 year ago)
+            end_date = timezone.now().date()
+            start_date = end_date - timedelta(days=365)
+
+            # Initialize a dictionary to store throughput data for each day
+            # Sets all picked, packed, shipped to zero to ensure no missing days in the response
+            throughput_data = {
+                (start_date + timedelta(days=i)): {"picked": 0, "packed": 0, "shipped": 0}
+                for i in range((end_date - start_date).days + 1)
+            }
+
+            # Calculate shipped items
+            shipped_orders = Orders.objects.filter(ship_date__isnull=False, ship_date__gte=start_date, ship_date__lte=end_date)
+            for order in shipped_orders:
+                ship_date = order.ship_date
+                order_parts_count = OrderPart.objects.filter(order_id=order.order_id).aggregate(total=Sum('qty'))['total'] or 0
+                throughput_data[ship_date]["shipped"] += order_parts_count
+
+            # Calculate picked items
+            picked_items = InventoryPicklistItem.objects.filter(
+                picked_at__isnull=False,
+                picked_at__date__gte=start_date,
+                picked_at__date__lte=end_date
+            ).annotate(day=TruncDate('picked_at')).values('day').annotate(total_picked=Count('picklist_item_id'))
+            for item in picked_items:
+                day = item['day']
+                throughput_data[day]["picked"] += item['total_picked']
+
+            # Calculate packed items
+            packed_items = OrderPart.objects.filter(
+                packed_timestamp__isnull=False,
+                packed_timestamp__date__gte=start_date,
+                packed_timestamp__date__lte=end_date
+            ).annotate(day=TruncDate('packed_timestamp')).values('day').annotate(total_packed=Count('order_part_id'))
+            for item in packed_items:
+                day = item['day']
+                throughput_data[day]["packed"] += item['total_packed']
+
+            # Convert the dictionary to a list of results
+            result = [
+                {
+                    "day": day.strftime("%Y-%m-%d"),
+                    "picked": data["picked"],
+                    "packed": data["packed"],
+                    "shipped": data["shipped"]
+                }
+                for day, data in sorted(throughput_data.items())
+            ]
+
+            return Response(result, status=200)
+
+        except Exception as e:
+            logger.error(f"Failed to fetch throughput data: {str(e)}")
+            return Response({"error": str(e)}, status=500)

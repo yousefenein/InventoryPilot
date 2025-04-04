@@ -17,7 +17,7 @@ const data = [
 
 const CycleTime = () => {
   return (
-    <div className="bg-white p-4 shadow-md rounded-lg">
+    <div className="bg-white p-4 shadow-md rounded-lg dark:bg-gray-900">
       {/* Title */}
       <h2 className="text-lg font-semibold mb-4">Cycle Time Per Order</h2>
 
