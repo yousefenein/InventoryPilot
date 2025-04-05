@@ -215,7 +215,7 @@ class PasswordResetSerializer(serializers.Serializer):
     def validate_token(self, data):
         # Decode the uidb64 and check if the user exists
         try:
-            uid = force_str(urlsafe_base64_decode(data['uidb64']))
+            uid = int(force_str(urlsafe_base64_decode(data['uidb64'])))
             user = users.objects.get(user_id=uid)
         
         except (TypeError, ValueError, OverflowError):
