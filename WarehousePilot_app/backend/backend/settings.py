@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "kpi_dashboard.apps.KpiConfig",
     "label_maker.apps.LabelMakerConfig",
     "oa_input.apps.OaInputConfig",
+    'log_actions.apps.LogActionsConfig',
 ]
 
 MIDDLEWARE = [
@@ -134,13 +135,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # EMAIL 
-
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'wp.notifs@gmail.com'
-# EMAIL_HOST_PASSWORD = 'dyur vqgz snpv jagv'  # App password
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+FRONTEND_URL = os.getenv('FRONTEND_URL')
 # DEFAULT_FROM_EMAIL = 'wp.notifs@gmail.com'
 
 
@@ -184,7 +185,15 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
+FRONTEND_URL = os.getenv('FRONTEND_URL', "https://inventorypilot-82re.onrender.com").rstrip('/')
+CORS_ALLOWED_ORIGINS = [
+    FRONTEND_URL,  # Production URL
+    "https://inventorypilot-82re.onrender.com",  # Production URL ^
+    "http://localhost:5173",  # Development URL (default)
+    "http://127.0.0.1:5173" # Localhost IP ^
+]
+CORS_ALLOW_ALL_ORIGINS = False 
+
 AUTH_USER_MODEL = 'auth_app.users'
 
 
