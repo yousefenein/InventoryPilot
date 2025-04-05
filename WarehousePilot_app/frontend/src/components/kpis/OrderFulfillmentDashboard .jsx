@@ -121,13 +121,14 @@ const OrderFulfillmentDashboard = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
       <SideBar/>
+      <div className="flex-1"></div>
       {/* Navbar */}
       <NavBar />
 
-      <div className="max-w-screen mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-screen mx-auto p-10">
       <div className="flex justify-between items-center mb-4">
 
-      <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+      <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
               Order Fulfillment Dashboard
             </h2>
             <button 
@@ -173,12 +174,13 @@ const OrderFulfillmentDashboard = () => {
             <div className="flex flex-col gap-6">
               {/* Donut Chart & Table with aggregated data */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <OrderFulfillmentChart currentPeriod={currentPeriod} />
+                <OrderFulfillmentChart currentPeriod={currentPeriod}isDarkMode={isDarkMode}  />
                 <OrderFulfillmentTable 
                   currentPeriod={currentPeriod} 
                   formatPeriodDate={formatPeriodDate}
                   filterType={filterType}
                 />
+                
               </div>
 
               {/* Bar Chart with daily data */}
@@ -189,6 +191,7 @@ const OrderFulfillmentDashboard = () => {
                   <div className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-sm text-center">
                     <p className="text-gray-600 dark:text-gray-400">Not enough historical data to display trends.</p>
                     <p className="text-gray-500 dark:text-gray-500 text-sm">Try selecting a different date range to see more data points.</p>
+                    
                   </div>
                 )}
               </div>

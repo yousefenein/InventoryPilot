@@ -179,11 +179,11 @@ const OrderPickingPage = () => {
   return (
     <div className={`min-h-screen ${bgColor}`}>
       <SideBar />
+      <div className="flex-1"></div>
       <NavBar />
 
-      <div className="max-w-7xl mx-auto px-4 py-4 ">
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-4 gap-4">
+      <div className="max-w-screen mx-auto p-10">
+      <div className="flex justify-between items-center mb-2">
             <h1 className={`text-3xl font-bold ${textColor}`}>Order Picking Details</h1>
             <button
               className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600'} text-white py-1 px-3 rounded`}
@@ -191,9 +191,8 @@ const OrderPickingPage = () => {
             >
               Back to KPI Overview
             </button>
-          </div>
         </div>
-        <div className="flex justify-end mb-2">
+        <div className="flex justify-end mb-4">
           <Button color="primary" size="sm" onPress={fetchAllData}>
             Refresh Data
           </Button>
