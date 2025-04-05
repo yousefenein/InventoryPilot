@@ -185,7 +185,13 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    os.getenv('FRONTEND_URL').rstrip('/'),  # Frontend domain
+    "http://localhost:5173",  # Development URL (default)
+    "http://127.0.0.1:5173" # Localhost IP ^
+]
+CORS_ALLOW_ALL_ORIGINS = False 
+
 AUTH_USER_MODEL = 'auth_app.users'
 
 
