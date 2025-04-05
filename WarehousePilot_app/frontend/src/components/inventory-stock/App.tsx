@@ -44,7 +44,7 @@ import {ArrowUpIcon} from "./arrow-up";
 
 import {useMemoizedCallback} from "./use-memoized-callback";
 
-import {columns, INITIAL_VISIBLE_COLUMNS, fetchInventoryData, statusColorMap, deleteInventoryItems} from "./data";
+import {columns, INITIAL_VISIBLE_COLUMNS, fetchInventoryData, statusColorMap, deleteInventoryItems, editInventoryItem} from "./data";
 import NotifCard from "../notifications/notifications-card/App";
 import { AddItemForm } from "./add-item-form";
 import { ToastContainer, toast } from "react-toastify";
@@ -70,6 +70,14 @@ export default function InventoryTable() {
   }); 
   const [isAddItemPopoverOpen, setIsAddItemPopoverOpen] = useState(false);
   const [isDeletePopoverOpen, setIsDeletePopoverOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Inventory | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    warehouse_number: "",
+    sku_color_id: "",
+    location: "",
+    qty: "",
+    amount_needed: "",
+  });
 
   useEffect(() => {
     const loadInventory = async () => {
@@ -163,6 +171,53 @@ export default function InventoryTable() {
   const {getButtonProps: getEditProps} = useButton({ref: editRef});
   const {getButtonProps: getDeleteProps} = useButton({ref: deleteRef});
 
+  const handleEditClick = (item: Inventory) => {
+    setEditingItem(item);
+    setEditFormData({
+      warehouse_number: item.warehouse_number,
+      sku_color_id: item.sku_color_id,
+      location: item.location,
+      qty: String(item.qty),
+      amount_needed: String(item.amount_needed),
+    });
+  };
+
+  const handleEditChange = (field: keyof typeof editFormData, value: string) => {
+    setEditFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleEditSave = async () => {
+    if (editingItem) {
+      try {
+        await editInventoryItem({
+          inventory_id: editingItem.inventory_id,
+          warehouse_number: editFormData.warehouse_number,
+          sku_color_id: editFormData.sku_color_id,
+          location: editFormData.location,
+          qty: parseInt(editFormData.qty, 10),
+          amount_needed: parseInt(editFormData.amount_needed, 10),
+        });
+        setInventory((prevInventory) =>
+          prevInventory.map((item) =>
+            item.inventory_id === editingItem.inventory_id
+              ? { ...item, ...editFormData, qty: parseInt(editFormData.qty, 10), amount_needed: parseInt(editFormData.amount_needed, 10) }
+              : item
+          )
+        );
+        toast.success("Item updated successfully!");
+      } catch (error) {
+        console.error("Failed to update inventory item", error);
+        toast.error("Failed to update item.");
+      } finally {
+        setEditingItem(null);
+      }
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditingItem(null);
+  };
+
   const renderCell = useMemoizedCallback((item: Inventory, columnKey: React.Key) => {
     const itemKey = columnKey as ColumnsKey;
 
@@ -179,10 +234,10 @@ export default function InventoryTable() {
         return <div className="text-default-foreground">{cellValue}</div>;
       case "status":
         return <div className="flex items-center gap-2">{statusColorMap[cellValue as StatusOptions]} {cellValue}</div>;
-      case "edit":
+        case "edit":
         return (
           <div className="flex items-center gap-2">
-            <Button {...(getEditProps() as any)} ref={editRef} isIconOnly variant="flat">
+            <Button {...(getEditProps() as any)} ref={editRef} isIconOnly variant="flat" onPress={() => handleEditClick(item)}>
               <EditLinearIcon />
             </Button>
           </div>
@@ -323,6 +378,7 @@ export default function InventoryTable() {
               value={filterValue}
               onValueChange={onSearchChange}
             />
+            <Tooltip content="Sort in Ascending or Descending order">
             <div>
               <Dropdown>
                 <DropdownTrigger>
@@ -351,6 +407,8 @@ export default function InventoryTable() {
                 </DropdownMenu>
               </Dropdown>
             </div>
+            </Tooltip>
+            <Tooltip content="Add or remove columns">
             <div>
               <Dropdown closeOnSelect={false}>
                 <DropdownTrigger>
@@ -380,6 +438,7 @@ export default function InventoryTable() {
                 </DropdownMenu>
               </Dropdown>
             </div>
+            </Tooltip>
           </div>
 
           <Divider className="h-5" orientation="vertical" />
@@ -430,22 +489,24 @@ export default function InventoryTable() {
       <div className="mb-[18px] flex items-center justify-between" style={{ marginTop: "40px" }}>
         <div className="flex w-[226px] items-center gap-2">
           <h1 className="text-2xl font-[700] leading-[32px]">
-            <b>Inventory</b>
+            <b className="dark:text-white">Inventory</b>
           </h1>
+          <Tooltip content="Total number of items in inventory">
           <Chip className="hidden items-center text-default-500 sm:flex" size="sm" variant="flat">
             {inventory.length}
           </Chip>
+          </Tooltip>
         </div>
         <div className="flex items-center gap-6">
           <Popover>
             <PopoverTrigger>
               <Button isIconOnly variant="flat">
               <Badge
-  style={{ backgroundColor: "#b91c1c" }} // Custom red color
-  content=" "
-  shape="circle"
-  isInvisible={!unreadNotifications}
->
+                style={{ backgroundColor: "#b91c1c" }} // Custom red color
+                content=" "
+                shape="circle"
+                isInvisible={!unreadNotifications}
+              >
   <Icon icon="solar:bell-outline" width={24} />
 </Badge>
               </Button>
@@ -456,7 +517,7 @@ export default function InventoryTable() {
           </Popover>
           <Popover isOpen={isAddItemPopoverOpen} onOpenChange={setIsAddItemPopoverOpen}>
             <PopoverTrigger>
-              <Button className= "bg-gray-300" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
+              <Button className= "bg-gray-600" endContent={<Icon icon="solar:add-circle-bold" width={20} />}>
                 Add Item
               </Button>
             </PopoverTrigger>
@@ -476,17 +537,15 @@ export default function InventoryTable() {
     return (
       <div className="flex flex-col justify-between gap-2 px-2 py-2 sm:flex-row">
         <Pagination
-          isCompact
-          showControls
-          showShadow
-        classNames={{
-            item: "bg-white text-black",
-            cursor: "bg-black text-white",
-                    }}
-          page={page}
-          total={pages}
-          onChange={setPage}
-        />
+                            total={pages}
+                          initialPage={1}
+                         
+                          onChange={setPage}
+                          classNames={{
+                            item: "bg-white text-black dark:bg-gray-700 dark:text-white",
+                            cursor: "bg-black text-white dark:bg-blue-600 dark:text-white",
+                          }}
+                        />
       
         <div className="flex items-center justify-end gap-6 ml-auto">
           <span className="text-small text-default-400">
@@ -508,16 +567,18 @@ export default function InventoryTable() {
   }, [filterSelectedKeys, page, pages, filteredItems.length, onPreviousPage, onNextPage]);
 
   if (loading) {
-    return <div className="loading-container">Loading... This may take a minute
+    return <div className="loading-container dark:bg-gray-900">Loading... This may take a minute
     <Spinner size="lg" color="default" className="ms-5"/>
     </div>;
   }
+  
 
   return (
-    <div style={{ marginTop: "-80px" }}>
-      <NavBar />
-      <SideBar /> {/* Add the SideBar component here */}
-      <div className="flex-1 p-6" style={{ padding: "40px" }}>
+   <div className="flex-1 px-10 dark:bg-gray-900" style={{ minHeight: "100vh" }}>
+       
+        <SideBar /> {/* Add the SideBar component here */}
+        <div className="flex-1 mt-2 ">
+        <NavBar />
         {topBar}
         <Table
           isHeaderSticky
@@ -525,7 +586,10 @@ export default function InventoryTable() {
           bottomContent={bottomContent}
           bottomContentPlacement="outside"
           classNames={{
-            td: "before:bg-transparent",
+            wrapper: "dark:bg-gray-800",
+            th: "dark:bg-gray-700 dark:text-white",
+            tr: "dark:hover:bg-gray-700",
+            td: "dark:text-white dark:before:bg-transparent"
           }}
           selectedKeys={filterSelectedKeys}
           selectionMode="multiple"
@@ -541,7 +605,7 @@ export default function InventoryTable() {
                 key={column.uid}
                 align={column.uid === "actions" ? "end" : "start"}
                 className={cn([
-                  column.uid === "actions" ? "flex items-center justify-end px-[20px]" : "",
+                  column.uid === "actions" ? "flex items-center justify-end px-[20px]" : "", "dark:text-white"
                 ])}
               >
                 {column.name}
@@ -556,7 +620,62 @@ export default function InventoryTable() {
             )}
           </TableBody>
         </Table>
-        <ToastContainer />
+        {editingItem && (
+        <Popover isOpen={!!editingItem} onOpenChange={(isOpen) => !isOpen && setEditingItem(null)} style={{ position: "absolute", zIndex: 100000, maxHeight: "100vh", marginTop: "-40%", marginLeft: "65%" }}>
+          {[
+            <PopoverContent key="popover-content">
+              <div className="p-4">
+                <h3 className="text-lg font-bold mb-4">Edit Item</h3>
+                <div className="flex flex-col gap-3">
+                  <Input
+                    label="Warehouse Number"
+                    value={editFormData.warehouse_number}
+                    onValueChange={(value) => handleEditChange("warehouse_number", value)}
+                  />
+                  <Input
+                    label="SKU Color ID"
+                    value={editFormData.sku_color_id}
+                    onValueChange={(value) => handleEditChange("sku_color_id", value)}
+                  />
+                  <Input
+                    label="Location"
+                    value={editFormData.location}
+                    onValueChange={(value) => handleEditChange("location", value)}
+                  />
+                  <Input
+                    label="Quantity"
+                    value={editFormData.qty}
+                    onValueChange={(value) => handleEditChange("qty", value)}
+                  />
+                  <Input
+                    label="Amount Needed"
+                    value={editFormData.amount_needed}
+                    onValueChange={(value) => handleEditChange("amount_needed", value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button variant="flat" onPress={handleEditCancel}>
+                    Cancel
+                  </Button>
+                  <Button onPress={handleEditSave}>Save</Button>
+                </div>
+              </div>
+            </PopoverContent>
+          ]}
+        </Popover>
+      )}
+        <ToastContainer 
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
       </div>
     </div>
   );

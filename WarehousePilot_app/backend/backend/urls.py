@@ -32,4 +32,6 @@ urlpatterns = [
     path('qa_dashboard/', include('qa_dashboard.urls')),
     path('kpi_dashboard/', include('kpi_dashboard.urls')),
     path('label_maker/', include('label_maker.urls')),
+    path('oa_input/', include('oa_input.urls')),
+    path('picking_logs/', include('log_actions.urls')),
 ]

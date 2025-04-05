@@ -26,13 +26,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#f0=cg2x9dmd@_&m$ux$0vo!@oyw-i@cze9x-_wk8&&oai(6&@'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # can use ['*'] to allow all origins , for production use the actual domain
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 
 # Application definition
@@ -60,8 +60,9 @@ INSTALLED_APPS = [
     "django_celery_results",
     "qa_dashboard.apps.QADashboardConfig",
     "kpi_dashboard.apps.KpiConfig",
-
     "label_maker.apps.LabelMakerConfig",
+    "oa_input.apps.OaInputConfig",
+    'log_actions.apps.LogActionsConfig',
 ]
 
 MIDDLEWARE = [
@@ -134,13 +135,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # EMAIL 
-
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'wp.notifs@gmail.com'
-# EMAIL_HOST_PASSWORD = 'dyur vqgz snpv jagv'  # App password
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+FRONTEND_URL = os.getenv('FRONTEND_URL')
 # DEFAULT_FROM_EMAIL = 'wp.notifs@gmail.com'
 
 

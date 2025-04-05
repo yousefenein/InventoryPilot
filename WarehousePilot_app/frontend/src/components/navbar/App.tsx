@@ -1,6 +1,7 @@
 import type { NavbarProps } from "@heroui/react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from "react";
+import ThemeSwitcher from "../ThemeSwitcher";
 import {
   Navbar,
   NavbarBrand,
@@ -11,6 +12,7 @@ import {
   NavbarMenuToggle,
   Link,
   Button,
+  Tooltip
 } from "@heroui/react";
 
 export default function NavBar(props: NavbarProps) {
@@ -92,33 +94,61 @@ export default function NavBar(props: NavbarProps) {
         </NavbarBrand>
 
         {/* Conditionally Rendered Navbar Items */}
+        <Tooltip content="Dashboard Details">
+        <NavbarItem>
+            {/* <ThemeSwitcher /> */}
+          </NavbarItem>
         <NavbarItem>
           <Link className="text-default-500" href="/dashboard" size="sm">
             Dashboard
           </Link>
         </NavbarItem>
+        </Tooltip>
 
         {(userRole === "admin") && (
           <>
-            <NavbarItem><Link className="text-default-500" href="/kpi" size="sm">KPI</Link></NavbarItem>
-            <NavbarItem><Link className="text-default-500" href="/orders" size="sm">Orders</Link></NavbarItem>
-            <NavbarItem><Link className="text-default-500" href="/inventory-stock" size="sm">Inventory</Link></NavbarItem>
-            <NavbarItem><Link className="text-default-500" href="/manufacturing_tasks" size="sm">Manufacturing Tasks</Link></NavbarItem>
+          <Tooltip>
+            <ThemeSwitcher/>
+          </Tooltip>
+            <Tooltip content="View all Key Performance Indicators">
+              <NavbarItem><Link className="text-default-500" href="/kpi" size="sm">KPI</Link></NavbarItem>
+            </Tooltip>
+            <Tooltip content="View and Manage all Orders">
+              <NavbarItem><Link className="text-default-500" href="/orders" size="sm">Orders</Link></NavbarItem>
+            </Tooltip>
+              <NavbarItem><Link className="text-default-500" href="/inventory-stock" size="sm">Inventory</Link></NavbarItem>
+            <Tooltip content="View all task details">
+              <NavbarItem><Link className="text-default-500" href="/manufacturing_tasks" size="sm">Manufacturing Tasks</Link></NavbarItem>
+            </Tooltip>
           </>
         )}
 
         {(userRole === "manager") && (
           <>
-            <NavbarItem><Link className="text-default-500" href="/kpi" size="sm">KPI</Link></NavbarItem>
-            <NavbarItem><Link className="text-default-500" href="/orders" size="sm">Orders</Link></NavbarItem>
+           <Tooltip>
+            <ThemeSwitcher/>
+          </Tooltip>
+            <Tooltip content="View all Key Performance Indicators">
+              <NavbarItem><Link className="text-default-500" href="/kpi" size="sm">KPI</Link></NavbarItem>
+            </Tooltip>
+            <Tooltip content="View and Manage all Orders">
+              <NavbarItem><Link className="text-default-500" href="/orders" size="sm">Orders</Link></NavbarItem>
+            </Tooltip>
             <NavbarItem><Link className="text-default-500" href="/inventory-stock" size="sm">Inventory</Link></NavbarItem>
-            <NavbarItem><Link className="text-default-500" href="/qa_error_list_view" size="sm">QA Error Reports</Link></NavbarItem>
-            <NavbarItem><Link className="text-default-500" href="/manufacturing_tasks" size="sm">Manufacturing Tasks</Link></NavbarItem>
+            <Tooltip content="Quality Control Monitoring">
+              <NavbarItem><Link className="text-default-500" href="/qa_error_list_view" size="sm">QA Error Reports</Link></NavbarItem>
+            </Tooltip>
+            <Tooltip content="View all task details">
+              <NavbarItem><Link className="text-default-500" href="/manufacturing_tasks" size="sm">Manufacturing Tasks</Link></NavbarItem>
+            </Tooltip>
           </>
         )}
 
         {userRole === "staff" && (
           <>
+           <Tooltip>
+            <ThemeSwitcher/>
+          </Tooltip>
             <NavbarItem><Link className="text-default-500" href="/staff_manufacturing_tasks" size="sm">Assigned Tasks</Link></NavbarItem>
             <NavbarItem><Link className="text-default-500" href="/assigned_picklist" size="sm">Assigned Picklist</Link></NavbarItem>
           </>
@@ -126,14 +156,25 @@ export default function NavBar(props: NavbarProps) {
 
         {userRole === "qa" && (
           <>
-            <NavbarItem><Link className="text-default-500" href="/qa_tasks" size="sm">QA Tasks</Link></NavbarItem>
-            <NavbarItem><Link className="text-default-500" href="/qa_error_list_view" size="sm">Error Reports</Link></NavbarItem>
+           <Tooltip>
+            <ThemeSwitcher/>
+          </Tooltip>
+            <Tooltip content="Quality Control Monitoring">
+              <NavbarItem><Link className="text-default-500" href="/qa_error_list_view" size="sm">QA Tasks</Link></NavbarItem>
+            </Tooltip>
+            <Tooltip content="Quality Control Monitoring">
+              <NavbarItem><Link className="text-default-500" href="/qa_error_list_view" size="sm">QA Error Reports</Link></NavbarItem>
+            </Tooltip>
           </>
         )}
 
         {/* Account & Logout/Login Button */}
-        {userRole && <NavbarItem><Link className="text-default-500" href="/account_management" size="sm">Account</Link></NavbarItem>}
-
+        {userRole && 
+        
+        <Tooltip content="Account Management">
+          <NavbarItem><Link className="text-default-500" href="/account_management" size="sm">Account</Link>
+          </NavbarItem>
+        </Tooltip>}
         <NavbarItem className="ml-2 !flex">
           {userRole ? (
             <Button radius="full" variant="flat" onPress={handleLoginAsDifferentUser}>Logout</Button>
