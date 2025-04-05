@@ -185,8 +185,9 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173').rstrip('/')
 CORS_ALLOWED_ORIGINS = [
-    os.getenv('FRONTEND_URL').rstrip('/'),  # Frontend domain
+    FRONTEND_URL,  # Frontend domain
     "http://localhost:5173",  # Development URL (default)
     "http://127.0.0.1:5173" # Localhost IP ^
 ]
