@@ -185,10 +185,10 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+FRONTEND_URL = os.getenv('FRONTEND_URL', "https://inventorypilot-82re.onrender.com").rstrip('/')
 CORS_ALLOWED_ORIGINS = [
-    FRONTEND_URL,  # Frontend domain
-    "https://inventorypilot-82re.onrender.com/",  # Production URL
+    FRONTEND_URL,  # Production URL
+    "https://inventorypilot-82re.onrender.com",  # Production URL ^
     "http://localhost:5173",  # Development URL (default)
     "http://127.0.0.1:5173" # Localhost IP ^
 ]
