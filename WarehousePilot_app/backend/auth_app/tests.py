@@ -5,8 +5,8 @@ This file contains test cases for validating authentication
 2. `ChangePasswordTests`: Verifies the password change process, handling scenarios like correct, incorrect, or missing old passwords.
 3. `ProfileViewTests`: Tests profile retrieval, including access for authenticated users, unauthenticated access, and handling invalid tokens.
 4. `PasswordResetRequestTests`: Tests the password reset request process, including email validation and sending reset emails.
+5. `PasswordResetTests`: Validates the password reset process, including token validation and setting a new password.
 """
-
 
 from django.urls import reverse
 from rest_framework import status, serializers
@@ -180,7 +180,7 @@ class PasswordResetRequestTests(APITestCase):
         self.valid_email = {'email': 'test@example.com'}
         self.invalid_email = {'email': 'nonexistent@example.com'}
 
-        # backend URL for password reset request
+        # Backend URL for password reset request
         self.url = reverse('password_reset_request')  
 
     @patch('auth_app.serializers.users.objects.filter')
@@ -257,3 +257,158 @@ class PasswordResetRequestTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, {"detail": "Password reset email sent."})
 
+class PasswordResetTests(APITestCase):
+    def setUp(self):
+        # Create a test user with test values
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Tester',
+            username="tester",
+            password="testpassword",
+            email="test@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )
+        
+        # Create an API client instance
+        self.client = APIClient()
+
+        # Generate a valid uid and token for the user
+        self.uid = urlsafe_base64_encode(force_bytes(self.user.user_id))
+        self.token = default_token_generator.make_token(self.user)
+        
+        # Data for testing password reset - valid case
+        self.valid_data = {
+            'uidb64': self.uid,
+            'token': self.token,
+            'new_password': 'newpassword123'
+        }
+        
+        # Data for testing password reset - invalid uid
+        self.invalid_uid_data = {
+            'uidb64': 'invalid',
+            'token': self.token,
+            'new_password': 'newpassword123'
+        }
+        
+        # Data for testing password reset - invalid token
+        self.invalid_token_data = {
+            'uidb64': self.uid,
+            'token': 'invalid',
+            'new_password': 'newpassword123'
+        }
+
+        # Backend URL for password reset
+        self.url = reverse('password_reset')
+
+    @patch('auth_app.serializers.default_token_generator.check_token')
+    @patch('auth_app.serializers.users.objects.get')
+    # test_validate_token_success(): Test validate_token() for successful token and uid validation
+    def test_validate_token_success(self, mock_get, mock_check_token):
+        # Arrange: Mock user retrieval and token validation
+        mock_get.return_value = self.user
+        mock_check_token.return_value = True
+        
+        # Act: Call validate_token() with valid uid and token
+        serializer = PasswordResetSerializer()
+        response = serializer.validate_token({
+            'uidb64': self.uid,
+            'token': self.token
+        })
+        
+        # Assert: Check if the result is the user object
+        self.assertEqual(response, self.user)
+        mock_get.assert_called_once_with(user_id=self.user.user_id)
+        mock_check_token.assert_called_once_with(self.user, self.token)
+
+    @patch('auth_app.serializers.users.objects.get')
+    # test_validate_token_invalid_uid(): Test validate_token() with invalid uid
+    def test_validate_token_invalid_uid(self, mock_get):
+        # Arrange: Mock user retrieval to raise DoesNotExist exception
+        mock_get.side_effect = users.DoesNotExist()
+        
+        # Act: Call validate_token() with invalid uid
+        serializer = PasswordResetSerializer()
+        response = serializer.validate_token({
+            'uidb64': 'invalid',
+            'token': self.token
+        })
+
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {"error": "Invalid uid"})
+
+    @patch('auth_app.serializers.default_token_generator.check_token')
+    @patch('auth_app.serializers.users.objects.get')
+    # test_validate_token_invalid_token(): Test validate_token() with invalid token
+    def test_validate_token_invalid_token(self, mock_get, mock_check_token):
+        # Arrange: Mock user retrieval and token validation (failure case)
+        mock_get.return_value = self.user
+        mock_check_token.return_value = False
+        
+        # Act: Call validate_token() with invalid token
+        serializer = PasswordResetSerializer()
+        response = serializer.validate_token({
+            'uidb64': self.uid,
+            'token': 'invalid'
+        })
+
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data, {"error": "An error occurred while validating the token."})
+
+    # test_set_new_password_success(): Test set_new_password() for successful password reset
+    def test_set_new_password_success(self):
+        # Act: Call set_new_password() with valid user and new password
+        serializer = PasswordResetSerializer()
+        serializer.set_new_password(self.user, 'newpassword123')
+        self.user.refresh_from_db()
+
+        # Assert: Check if password was updated
+        self.assertTrue(self.user.check_password('newpassword123'))
+
+    @patch('auth_app.serializers.PasswordResetSerializer')
+    # test_password_reset_view_success(): Test PasswordResetView for successful password reset
+    def test_password_reset_view_success(self, mock_serializer):
+        # Arrange: Mock the serializer
+        mock_serializer_instance = mock_serializer.return_value
+        mock_serializer_instance.validate_token.return_value = self.user
+        mock_serializer_instance.set_new_password.return_value = None
+        
+        # Act: Call PasswordResetView with valid data
+        response = self.client.post(self.url, self.valid_data)
+        
+        # Assert: Check if response is as expected
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {"detail": "Password has been reset successfully."})
+
+    @patch('auth_app.views.PasswordResetSerializer')
+    # test_password_reset_view_invalid_uid(): Test PasswordResetView with invalid uid
+    def test_password_reset_view_invalid_uid(self, mock_serializer):
+        # Arrange: Mock the serializer to raise ValidationError for invalid uid
+        mock_serializer_instance = mock_serializer.return_value
+        mock_serializer_instance.validate_token.side_effect = serializers.ValidationError("Invalid uid") #
+        
+        # Act: Call PasswordResetView with invalid uid data
+        response = self.client.post(self.url, self.invalid_uid_data)
+        
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data[0], "Invalid uid")
+
+    @patch('auth_app.views.PasswordResetSerializer')
+    # test_password_reset_view_invalid_token(): Test PasswordResetView with invalid token
+    def test_password_reset_view_invalid_token(self, mock_serializer):
+        # Arrange: Mock the serializer to raise ValidationError for invalid token
+        mock_serializer_instance = mock_serializer.return_value
+        mock_serializer_instance.validate_token.side_effect = serializers.ValidationError("Invalid or expired reset link")
+        
+        # Act: Call PasswordResetView with invalid token data
+        response = self.client.post(self.url, self.invalid_token_data)
+        
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data[0], "Invalid or expired reset link")
