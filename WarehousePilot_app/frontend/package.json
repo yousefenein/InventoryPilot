@@ -23,6 +23,7 @@
       "@mui/x-data-grid": "^7.23.5",
       "axios": "^1.7.7",
       "chart.js": "^4.4.7",
+      "data-fns": "^1.1.0",
       "date-fns": "^4.1.0",
       "dayjs": "^1.11.13",
       "framer-motion": "^12.4.7",
@@ -34,7 +35,8 @@
       "react-qr-barcode-scanner": "^2.0.0",
       "react-router-dom": "^6.28.0",
       "recharts": "^2.15.1",
-      "serve": "^14.2.4"
+      "serve": "^14.2.4",
+      "zxcvbn": "^4.4.2"
    },
    "devDependencies": {
       "@babel/core": "^7.26.0",

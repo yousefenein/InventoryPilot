@@ -337,7 +337,11 @@ class InventoryPicklistItemsView(APIView):
                 'area',
                 'lineup_nb',
                 'model_nb',
-                'material_type'
+                'material_type', 
+                'manually_picked', 
+                'repick',
+                'repick_reason', 
+                'actual_picked_quantity'
             )
 
             # Build response data
@@ -354,7 +358,11 @@ class InventoryPicklistItemsView(APIView):
                     "area": item['area'],
                     "lineup_nb": item['lineup_nb'],
                     "model_nb": item['model_nb'],
-                    "material_type": item['material_type']
+                    "material_type": item['material_type'],
+                    "manually_picked": item['manually_picked'], 
+                    "repick": item['repick'],
+                    "repick_reason": item['repick_reason'], 
+                    "actual_picked_quantity": item['actual_picked_quantity']  
                 }
                 for item in picklist_items
             ]

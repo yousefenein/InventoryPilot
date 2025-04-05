@@ -1,22 +1,56 @@
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell, Pagination } from "@heroui/react";
 import { useEffect, useState, useMemo } from "react";
+import { startOfWeek, format } from "date-fns";
 
 export default function ThroughputTable({data}) {
     const [rows, setRows] = useState([]);
     const [page, setPage] = useState(1);
-    
-    /* useEffect - format data for table */
+
+    /* useEffect - group data by weeks */
     useEffect(() => {
-        setRows(
-            data.map((entry, index) => ({
-                key: index + 1,
-                date: entry.date,
+        const groupedData = {};
+
+        // Group data by weeks
+        data.forEach((entry) => {
+            const date = new Date(entry.date);
+            const weekStart = startOfWeek(date, { weekStartsOn: 1 }); // Get the Monday of the week
+            const weekKey = format(weekStart, "yyyy-MM-dd"); // Use the Monday's date as the key
+
+            if (!groupedData[weekKey]) {
+                groupedData[weekKey] = { date: weekKey, picked: 0, packed: 0, shipped: 0 };
+            }
+
+            groupedData[weekKey].picked += entry.picked || 0;
+            groupedData[weekKey].packed += entry.packed || 0;
+            groupedData[weekKey].shipped += entry.shipped || 0;
+        });
+
+        // Convert grouped data into an array and sort by date
+        const formattedRows = Object.values(groupedData)
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .map((entry, index) => ({
+                key: index + 1, // Add a unique key for each row
+                date: entry.date, // Week start date (Monday)
                 picked: entry.picked,
                 packed: entry.packed,
                 shipped: entry.shipped,
-            }))
-        );
-    }, []);
+            }));
+
+        setRows(formattedRows); // Update the rows state with the grouped data
+    }, [data]);
+    
+    // /* useEffect - format data for table */
+    // useEffect(() => {
+    //     setRows(
+    //         data.map((entry, index) => ({
+    //             key: index + 1,
+    //             date: entry.day,
+    //             picked: entry.picked,
+    //             packed: entry.packed,
+    //             shipped: entry.shipped,
+    //         }))
+    //     );
+    // }, []);
 
     /* Pagination */
     const rowsPerPage = 5;
@@ -67,9 +101,9 @@ export default function ThroughputTable({data}) {
                     {(item) => (
                         <TableRow key={item.key}>
                             <TableCell className="dark:text-gray-300">{item.date}</TableCell>
-                            <TableCell className="dark:text-gray-300">{item.picked ? item.picked : "N/A"}</TableCell>
-                            <TableCell className="dark:text-gray-300">{item.packed ? item.packed : "N/A"}</TableCell>
-                            <TableCell className="dark:text-gray-300">{item.shipped ? item.shipped : "N/A"}</TableCell>
+                            <TableCell className="dark:text-gray-300">{item.picked ? item.picked : "0"}</TableCell>
+                            <TableCell className="dark:text-gray-300">{item.packed ? item.packed : "0"}</TableCell>
+                            <TableCell className="dark:text-gray-300">{item.shipped ? item.shipped : "0"}</TableCell>
                         </TableRow>
                     )}
                 </TableBody>

@@ -101,3 +101,25 @@ export const deleteInventoryItems = async (itemIds: number[]): Promise<void> => 
     throw new Error("Failed to delete inventory items");
   }
 };
+
+export const editInventoryItem = async (item: {
+  inventory_id: number;
+  warehouse_number: string;
+  sku_color_id: string;
+  location: string;
+  qty: number;
+  amount_needed: number;
+}): Promise<void> => {
+  const csrfToken = await getCsrfToken();
+  const response = await fetch(`${API_BASE_URL}/inventory/update_inventory_item`, { // Updated path
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken,
+    },
+    body: JSON.stringify(item),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to update inventory item");
+  }
+};

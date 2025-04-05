@@ -42,6 +42,10 @@ class InventoryPicklistItem(models.Model):
       lineup_nb = models.CharField(max_length=255, null=True) # lineup number like 01, 02, etc
       model_nb = models.CharField(max_length=255, null=True) # model number like 8-12, 13-15 
       material_type = models.CharField(max_length=255, null=True) # material type (metal and plastic). All metals must be picked before plastics 
+      manually_picked = models.BooleanField(default=False)  
+      repick = models.BooleanField(default=False)  
+      repick_reason = models.TextField(null=True, blank=True)
+      actual_picked_quantity = models.IntegerField(default=0)  # New field to store the actual picked amount
 
 def __str__(self):
         return f"Picklist Item {self.picklist_item_id} - Status: {self.status}"

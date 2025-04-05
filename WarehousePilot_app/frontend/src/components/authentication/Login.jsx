@@ -27,8 +27,8 @@ function Login() {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login/`, { username, password });
       const { access, user } = response.data;
-      
-      
+
+
       localStorage.setItem('token', access);
       localStorage.setItem('user', JSON.stringify(user));
       if (rememberMe) {
@@ -60,14 +60,14 @@ function Login() {
       <div className="w-full md:w-1/2 p-8 flex flex-col justify-center mx-auto max-w-2xl">
         <div className="w-full space-y-8">
           <div className="text-center">
-            <img 
-              src="csf-logo-footer-edited.png" 
-              alt="Company Logo" 
+            <img
+              src="csf-logo-footer-edited.png"
+              alt="Company Logo"
               className="h-16 mx-auto mb-8"
             />
             <h1 className="text-3xl font-bold mb-8 dark:text-white">Sign In</h1>
           </div>
-  
+
           <form onSubmit={handleLogin} className={`space-y-8 ${shake ? 'animate-shake' : ''}`}>
             <div>
               <label className="block text-lg font-medium mb-3 dark:text-gray-300">
@@ -82,7 +82,7 @@ function Login() {
                 className="w-full px-4 py-3 border rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder-gray-400"
               />
             </div>
-  
+
             <div>
               <label className="block text-lg font-medium mb-3 dark:text-gray-300">
                 Password
@@ -96,7 +96,7 @@ function Login() {
                 className="w-full px-4 py-3 border rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder-gray-400"
               />
             </div>
-  
+
             <div className="flex items-center justify-between">
               <label className="flex items-center dark:text-gray-300">
                 <input
@@ -107,18 +107,24 @@ function Login() {
                 />
                 <span className="ml-2 text-lg">Remember me</span>
               </label>
-              <a href="#" className="text-lg text-gray-500 hover:underline dark:text-gray-400">
-                I forgot my password
+              <a
+                href="#"
+                onClick={(e) => {
+                  navigate('/forgot-password');
+                }}
+                className="text-lg text-gray-500 hover:underline dark:text-gray-400"
+              >
+                Forgot Password
               </a>
             </div>
-  
+
             <button
               type="submit"
               className="w-full py-3 px-4 bg-black text-white rounded-lg transition-colors duration-200 text-lg font-medium hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
             >
               Sign In
             </button>
-  
+
             {error && (
               <p className="text-red-600 dark:text-red-400 text-lg text-center" data-testid="login-error">
                 {error}
@@ -127,7 +133,7 @@ function Login() {
           </form>
         </div>
       </div>
-  
+
       {/* Right side - Image (hidden below 1000px) */}
       <div className="hidden md:block w-1/2 bg-gray-100 dark:bg-gray-800 hide-below-1000">
         <img
