@@ -135,24 +135,13 @@ const CTPO = () => {
     navigate('/kpi');
   };
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full dark:bg-gray-900">
       <div className="w-screen flex-1">
 
         <SideBar />
-        {/* Navbar */}
-        <NavBar />
-
-        <main className="flex p-4 h-screen w-screen">
-          <div className="mt-2 p-6 w-screen">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold mb-6">Cycle Time Per Order Statistics</h1>
-              <button
-                className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600'} text-white py-1 px-3 rounded`}
-                onClick={handleViewDetails}
-              >
-                Back to KPI Overview
-              </button>
-            </div>
+        <main className="flex p-6 h-screen w-screen">
+          <div className="mt-2 p-8 w-screen">
+            <h1 className="text-2xl font-bold mb-6">Cycle Time Per Order Statistics</h1>
 
             {/* Error message */}
             {error && (
@@ -202,7 +191,16 @@ const CTPO = () => {
               </div>
             ) : (
               <>
-                <Table aria-label="CTPO" className="min-w-full w-full">
+                <Table aria-label="CTPO" className="min-w-full w-full"
+                
+                
+                classNames={{
+                  wrapper: "dark:bg-gray-800",
+                  th: "dark:bg-gray-700 dark:text-white",
+                  tr: "dark:hover:bg-gray-700",
+                  td: "dark:text-white dark:before:bg-transparent"
+                }}
+                >
                   <TableHeader>
                     {CTPO_COLUMNS.map((column) => (
                       <TableColumn key={column}>{column}</TableColumn>

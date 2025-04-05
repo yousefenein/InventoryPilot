@@ -109,7 +109,7 @@ const CTPOPreview = () => {
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm">
+    <div className="bg-white p-4 rounded-lg shadow-sm dark:bg-transparent">
       {/* Inline style block to hide the header (h3) within the chart */}
       <style>{`
         .hide-chart-title h3 {
@@ -118,8 +118,8 @@ const CTPOPreview = () => {
       `}</style>
 
       {/* Header row: Title + Details button */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Cycle Time Per Order</h2>
+      <div className="flex justify-between items-center mb-4 ">
+        <h2 className="text-xl font-semibold dark:text-white">Cycle Time Per Order</h2>
         <button
           onClick={handleDetailsClick}
           className="bg-gray-500 hover:bg-red-600 text-white py-1 px-3 rounded"
@@ -129,7 +129,7 @@ const CTPOPreview = () => {
       </div>
 
       {/* Timeline Range Selector */}
-      <div className="flex space-x-2 mb-4">
+      <div className="flex space-x-2 mb-4 ">
         {["1D", "1W", "1M"].map((label) => (
           <button
             key={label}

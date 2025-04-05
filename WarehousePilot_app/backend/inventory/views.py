@@ -98,6 +98,29 @@ def add_inventory_item(request):
         #logger.error("Failed to add inventory item: %s (add_inventory_item)", str(e))
         return JsonResponse({"error": str(e)}, status=500)
 
+@csrf_exempt
+@require_POST
+def update_inventory_item(request):
+    try:
+        data = json.loads(request.body)
+        item_id = data.get("inventory_id")
+        if not item_id:
+            return JsonResponse({"error": "Inventory ID is required"}, status=400)
+
+        item = Inventory.objects.get(inventory_id=item_id)
+        item.warehouse_number = data.get("warehouse_number", item.warehouse_number)
+        item.sku_color_id = data.get("sku_color_id", item.sku_color_id)
+        item.location = data.get("location", item.location)
+        item.qty = data.get("qty", item.qty)
+        item.amount_needed = data.get("amount_needed", item.amount_needed)
+        item.save()
+
+        return JsonResponse({"message": "Item updated successfully"}, status=200)
+    except Inventory.DoesNotExist:
+        return JsonResponse({"error": "Item not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 def get_csrf_token(request):
     return JsonResponse({'csrfToken': get_token(request)})
 
@@ -207,19 +230,48 @@ class PickPicklistItemView(APIView):
         try:
             item = InventoryPicklistItem.objects.get(picklist_item_id=picklist_item_id)
         except InventoryPicklistItem.DoesNotExist:
-            #logger.error("Item %s was not found", picklist_item_id)
+#logger.error("Item %s was not found", picklist_item_id)
             return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # If your role check remains the same:
+# If your role check remains the same:
         if request.user.role == 'qa':
-             #logger.error("Unauthorized user - only staff users can access picklist picking")
+#logger.error("Unauthorized user - only staff users can access picklist picking")
             return Response({"error": "Not allowed. You need login as a staff "}, status=403)
 
-        # Only set picked_at if it's not already picked
-        if not item.status:
-            item.status = True
-            item.picked_at = timezone.now()  # <-- set the pick time
-            item.save()
-            #logger.info("Item %s has been successfully picked", picklist_item_id)
+        manually_picked = request.data.get("manually_picked", False)
+        picked_quantity = request.data.get("picked_quantity", 0)
+
+       
+        item.actual_picked_quantity += int(picked_quantity)
+        item.status = True
+        item.picked_at = timezone.now()
+        item.manually_picked = manually_picked
+        item.save()
+#logger.info("Item %s has been successfully picked", picklist_item_id)
 
         return Response({"message": "Item picked successfully"}, status=status.HTTP_200_OK)
+
+class RepickPicklistItemView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, picklist_item_id):
+        try:
+            item = InventoryPicklistItem.objects.get(picklist_item_id=picklist_item_id)
+        except InventoryPicklistItem.DoesNotExist:
+            return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.role == 'qa':
+            return Response({"error": "Not allowed. You need to log in as staff."}, status=status.HTTP_403_FORBIDDEN)
+
+        reason = request.data.get("reason")
+        quantity = request.data.get("quantity")
+        if not reason or not quantity:
+            return Response({"error": "Reason and quantity are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        item.repick = True
+        item.repick_reason = reason
+        item.actual_picked_quantity += int(quantity)  
+        item.save()
+
+        return Response({"message": f"Item marked for repick due to {reason} with quantity {quantity}."}, status=status.HTTP_200_OK)
