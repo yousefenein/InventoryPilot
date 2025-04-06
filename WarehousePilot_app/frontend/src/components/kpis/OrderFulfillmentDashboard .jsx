@@ -7,6 +7,8 @@ import OrderFulfillmentBarChart from './OrderFulfillmentBarChart';
 import NavBar from "../navbar/App";
 import SideBar from "../dashboard_sidebar1/App";
 
+const COLORS_LIGHT = ["#950606", "#ca3433"];
+const COLORS_DARK = ["#8884d8", "#ff4444"];
 const API_BASE_URL = "http://127.0.0.1:8000/kpi_dashboard"; // Update with your backend URL
 
 const OrderFulfillmentDashboard = () => {
@@ -19,6 +21,26 @@ const OrderFulfillmentDashboard = () => {
   const [error, setError] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  
+    useEffect(() => {
+      const htmlElement = document.documentElement;
+      setIsDarkMode(htmlElement.classList.contains('dark'));
+  
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.attributeName === 'class') {
+            setIsDarkMode(htmlElement.classList.contains('dark'));
+          }
+        });
+      });
+  
+      observer.observe(htmlElement, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+  
+      return () => observer.disconnect();
+    }, []);
   
   useEffect(() => {
     fetchData();
@@ -110,12 +132,16 @@ const OrderFulfillmentDashboard = () => {
     
     return date.toLocaleDateString(undefined, options);
   };
-  const COLORS = isDarkMode ? ["#8884d8", "#ff4444"] : ["#8B0000", "#A52A2A"];
 
   const handleViewDetails = () => {
     navigate('/kpi');
   };
-
+  const colors = isDarkMode ? COLORS_DARK : COLORS_LIGHT;
+  const bgColor = isDarkMode ? 'bg-gray-900' : 'bg-gray-50';
+  const cardBg = isDarkMode ? 'bg-gray-800' : 'bg-white';
+  const textColor = isDarkMode ? 'text-white' : 'text-gray-800';
+  const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-300';
+  const tableHeaderBg = isDarkMode ? 'bg-gray-700' : 'bg-gray-100';
   return (
     
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -128,7 +154,7 @@ const OrderFulfillmentDashboard = () => {
       <div className="max-w-screen mx-auto p-10">
       <div className="flex justify-between items-center mb-4">
 
-      <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+      <h2 className={`text-3xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
               Order Fulfillment Dashboard
             </h2>
             <button 

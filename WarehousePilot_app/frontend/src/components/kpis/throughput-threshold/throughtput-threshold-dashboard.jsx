@@ -16,6 +16,7 @@ const ThroughputThresholdDashboard = ({ userData }) => {
     const [error, setError] = useState(null);
     const [data, setData] = useState([]); //formatted data for ThroughputBarGraph
     const [donutChartData, setDonutChartData] = useState([]); //formatted data for ThroughputDonutChart
+    const [isDarkMode, setIsDarkMode] = useState(false);
 
     /* fetchData: fetch and format data for ThroughputBarGraph */
     const fetchData = async () => {
@@ -65,6 +66,26 @@ const ThroughputThresholdDashboard = ({ userData }) => {
         ];
     };
 
+    useEffect(() => {
+      const htmlElement = document.documentElement;
+      setIsDarkMode(htmlElement.classList.contains('dark'));
+  
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.attributeName === 'class') {
+            setIsDarkMode(htmlElement.classList.contains('dark'));
+          }
+        });
+      });
+  
+      observer.observe(htmlElement, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+  
+      return () => observer.disconnect();
+    }, []);
+  
     /* useEffect - fetch data and set loading state */
     useEffect(() => {
         fetchData();
@@ -88,17 +109,17 @@ const ThroughputThresholdDashboard = ({ userData }) => {
             <SideBar userData={userData} isOpen={isSidebarOpen} />
 
             {/* Navbar */}
-            <div className="flex-1 sm:ml-10 sm:mt-2">
+            <div className="flex-1 sm:ml-10 sm:mt-2 mb-8">
                 <NavBar />
             </div>
 
             {/* Header - Title and Back to KPI Page button*/}
-            <div className="flex justify-between items-center mx-10">
-                <h1 className="text-3xl font-bold mb-6 dark:text-white">
+            <div className="flex justify-between items-center mx-10 ">
+                <h1 className="text-3xl font-bold mb-6 dark:text-white ">
                     Throughput Threshold Dashboard
                 </h1>
                 <button
-                    className="bg-red-600 dark:bg-red-700 text-white py-1 px-3 rounded hover:bg-red-700 dark:hover:bg-red-800 transition-colors"
+                    className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600'} text-white py-1 px-3 rounded`}
                     onClick={handleViewDetails}
                 >
                     Back to KPI Overview

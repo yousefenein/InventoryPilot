@@ -4,7 +4,7 @@ import {
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-const COLORS = ['#4CAF50', '#8BC34A', '#FF9800'];
+const COLORS = ["#e5745b", "#ca3433","#7b1e1e"];
 
 const OrderFulfillmentBarChart = ({ data ,isDarkMode}) => {
   // Convert raw data into a consistent shape
