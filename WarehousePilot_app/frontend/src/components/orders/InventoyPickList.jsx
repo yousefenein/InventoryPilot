@@ -309,80 +309,11 @@ const InventoryPickList = () => {
               </TableHeader>
               <TableBody items={paginatedRows}>
                 {(item) => (
-                  <TableRow key={item.id} 
+                  <TableRow key={item.id}
                   className="odd:bg-white even:bg-gray-100 dark:odd:bg-gray-800 dark:even:bg-gray-700">
-                    <TableCell className="dark:text-white">
-                      {item.order_id}
-                      <CopyText text={item.order_id.toString()} />
-                    </TableCell>
-                    <TableCell className="flex items-center gap-2 dark:text-white">
-                      <Icon
-                        icon="solar:calendar-linear"
-                        width={18}
-                        className="text-gray-500 dark:text-gray-400"
-                      />
-                      {item.due_date}
-                    </TableCell>
-                    <TableCell className="dark:text-white">
-                      {item.already_filled ? "Yes" : "No"}
-                    </TableCell>
-                    <TableCell>
-                      {item.assigned_to ? (
-                        <Chip
-                          className="capitalize"
-                          color="success"
-                          size="sm"
-                          variant="flat"
-                        >
-                          {item.assigned_to}
-                        </Chip>
-                      ) : (
-                        <Chip
-                          className="capitalize"
-                          color="default"
-                          size="sm"
-                          variant="flat"
-                        >
-                          Unassigned
-                        </Chip>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        style={{
-                          backgroundColor: '#b91c1c',
-                          color: 'white',
-                        }}
-                        size="sm"
-                        onPress={() => handleViewOrderDetails(item.order_id)}
-                      >
-                        Pick Order
-                      </Button>
-
-                      <Button
-                        style={{
-                          backgroundColor: '#b91c1c',
-                          color: 'white',
-                        }}
-                        size="sm"
-                        onPress={() => handleOpenAssignModal(item.order_id)}
-                        className="ml-2"
-                      >
-                        Assign Staff
-                      </Button>
-
-                      <Button
-                        style={{
-                          backgroundColor: '#b91c1c',
-                          color: 'white',
-                        }}
-                        size="sm"
-                        onPress={() => navigate(`/label/all/${item.order_id}`)}
-                        className="ml-2"
-                      >
-                        View Labels
-                      </Button>
-                    </TableCell>
+                    {visibleTableColumns.map(col => (
+                      <TableCell key={`${item.id}-${col.uid}`}>{renderCell(item, col.uid)}</TableCell>
+                    ))}
                   </TableRow>
                 )}
               </TableBody>
