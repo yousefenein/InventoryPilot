@@ -116,11 +116,11 @@ const ActiveOrdersDetails = ({ userData }) => {
     <div className={`flex min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <SideBar userData={userData} isOpen={isSidebarOpen} />
 
-      <div className="flex-1 sm:ml-10 sm:mt-2">
+      <div className="flex-1 p-2">
         <NavBar />
-        <div className="flex-1 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className={`text-3xl font-bold mb-6 ml-10 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+        <div className="max-w-screen mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-between items-center mb-4">
+            <h1 className={`text-3xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
               Active Orders Details
             </h1>
             <button 

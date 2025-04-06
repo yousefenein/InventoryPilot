@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import CTPOBarChart from "./CTPOBarChart";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -19,6 +20,7 @@ const CTPOPreview = () => {
   const [range, setRange] = useState("1D");              // Timeline: 1D, 1W, or 1M
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Use today's date as reference (YYYY-MM-DD)
   const today = new Date().toISOString().split("T")[0];
@@ -105,7 +107,7 @@ const CTPOPreview = () => {
   };
 
   const handleDetailsClick = () => {
-    window.location.href = "http://localhost:5173/CTPO";
+    navigate("/CTPO"); 
   };
 
   return (
@@ -122,7 +124,7 @@ const CTPOPreview = () => {
         <h2 className="text-xl font-semibold dark:text-white">Cycle Time Per Order</h2>
         <button
           onClick={handleDetailsClick}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-gray-500 dark:bg-gray-700 hover:bg-red-600 dark:hover:bg-red-700 text-white py-1 px-3 rounded transition-colors"
         >
           View Details
         </button>
@@ -136,7 +138,7 @@ const CTPOPreview = () => {
             onClick={() => handleRangeClick(label)}
             className={`px-4 py-2 rounded ${
               range === label
-                ? "bg-blue-500 text-white"
+                ? "bg-red-600 dark:bg-red-700 text-white"
                 : "bg-gray-200 text-gray-700"
             }`}
           >

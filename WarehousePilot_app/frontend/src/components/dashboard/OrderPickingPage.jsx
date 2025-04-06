@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import NavBar from "../navbar/App";
+import SideBar from "../dashboard_sidebar1/App";
 import {
   PieChart,
   Pie,
@@ -45,7 +46,7 @@ const OrderPickingPage = () => {
   useEffect(() => {
     const htmlElement = document.documentElement;
     setIsDarkMode(htmlElement.classList.contains('dark'));
-    
+
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.attributeName === 'class') {
@@ -53,12 +54,12 @@ const OrderPickingPage = () => {
         }
       });
     });
-    
+
     observer.observe(htmlElement, {
       attributes: true,
       attributeFilter: ['class']
     });
-    
+
     return () => observer.disconnect();
   }, []);
 
@@ -163,7 +164,7 @@ const OrderPickingPage = () => {
       return dayMatch || orderMatch || picksMatch;
     });
   }, [detailedData, detailFilter]);
-  
+
   const handleViewDetails = () => {
     navigate('/kpi');
   };
@@ -177,24 +178,25 @@ const OrderPickingPage = () => {
 
   return (
     <div className={`min-h-screen ${bgColor}`}>
+      <SideBar />
+      <div className="flex-1"></div>
       <NavBar />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div className="flex justify-between items-center mb-4 gap-4">
+      <div className="max-w-screen mx-auto p-10">
+      <div className="flex justify-between items-center mb-2">
             <h1 className={`text-3xl font-bold ${textColor}`}>Order Picking Details</h1>
-            <button 
+            <button
               className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600'} text-white py-1 px-3 rounded`}
               onClick={handleViewDetails}
             >
               Back to KPI Overview
             </button>
-          </div>
-          <Button color="primary" onPress={fetchAllData}>
+        </div>
+        <div className="flex justify-end mb-4">
+          <Button color="primary" size="sm" onPress={fetchAllData}>
             Refresh Data
           </Button>
         </div>
-
         {/* Error messages */}
         {errorPie && (
           <div className={`border ${isDarkMode ? 'border-red-900 bg-red-900/20' : 'border-red-400 bg-red-100'} text-red-700 px-4 py-3 rounded relative mb-4 ${isDarkMode ? 'text-red-300' : ''}`}>
@@ -249,11 +251,10 @@ const OrderPickingPage = () => {
                   <tr>
                     <td className={`px-4 py-2 font-medium ${textColor}`}>Accuracy %</td>
                     <td
-                      className={`px-4 py-2 font-semibold ${
-                        accuracyPercentage >= targetAccuracy
+                      className={`px-4 py-2 font-semibold ${accuracyPercentage >= targetAccuracy
                           ? "text-green-500"
                           : "text-red-500"
-                      }`}
+                        }`}
                     >
                       {accuracyPercentage}%
                     </td>
@@ -277,8 +278,8 @@ const OrderPickingPage = () => {
                     <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={isDarkMode ? { 
+                <Tooltip
+                  contentStyle={isDarkMode ? {
                     backgroundColor: '#2D3748',
                     borderColor: '#4A5568',
                     color: '#E2E8F0'
@@ -325,8 +326,8 @@ const OrderPickingPage = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#4A5568' : '#E2E8F0'} />
                   <XAxis dataKey="day" stroke={isDarkMode ? '#E2E8F0' : '#1A202C'} />
                   <YAxis stroke={isDarkMode ? '#E2E8F0' : '#1A202C'} />
-                  <Tooltip 
-                    contentStyle={isDarkMode ? { 
+                  <Tooltip
+                    contentStyle={isDarkMode ? {
                       backgroundColor: '#2D3748',
                       borderColor: '#4A5568',
                       color: '#E2E8F0'

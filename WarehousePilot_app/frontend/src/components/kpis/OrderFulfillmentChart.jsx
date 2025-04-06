@@ -4,7 +4,7 @@ import {
   Tooltip, Legend
 } from 'recharts';
 
-const COLORS = ['#4CAF50', '#8BC34A', '#FF9800'];
+const COLORS = ["#e5745b", "#ca3433","#7b1e1e"];
 
 const OrderFulfillmentChart = ({ currentPeriod }) => {
   // Function to prepare data for the donut chart
