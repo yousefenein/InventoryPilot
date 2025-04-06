@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import OrderFulfillmentBarChart from "./OrderFulfillmentBarChart";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = "http://127.0.0.1:8000/kpi_dashboard";
 
@@ -10,6 +11,7 @@ const OrderFulfillmentPreview = () => {
   const [range, setRange] = useState("1D");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -76,7 +78,7 @@ const OrderFulfillmentPreview = () => {
   };
 
   const handleDetailsClick = () => {
-    window.location.href = "http://localhost:5173/order-fullfillement-dashboard";
+    navigate("/order-fullfillement-dashboard"); 
   };
 
   return (
@@ -95,7 +97,7 @@ const OrderFulfillmentPreview = () => {
         </h2>
         <button
           onClick={handleDetailsClick}
-          className="bg-gray-500 hover:bg-red-600 text-white py-1 px-3 rounded"
+          className="bg-gray-500 dark:bg-gray-700 hover:bg-red-600 dark:hover:bg-red-700 text-white py-1 px-3 rounded transition-colors"
         >
           View Details
         </button>
