@@ -620,7 +620,8 @@ const InventoryPicklistItem = () => {
                       </TableHeader>
                       <TableBody>
                         {paginatedInventoryItems.map((item) => (
-                          <TableRow key={item.picklist_item_id}>
+                          <TableRow key={item.picklist_item_id}
+                          className="odd:bg-white even:bg-gray-100 dark:odd:bg-gray-800 dark:even:bg-gray-700">
                             <TableCell>{item.picklist_item_id}</TableCell>
                             <TableCell>
                               <span className="bg-blue-100 text-black-800 font-semibold px-2 py-1 rounded">
@@ -932,7 +933,8 @@ const InventoryPicklistItem = () => {
                       </TableHeader>
                       <TableBody>
                         {paginatedManufacturingItems.map((item) => (
-                          <TableRow key={item.manufacturing_list_item_id}>
+                          <TableRow key={item.manufacturing_list_item_id}
+                          className="odd:bg-white even:bg-gray-100 dark:odd:bg-gray-800 dark:even:bg-gray-700">
                             <TableCell>
                               {item.manufacturing_list_item_id}
                             </TableCell>

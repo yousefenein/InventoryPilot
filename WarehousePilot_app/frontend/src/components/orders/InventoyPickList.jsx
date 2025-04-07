@@ -309,7 +309,8 @@ const InventoryPickList = () => {
               </TableHeader>
               <TableBody items={paginatedRows}>
                 {(item) => (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.id}
+                  className="odd:bg-white even:bg-gray-100 dark:odd:bg-gray-800 dark:even:bg-gray-700">
                     {visibleTableColumns.map(col => (
                       <TableCell key={`${item.id}-${col.uid}`}>{renderCell(item, col.uid)}</TableCell>
                     ))}
