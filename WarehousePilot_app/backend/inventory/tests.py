@@ -123,3 +123,14 @@ class AssignedPicklistViewTest(TestCase):
         self.assertEqual(response.data[0]["already_filled"], False)
         self.assertEqual(response.data[0]["assigned_to"], "Test User")
 
+    def test_get_assigned_picklists_no_picklists(self):
+        # Unassign the picklist from the user
+        self.picklist.assigned_employee_id = None
+        self.picklist.save()
+
+        url = reverse('assigned_inventory_picklist')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([], response.data)
+        #self.assertEqual(len(response.data), 0)
+
