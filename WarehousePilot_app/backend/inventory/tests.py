@@ -115,3 +115,11 @@ class AssignedPicklistViewTest(TestCase):
         )
 
     def test_get_assigned_picklists_success(self):
+        url = reverse('assigned_inventory_picklist')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["order_id"], int(self.order.order_id))
+        self.assertEqual(response.data[0]["already_filled"], False)
+        self.assertEqual(response.data[0]["assigned_to"], "Test User")
+
