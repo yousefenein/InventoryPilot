@@ -134,3 +134,10 @@ class AssignedPicklistViewTest(TestCase):
         self.assertEqual([], response.data)
         #self.assertEqual(len(response.data), 0)
 
+    def test_get_assigned_picklists_error(self):
+        # Simulate an error by deleting the user
+        self.user.delete()
+
+        url = reverse('assigned_inventory_picklist')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 401)
