@@ -44,7 +44,7 @@ import {ArrowUpIcon} from "./arrow-up";
 
 import {useMemoizedCallback} from "./use-memoized-callback";
 
-import {columns, INITIAL_VISIBLE_COLUMNS, fetchInventoryData, statusColorMap, deleteInventoryItems} from "./data";
+import {columns, INITIAL_VISIBLE_COLUMNS, fetchInventoryData, statusColorMap, deleteInventoryItems, editInventoryItem} from "./data";
 import NotifCard from "../notifications/notifications-card/App";
 import { AddItemForm } from "./add-item-form";
 import { ToastContainer, toast } from "react-toastify";
@@ -70,6 +70,14 @@ export default function InventoryTable() {
   }); 
   const [isAddItemPopoverOpen, setIsAddItemPopoverOpen] = useState(false);
   const [isDeletePopoverOpen, setIsDeletePopoverOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Inventory | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    warehouse_number: "",
+    sku_color_id: "",
+    location: "",
+    qty: "",
+    amount_needed: "",
+  });
 
   useEffect(() => {
     const loadInventory = async () => {
@@ -163,6 +171,53 @@ export default function InventoryTable() {
   const {getButtonProps: getEditProps} = useButton({ref: editRef});
   const {getButtonProps: getDeleteProps} = useButton({ref: deleteRef});
 
+  const handleEditClick = (item: Inventory) => {
+    setEditingItem(item);
+    setEditFormData({
+      warehouse_number: item.warehouse_number,
+      sku_color_id: item.sku_color_id,
+      location: item.location,
+      qty: String(item.qty),
+      amount_needed: String(item.amount_needed),
+    });
+  };
+
+  const handleEditChange = (field: keyof typeof editFormData, value: string) => {
+    setEditFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleEditSave = async () => {
+    if (editingItem) {
+      try {
+        await editInventoryItem({
+          inventory_id: editingItem.inventory_id,
+          warehouse_number: editFormData.warehouse_number,
+          sku_color_id: editFormData.sku_color_id,
+          location: editFormData.location,
+          qty: parseInt(editFormData.qty, 10),
+          amount_needed: parseInt(editFormData.amount_needed, 10),
+        });
+        setInventory((prevInventory) =>
+          prevInventory.map((item) =>
+            item.inventory_id === editingItem.inventory_id
+              ? { ...item, ...editFormData, qty: parseInt(editFormData.qty, 10), amount_needed: parseInt(editFormData.amount_needed, 10) }
+              : item
+          )
+        );
+        toast.success("Item updated successfully!");
+      } catch (error) {
+        console.error("Failed to update inventory item", error);
+        toast.error("Failed to update item.");
+      } finally {
+        setEditingItem(null);
+      }
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditingItem(null);
+  };
+
   const renderCell = useMemoizedCallback((item: Inventory, columnKey: React.Key) => {
     const itemKey = columnKey as ColumnsKey;
 
@@ -182,7 +237,7 @@ export default function InventoryTable() {
         case "edit":
         return (
           <div className="flex items-center gap-2">
-            <Button {...(getEditProps() as any)} ref={editRef} isIconOnly variant="flat">
+            <Button {...(getEditProps() as any)} ref={editRef} isIconOnly variant="flat" onPress={() => handleEditClick(item)}>
               <EditLinearIcon />
             </Button>
           </div>
@@ -559,12 +614,57 @@ export default function InventoryTable() {
           </TableHeader>
           <TableBody emptyContent={"No items found"} items={paginatedItems}>
             {(item) => (
-              <TableRow key={item.inventory_id}>
+              <TableRow key={item.inventory_id}
+              className="odd:bg-white even:bg-gray-100 dark:odd:bg-gray-800 dark:even:bg-gray-700">
                 {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
               </TableRow>
             )}
           </TableBody>
         </Table>
+        {editingItem && (
+        <Popover isOpen={!!editingItem} onOpenChange={(isOpen) => !isOpen && setEditingItem(null)} style={{ position: "absolute", zIndex: 100000, maxHeight: "100vh", marginTop: "-40%", marginLeft: "65%" }}>
+          {[
+            <PopoverContent key="popover-content">
+              <div className="p-4">
+                <h3 className="text-lg font-bold mb-4">Edit Item</h3>
+                <div className="flex flex-col gap-3">
+                  <Input
+                    label="Warehouse Number"
+                    value={editFormData.warehouse_number}
+                    onValueChange={(value) => handleEditChange("warehouse_number", value)}
+                  />
+                  <Input
+                    label="SKU Color ID"
+                    value={editFormData.sku_color_id}
+                    onValueChange={(value) => handleEditChange("sku_color_id", value)}
+                  />
+                  <Input
+                    label="Location"
+                    value={editFormData.location}
+                    onValueChange={(value) => handleEditChange("location", value)}
+                  />
+                  <Input
+                    label="Quantity"
+                    value={editFormData.qty}
+                    onValueChange={(value) => handleEditChange("qty", value)}
+                  />
+                  <Input
+                    label="Amount Needed"
+                    value={editFormData.amount_needed}
+                    onValueChange={(value) => handleEditChange("amount_needed", value)}
+                  />
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button variant="flat" onPress={handleEditCancel}>
+                    Cancel
+                  </Button>
+                  <Button onPress={handleEditSave}>Save</Button>
+                </div>
+              </div>
+            </PopoverContent>
+          ]}
+        </Popover>
+      )}
         <ToastContainer 
           position="bottom-right"
           autoClose={5000}

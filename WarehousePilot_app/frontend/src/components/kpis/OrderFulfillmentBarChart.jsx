@@ -4,9 +4,9 @@ import {
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-const COLORS = ['#4CAF50', '#8BC34A', '#FF9800'];
+const COLORS = ["#e5745b", "#ca3433","#7b1e1e"];
 
-const OrderFulfillmentBarChart = ({ data }) => {
+const OrderFulfillmentBarChart = ({ data ,isDarkMode}) => {
   // Convert raw data into a consistent shape
   const prepareChartData = (periodData) => {
     if (!periodData || !Array.isArray(periodData) || periodData.length === 0) {
@@ -95,21 +95,26 @@ const OrderFulfillmentBarChart = ({ data }) => {
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             {...stackProps}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#eee" strokeOpacity={0.3} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#4A5568' : '#E2E8F0'} />
             <XAxis 
-              dataKey="name" 
-              tick={{ fill: '#6B7280' }} 
-              stroke="#6B7280"
+               dataKey="name" 
+               tick={{ fill: isDarkMode ? '#E2E8F0' : '#6B7280' }} 
+               stroke={isDarkMode ? '#E2E8F0' : '#6B7280'}
             />
             <YAxis 
-              tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} 
-              tick={{ fill: '#6B7280' }}
-              stroke="#6B7280"
+             tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} 
+             tick={{ fill: isDarkMode ? '#E2E8F0' : '#6B7280' }}
+             stroke={isDarkMode ? '#E2E8F0' : '#6B7280'}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip contentStyle={isDarkMode ? {
+    backgroundColor: '#2D3748',
+    borderColor: '#4A5568',
+    color: '#E2E8F0'
+  } : {}}
+/>
             <Legend 
               wrapperStyle={{
-                color: '#6B7280'
+                color: isDarkMode ? '#E2E8F0' : '#6B7280'
               }}
             />
             <Bar dataKey="Fully Fulfilled" stackId="a" fill={COLORS[0]} />
