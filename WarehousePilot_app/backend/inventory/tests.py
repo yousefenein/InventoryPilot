@@ -68,3 +68,50 @@ class InventoryTests(TestCase):
         
         with self.assertRaises(Inventory.DoesNotExist):
             Inventory.objects.get(inventory_id=self.inventory_item.inventory_id)
+
+
+class AssignedPicklistViewTest(TestCase):
+    def setUp(self):
+        # Create a test user
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="testuseremail@test.com",
+            password="testpassword",
+            first_name="Test",
+            last_name="User",
+            role="staff",
+            department="Test Department",
+            date_of_hire=timezone.now(),
+        )
+        self.client = APIClient()
+        self.token = AccessToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
+
+        # Create a test order
+        self.order = Orders.objects.create(
+            order_id="123",
+            due_date=timezone.now() + timezone.timedelta(days=5),
+            status="In Progress"
+        )
+
+        # Create a picklist assigned to the user
+        self.picklist = InventoryPicklist.objects.create(
+            order_id=self.order,
+            assigned_employee_id=self.user,
+            status=False,
+        )
+        #create part
+        self.part = Part.objects.create(
+            sku_color='ALOE 01',
+            sku='ALOE',
+            description='Aloe Part Description'
+        )
+        # Create picklist items
+        self.picklist_item = InventoryPicklistItem.objects.create(
+            picklist_id=self.picklist,
+            status=False,
+            sku_color=self.part,
+            amount=10,
+        )
+
+    def test_get_assigned_picklists_success(self):
