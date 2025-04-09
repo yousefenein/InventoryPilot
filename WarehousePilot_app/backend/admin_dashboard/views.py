@@ -25,7 +25,7 @@ def home(request):
 # IsAdminUser: Allows access to admin users
 class IsAdminUser(BasePermission):
     def has_permission(self, request, view):
-        return request.user and request.user.role == 'admin'
+        return request.user and request.user.is_authenticated and request.user.role == 'admin'
 
 # Manage Users: Retrieve all of the platform
 class ManageUsersView(APIView):
@@ -47,7 +47,7 @@ class ManageUsersView(APIView):
 # Adding Users:  Retrieve user input and add to database
 class AddUserView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         try:
@@ -81,7 +81,7 @@ class AddUserView(APIView):
 
 class EditUserView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, user_id):
         """
@@ -137,7 +137,7 @@ class EditUserView(APIView):
 
 class DeleteUserView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def delete(self, request, user_id):
         """
