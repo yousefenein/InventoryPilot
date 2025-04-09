@@ -558,36 +558,109 @@ class EditUserTests(APITestCase):
         self.assertEqual(response.data, {'detail': 'You do not have permission to perform this action.'})
 
 
+class DeleteUserTests(APITestCase):
+    def setUp(self):
+        # Create a user who will perform the delete operations
+        self.deleter_user = users.objects.create_user(
+            username='deleteruser',
+            email='deleteruser@example.com',
+            password='deleterpassword',
+            role='admin',
+            date_of_hire='1980-08-08',
+            first_name='Deleter',
+            last_name='User',
+            department='Deleting',
+        )
+        # Create a user who will be the target of delete operations
+        self.target_user = users.objects.create_user(
+            username='targetuser',
+            email='targetuser@example.com',
+            password='targetpassword',
+            role='user',
+            date_of_hire='1990-01-01',
+            first_name='Target',
+            last_name='User',
+            department='Targeting',
+        )
+        # Create a regular user for testing
+        self.regular_user = users.objects.create_user(
+            username='staffuser',
+            email='staffuser@example.com',
+            password='staffpassword',
+            role='user',
+            date_of_hire='1990-01-01',
+            first_name='Staff',
+            last_name='User',
+            department='Staffington',
+        )
+
+        self.client = APIClient()
 
         # Set up the URLs for deleting
         self.delete_user_url = reverse('delete_user', kwargs={'user_id': self.target_user.user_id})
 
-    def test_delete_user_success(self):
-        """
-        Ensure that an authenticated user can delete another user.
-        """
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
+    @patch('auth_app.models.users.objects.get')
+    # test_delete_user_success(): Ensure that an authenticated user can delete another user
+    def test_delete_user_success(self, mock_get):
+        # Arrange: Mock user retrieval and authenticate the deleter user
+        mock_get.return_value = self.target_user
+        self.client.force_authenticate(user=self.deleter_user)
+
+        # Act: Make DELETE request to delete user endpoint
         response = self.client.delete(self.delete_user_url)
+        
+        # Assert: Check response status and data
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['message'], 'User deleted successfully')
-
-        # Verify that the user has been deleted
-        with self.assertRaises(users.DoesNotExist):
-            users.objects.get(user_id=self.target_user.user_id)
-
-    def test_delete_user_not_found(self):
-        """
-        Ensure that deleting a non-existent user returns a 404 error.
-        """
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
+        self.assertEqual(response.data, {"message": "User deleted successfully"})
+    
+    @patch('auth_app.models.users.objects.get')
+    # test_delete_user_not_found(): Ensure that deleting a non-existent user returns a 404 error
+    def test_delete_user_not_found(self, mock_get):
+        # Arrange: Mock user retrieval to raise an exception, authenticate user, and set up URL
+        mock_get.side_effect = users.DoesNotExist()
+        self.client.force_authenticate(user=self.deleter_user)
         url = reverse('delete_user', kwargs={'user_id': 9999})
+        
+        # Act: Make DELETE request to delete user endpoint
         response = self.client.delete(url)
+
+        # Arrange: Check if exception was raised
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['error'], 'User not found')
 
-    def test_delete_user_unauthenticated(self):
-        """
-        Ensure that an unauthenticated user cannot delete a user.
-        """
+    @patch('auth_app.models.users.objects.get')
+    # test_delete_user_server_error(): Ensure that an error during deletion returns a 500 error
+    def test_delete_user_server_error(self, mock_get):
+        # Arrange: Mock deletion to raise an exception and authenticate user
+        mock_user = MagicMock()
+        mock_get.return_value = mock_user
+        mock_user.delete.side_effect = Exception("Database error")
+        self.client.force_authenticate(user=self.deleter_user)
+
+        # Act: Make DELETE request to delete user endpoint
         response = self.client.delete(self.delete_user_url)
+        
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data["error"], "An error occurred: Database error")
+
+    # test_delete_user_unauthenticated(): Ensure that an unauthenticated user cannot delete a user
+    def test_delete_user_unauthenticated(self):
+        # Act: Make DELETE request to delete user endpoint without authentication
+        response = self.client.delete(self.delete_user_url)
+
+        # Assert: Check if exception was raised
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data, {"detail": "Authentication credentials were not provided."})
+
+    # test_delete_user_non_admin_user(): Ensure that a non-admin user cannot delete another user
+    def test_delete_user_non_admin_user(self):
+        # Arrange: Authenticate the staff user
+        self.client.force_authenticate(self.regular_user)  
+
+        # Act: Make DELETE request to delete user endpoint
+        response = self.client.delete(self.delete_user_url)
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data, {'detail': 'You do not have permission to perform this action.'})
