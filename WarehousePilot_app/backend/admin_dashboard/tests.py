@@ -10,7 +10,7 @@ The tests cover:
 """
 
 from django.test import TestCase
-from rest_framework.test import APIClient, APITestCase
+from rest_framework.test import APIClient, APITestCase, force_authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from django.urls import reverse
@@ -230,7 +230,7 @@ class AddUserTests(APITestCase):
         self.add_user_url = reverse('add_user')
 
     @patch('auth_app.models.users.objects.filter')
-    # test_add_user_success(): Ensure that an authenticated, admin user can add a new user successfully.
+    # test_add_user_success(): Ensure that an authenticated, admin user can add a new user successfully
     def test_add_user_success(self, mock_filter):        
         # Arrange: Mock user creation and authenticate user
         mock_filter.return_value.exists.return_value = False
@@ -260,7 +260,7 @@ class AddUserTests(APITestCase):
             )
 
     @patch('auth_app.models.users.objects.filter')
-    # test_add_user_duplicate_email(): Ensure that adding a user with an existing email fails.
+    # test_add_user_duplicate_email(): Ensure that adding a user with an existing email fails
     def test_add_user_duplicate_email(self, mock_filter):        
         # Arrange: Mock the users.objects.filter to return True (user exists) and authenticate user
         mock_filter.return_value.exists.return_value = True
@@ -280,7 +280,7 @@ class AddUserTests(APITestCase):
         self.assertEqual(response.data, {"error": "User with this email already exists"})
         mock_filter.assert_called_once_with(email=self.valid_user_data['email'])
 
-    # test_add_user_missing_fields(): Ensure that missing required fields result in a 500 error.
+    # test_add_user_missing_fields(): Ensure that missing required fields result in a 500 error
     def test_add_user_missing_fields(self):
         # Arrange: Create incomplete user data and authenticate user
         incomplete_data = {
@@ -297,7 +297,7 @@ class AddUserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertIn('error', response.data)
 
-    # test_add_user_unauthenticated(): Ensure that an unauthenticated user cannot add a new user.
+    # test_add_user_unauthenticated(): Ensure that an unauthenticated user cannot add a new user
     def test_add_user_unauthenticated(self):
         # Act: Make POST request to add user endpoint without authentication
         response = self.client.post(
@@ -327,130 +327,237 @@ class AddUserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data, {'detail': 'You do not have permission to perform this action.'})
 
-
-        # Set up the URLs for editing
-        self.edit_user_url = reverse('edit_user', kwargs={'user_id': self.target_user.user_id})
-
-    def test_get_user_success(self):
-        """
-        Ensure that an authenticated user can retrieve details of another user.
-        """
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
-        response = self.client.get(self.edit_user_url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['username'], 'targetuser')
-        self.assertEqual(response.data['email'], 'targetuser@example.com')
-        self.assertEqual(response.data['role'], 'staff')
-        self.assertEqual(response.data['first_name'], 'Target')
-        self.assertEqual(response.data['last_name'], 'User')
-        self.assertEqual(response.data['department'], 'Targeting')
-
-    def test_get_user_not_found(self):
-        """
-        Ensure that requesting a non-existent user returns a 404 error.
-        """
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
-        url = reverse('edit_user', kwargs={'user_id': 9999})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['error'], 'User not found')
-
-    def test_get_user_unauthenticated(self):
-        """
-        Ensure that an unauthenticated user cannot retrieve user details.
-        """
-        response = self.client.get(self.edit_user_url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_update_user_success(self):
-        """
-        Ensure that an authenticated user can update another user's details.
-        """
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
-        update_data = {
-            'first_name': 'UpdatedFirstName',
-            'last_name': 'UpdatedLastName',
-            'department': 'UpdatedDepartment',
-        }
-        response = self.client.put(self.edit_user_url, update_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['message'], 'User updated successfully')
-
-        # Verify that the user's details have been updated
-        self.target_user.refresh_from_db()
-        self.assertEqual(self.target_user.first_name, 'UpdatedFirstName')
-        self.assertEqual(self.target_user.last_name, 'UpdatedLastName')
-        self.assertEqual(self.target_user.department, 'UpdatedDepartment')
-
-    def test_update_user_invalid_data(self):
-        """
-        Ensure that providing invalid data results in a 400 error.
-        """
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
-        invalid_data = {
-            'email': 'not-an-email'  # Invalid email format
-        }
-        response = self.client.put(self.edit_user_url, invalid_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('email', response.data)
-
-    def test_update_user_not_found(self):
-        """
-        Ensure that updating a non-existent user returns a 404 error.
-        """
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
-        url = reverse('edit_user', kwargs={'user_id': 9999})
-        update_data = {
-            'first_name': 'ShouldNotWork'
-        }
-        response = self.client.put(url, update_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['error'], 'User not found')
-
-    def test_update_user_unauthenticated(self):
-        """
-        Ensure that an unauthenticated user cannot update user details.
-        """
-        update_data = {
-            'first_name': 'ShouldNotWork'
-        }
-        response = self.client.put(self.edit_user_url, update_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-
-class DeleteUserTests(APITestCase):
+class EditUserTests(APITestCase):
     def setUp(self):
-        # Create a user who will perform the delete operations
-        self.deleter_user = users.objects.create_user(
-            username='deleteruser',
-            email='deleteruser@example.com',
-            password='deleterpassword',
-            role='deleter',
-            date_of_hire='1980-08-08',
-            first_name='Deleter',
+        # Create a user who will perform the edit operations
+        self.editor_user = users.objects.create_user(
+            username='editoruser',
+            email='editoruser@example.com',
+            password='editorpassword',
+            role='admin',
+            date_of_hire='1985-05-15',
+            first_name='Editor',
             last_name='User',
-            department='Deleting',
+            department='Editing',
+            is_staff=True,
+            is_active=True,
         )
-        # Create a user who will be the target of delete operations
+        # Create a user who will be the target of edit operations
         self.target_user = users.objects.create_user(
             username='targetuser',
             email='targetuser@example.com',
             password='targetpassword',
-            role='user',
+            role='staff',
             date_of_hire='1990-01-01',
             first_name='Target',
             last_name='User',
             department='Targeting',
+            is_active=True,
+            is_staff=True,
         )
-        # Log in to get an access token
-        self.login_url = reverse('login')
-        login_data = {
-            'username': 'deleteruser',
-            'password': 'deleterpassword'
+        # Create a regular user for testing
+        self.regular_user = users.objects.create_user(
+            username='staffuser',
+            email='staffuser@example.com',
+            password='staffpassword',
+            role='user',
+            date_of_hire='1990-01-01',
+            first_name='Staff',
+            last_name='User',
+            department='Staffington',
+        )
+
+        # Create test data to pass in PUT request
+        self.update_data = {             
+            'first_name': 'UpdatedFirstName',
+            'last_name': 'UpdatedLastName',
+            'department': 'UpdatedDepartment'
         }
-        response = self.client.post(self.login_url, login_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK, "Login failed in setUp.")
-        self.access_token = response.data.get('access')
+        self.invalid_update_email = { 'email': 'invalid-email' }  # Invalid email format
+
+        # Create an API client instance
+        self.client = APIClient()
+
+        # Set up the URLs for editing
+        self.edit_user_url = reverse('edit_user', kwargs={'user_id': self.target_user.user_id})
+
+    @patch('auth_app.models.users.objects.get')
+    # test_get_user_success(): Ensure that an authenticated user can retrieve details of another user
+    def test_get_user_success(self, mock_get):
+        # Arrange: Mock user retrieval and staff serializer, and authenticate the editor user
+        mock_get.return_value = self.target_user
+        
+        serializer_data = {
+            "user_id": self.target_user.user_id,
+            "username": self.target_user.username,
+            "email": self.target_user.email,
+            "role": self.target_user.role,
+            "date_of_hire": self.target_user.date_of_hire,
+            "first_name": self.target_user.first_name,
+            "last_name": self.target_user.last_name,
+            "department": self.target_user.department,
+            "is_active": self.target_user.is_active,
+            "is_staff": self.target_user.is_staff,
+        }
+        with patch('admin_dashboard.serializers.StaffSerializer') as mock_serializer:
+            mock_serializer.return_value.data = serializer_data
+            self.client.force_authenticate(user=self.editor_user)
+
+            # Act: Make GET request to edit user endpoint
+            response = self.client.get(self.edit_user_url)
+
+            # Assert: Check response status and data
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data['username'], serializer_data['username'])
+            self.assertEqual(response.data['email'], serializer_data['email'])
+            self.assertEqual(response.data['role'], serializer_data['role'])
+            self.assertEqual(response.data['first_name'], serializer_data['first_name'])
+            self.assertEqual(response.data['last_name'], serializer_data['last_name'])
+            self.assertEqual(response.data['department'], serializer_data['department'])
+
+    @patch('auth_app.models.users.objects.get')
+    # test_get_user_not_found(): Ensure that requesting a non-existent user returns a 404 error
+    def test_get_user_not_found(self, mock_get):
+        # Arrange: Mock user retrieval to raise an exception, authenticate user, and set up URL
+        mock_get.side_effect = users.DoesNotExist()
+        self.client.force_authenticate(user=self.editor_user)
+        url = reverse('edit_user', kwargs={'user_id': 9999})
+
+        # Act: Make GET request to edit user endpoint
+        response = self.client.get(url)
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['error'], 'User not found')
+
+    # test_get_user_unauthenticated(): Ensure that an unauthenticated user cannot retrieve user details
+    def test_get_user_unauthenticated(self):
+        # Act: Make GET request to edit user endpoint without authentication
+        response = self.client.get(self.edit_user_url)
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    # test_get_user_non_admin_user(): Ensure that a non-admin user cannot retrieve another user's details
+    def test_get_user_non_admin_user(self):
+        # Arrange: Authenticate the staff user
+        self.client.force_authenticate(user=self.regular_user)
+
+        # Act: Make GET request to edit user endpoint
+        response = self.client.get(self.edit_user_url)
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data, {'detail': 'You do not have permission to perform this action.'})
+
+    @patch('auth_app.models.users.objects.get')
+    # test_get_user_server_error(): Ensure that an error during user retrieval returns a 500 error
+    def test_get_user_server_error(self, mock_get):
+        # Arrange: Mock user retrieval to raise an exception and authenticate user
+        mock_get.side_effect = Exception("Database error")
+        self.client.force_authenticate(user=self.editor_user)
+
+        # Act: Make GET request to edit user endpoint
+        response = self.client.get(self.edit_user_url)
+        
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertIn("An error occurred", response.data["error"])
+
+    @patch('auth_app.models.users.objects.get')
+    # test_update_user_success(): Ensure that an authenticated user can update another user's details
+    def test_update_user_success(self, mock_get):
+        # Arrange: Mock user retrieval and staff serializer, and authenticate the editor user
+        mock_get.return_value = self.target_user
+  
+        mock_serializer = MagicMock()
+        mock_serializer.is_valid.return_value = True
+        with patch('admin_dashboard.serializers.StaffSerializer', return_value=mock_serializer):
+            self.client.force_authenticate(user=self.editor_user)
+            
+            # Act: Make PUT request to edit user endpoint
+            response = self.client.put(self.edit_user_url, self.update_data, format='json')
+            
+            # Assert: Check response and database value
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data, {"message": "User updated successfully"})
+            self.target_user.refresh_from_db()
+            self.assertEqual(self.target_user.first_name, 'UpdatedFirstName')
+            self.assertEqual(self.target_user.last_name, 'UpdatedLastName')
+            self.assertEqual(self.target_user.department, 'UpdatedDepartment')
+
+    @patch('auth_app.models.users.objects.get')
+    # test_update_user_invalid_email(): Ensure that updating user with an invalid email returns a 400 error
+    def test_update_user_invalid_email(self, mock_get):
+        # Arrange: Mock user retrieval and staff serializer to simulate invalid email
+        mock_get.return_value = self.target_user
+        mock_serializer = MagicMock()
+        mock_serializer.is_valid.return_value = False
+        mock_serializer.errors = {'email': ['Enter a valid email address.']}
+
+        with patch('admin_dashboard.serializers.StaffSerializer', return_value=mock_serializer):
+            self.client.force_authenticate(user=self.editor_user)
+
+            # Act: Make PUT request to edit user endpoint with invalid email
+            response = self.client.put(self.edit_user_url, self.invalid_update_email, format='json')
+
+            # Assert: Check if exception was raised
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data, 
+                {'email': ['Enter a valid email address.']}
+            )
+
+    @patch('auth_app.models.users.objects.get')
+    # test_update_user_not_found(): Ensure that updating a non-existent user returns a 404 error
+    def test_update_user_not_found(self, mock_get):
+        # Arrange: Mock user retrieval to raise an exception and authenticate user
+        mock_get.side_effect = users.DoesNotExist()
+        self.client.force_authenticate(user=self.editor_user)
+
+        # Act: Make PUT request to edit user endpoint
+        response = self.client.put(self.edit_user_url, self.update_data, format='json') 
+        
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {"error": "User not found"})   
+
+    @patch('auth_app.models.users.objects.get')
+    # test_update_user_server_error(): Ensure that an error during user retrieval returns a 500 error
+    def test_update_user_server_error(self, mock_get):
+        # Arrange: Mock user retrieval to raise an exception and authenticate user
+        mock_get.side_effect = Exception("Database error")
+        self.client.force_authenticate(user=self.editor_user)
+
+        # Act: Make PUT request to edit user endpoint
+        response = self.client.put(self.edit_user_url, self.update_data, format='json')
+        
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data["error"], "An error occurred: Database error")
+
+    # test_update_user_unauthenticated(): Ensure that an unauthenticated user cannot update user details
+    def test_update_user_unauthenticated(self):
+        # Act: Make PUT request to edit user endpoint without authentication
+        response = self.client.put(self.edit_user_url, self.update_data, format='json')
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data, {"detail": "Authentication credentials were not provided."})
+
+    # test_update_user_non_admin_user(): Ensure that a non-admin user cannot update another user's details  
+    def test_update_user_non_admin_user(self):
+        # Arrange: Authenticate the staff user
+        self.client.force_authenticate(user=self.regular_user)
+
+        # Act: Make PUT request to edit user endpoint
+        response = self.client.put(self.edit_user_url, self.update_data, format='json')
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data, {'detail': 'You do not have permission to perform this action.'})
+
+
 
         # Set up the URLs for deleting
         self.delete_user_url = reverse('delete_user', kwargs={'user_id': self.target_user.user_id})
