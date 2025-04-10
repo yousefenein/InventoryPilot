@@ -56,55 +56,59 @@ const OrderPickingAccuracy = () => {
   // const accuracyPercentage = totalPicks > 0 ? ((data[0].value / totalPicks) * 100).toFixed(2) : 0;
 
   return (
-    <div className="flex flex-col">
-      {/* Title and Button on the same line */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Picking Accuracy</h2>
-        <button
-          onClick={() => navigate('/order-picking')}
-          className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-red-600"
-        >
-          View Details
-        </button>
-      </div>
+<div className="flex flex-col">
+  {/* Title and Button on the same line */}
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-xl font-semibold">Picking Accuracy</h2>
+    <button
+      onClick={() => navigate('/order-picking')}
+      className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-red-600"
+    >
+      View Details
+    </button>
+  </div>
 
-      <div>
-        <p className="text-3xl font-bold">{totalPicks.toLocaleString()}</p>
-        <p className={`${accuracyPercentage >= targetAccuracy ? 'text-green-500' : 'text-red-500'}`}>
-          {accuracyPercentage}%
-        </p>
-      </div>
+  <div>
+    <p className="text-3xl font-bold">{totalPicks.toLocaleString()}</p>
+    <p className={`${accuracyPercentage >= targetAccuracy ? 'text-green-500' : 'text-red-500'} text-2xl ml-3`}>
+      {accuracyPercentage}% {/* Adjusted font size and margin */}
+    </p>
+  </div>
 
-      <div className="bg-transparent">
-        {loading ? (
-          <p className="text-center">Loading...</p>
-        ) : error ? (
-          <p className="text-red-500 text-center">{error}</p>
-        ) : (
-          <>
-          {/* Chart */}
-            <PieChart width={300} height={200}>
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                fill="#950606"
-                label
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </>
-        )}
-      </div>
-    </div>
+  <div className="bg-transparent">
+    {loading ? (
+      <p className="text-center">Loading...</p>
+    ) : error ? (
+      <p className="text-red-500 text-center">{error}</p>
+    ) : (
+      <>
+        {/* Chart */}
+        <div className="w-full flex justify-center">
+          <PieChart width={400} height={300}> {/* Increased size */}
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={120} 
+              fill="#950606"
+              label
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        </div>
+      </>
+    )}
+  </div>
+</div>
+
+
   );
 };
 
