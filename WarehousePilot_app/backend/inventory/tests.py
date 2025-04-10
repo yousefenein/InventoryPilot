@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from .models import InventoryPicklist, InventoryPicklistItem
 from orders.models import Orders
 from django.utils import timezone
+from rest_framework import status
 
 User = get_user_model()
 
@@ -114,6 +115,7 @@ class AssignedPicklistViewTest(TestCase):
             amount=10,
         )
         self.url = reverse('assigned_inventory_picklist')
+        
     def test_get_assigned_picklists_success(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -128,7 +130,7 @@ class AssignedPicklistViewTest(TestCase):
         self.picklist.save()
 
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual([], response.data)
 
     def test_get_assigned_picklists_error(self):
@@ -136,9 +138,10 @@ class AssignedPicklistViewTest(TestCase):
         self.user.delete()
 
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         
     def test_unathenticated(self):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer invalidtoken123')
         response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         
