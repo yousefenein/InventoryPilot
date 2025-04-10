@@ -156,7 +156,7 @@ const KPIDashboard = ({ userData }) => {
             </div>
           </div>
 
-          {/* Details Section */}
+          {/* Inventory preview Section */}
           <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
             <StockLevelsPreview />
           </div>
