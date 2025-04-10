@@ -65,7 +65,7 @@ const KPIDashboard = ({ userData }) => {
         <NavBar />
         <main className="flex-1 p-12">
           {/* Overview Section - Top 3 Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {/* Active Orders Card */}
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <div className="flex justify-between items-center mb-4">
@@ -125,13 +125,7 @@ const KPIDashboard = ({ userData }) => {
               )}
             </div>
 
-            {/* Order Picking Accuracy Card */}
-            <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Order Picking Accuracy</h2>
-              <div className="accuracy-metrics">
-                <OrderPickingAccuracy />
-              </div>
-            </div>
+
           </div>
 
           {/* First Row of Graphs */}
@@ -144,12 +138,15 @@ const KPIDashboard = ({ userData }) => {
             </div>
           </div>
 
-          {/* Second Row of Graphs */}
+           {/* Second Row of Graphs */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <CTPOPreview />
             </div>
-         
+           {/* Order Picking Accuracy Card */}
+            <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
+                <OrderPickingAccuracy />
+            </div>
           </div>
 
           {/* Details Section */}
