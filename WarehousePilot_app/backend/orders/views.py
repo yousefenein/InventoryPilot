@@ -255,7 +255,7 @@ class OrdersView(APIView):
 
 class StartOrderView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAllowedUser]
 
     def post(self, request, order_id):
         try:

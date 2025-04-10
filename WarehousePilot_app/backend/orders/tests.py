@@ -10,7 +10,7 @@ This file includes:
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient, force_authenticate
 from rest_framework import status
-from datetime import date  
+from datetime import date, datetime
 from auth_app.models import users
 from rest_framework_simplejwt.tokens import RefreshToken
 from unittest.mock import patch, MagicMock
@@ -18,10 +18,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.test import TestCase
 from django.db.models.query import QuerySet
-from django.test import TestCase, override_settings
-from rest_framework.test import APIClient, APIRequestFactory
-from rest_framework import status
-from django.db import connection
+from rest_framework.test import APIClient
 from unittest.mock import patch, MagicMock
 from .models import (
     Orders,
@@ -37,6 +34,9 @@ from manufacturingLists.models import (
     ManufacturingLists,
     ManufacturingListItem
 )
+
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 
 class GenerateInventoryAndManufacturingListsViewTests(TestCase):
     def setUp(self):
@@ -801,7 +801,6 @@ class CycleTimePerOrderViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
 
-
 class OrdersViewTests(TestCase):
     def setUp(self):
         # Create a client instance and setup url
@@ -893,7 +892,7 @@ class OrdersViewTests(TestCase):
     
     @patch('django.db.connection.cursor')
     # test_empty_result_set(): Test handling of empty result set from database
-    def test_empty_result_set(self, mock_cursor_func):
+    def test_get_orders_empty_result_set(self, mock_cursor_func):
         # Arrange: Mock empty database result and authenticate user
         mock_cursor = MagicMock()
         mock_cursor.execute.return_value = None
@@ -911,7 +910,7 @@ class OrdersViewTests(TestCase):
         self.assertEqual(len(response.data), 0)
 
     @patch('django.db.connection.cursor')
-    # test_null_start_timestamp_handling(): Test proper handling of NULL start_timestamp values
+    # test_get_orders_null_start_timestamp_handling(): Test proper handling of NULL start_timestamp values
     def test_null_start_timestamp_handling(self, mock_cursor_func):
         # Arrange: Mock database to return NULL start_timestamp and authenticate user
         test_data = [(3, 90, 'Pending', '2023-12-20', None)]
@@ -930,3 +929,151 @@ class OrdersViewTests(TestCase):
         # Assert: Check response status and data
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNone(response.data[0]['start_timestamp'])
+
+class StartOrderViewTests(TestCase):
+    def setUp(self):
+        # Create a client instance and setup url
+        self.client = APIClient()
+        self.order_id = 123
+        self.url = reverse('start_order', kwargs={'order_id': self.order_id})
+
+        # Create a test user with test values
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )
+        
+        # Create a mock order
+        self.order = MagicMock(spec=Orders)
+        self.order.order_id = self.order_id
+        self.order.status = 'Not Started'
+
+    @patch('orders.views.get_object_or_404')
+    @patch('orders.views.timezone.now')
+    # test_start_order_success(): Test successful order start
+    def test_start_order_success(self, mock_now, mock_get_object):
+        # Arrange: Mocking the timezone and get_object_or_404 functions, and authenticate user
+        test_time = timezone.make_aware(datetime(2023, 1, 1, 12, 0))
+        mock_now.return_value = test_time
+        mock_get_object.return_value = self.order
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()  # Use .json() to access the response content
+
+
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['order_status'], 'In Progress')
+        self.assertEqual(response_data['start_timestamp'], test_time.isoformat())
+    
+    @patch('orders.views.get_object_or_404')
+    # test_start_order_already_in_progress(): Test starting an already in-progress order
+    def test_start_order_already_in_progress(self, mock_get_object):
+        # Arrange: Mocking the get_object_or_404 function and authenticate user
+        self.order.status = 'In Progress'
+        self.order.save()
+        mock_get_object.return_value = self.order
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response_data['status'], 'error')
+        self.assertEqual(response_data['message'], 'Order is already in progress')
+
+    @patch('orders.views.get_object_or_404')
+    # test_start_order_with_null_status(): Test that order with NULL status gets default status
+    def test_start_order_with_null_status(self, mock_get_object):
+        # Arrange: Mocking the get_object_or_404 function and authenticate user
+        self.order.status = None
+        self.order.save()
+        mock_get_object.return_value = self.order
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check response status and data, and that status got updated
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(self.order.status, 'In Progress')
+    
+    @patch('orders.views.get_object_or_404')
+    # test_start_order_exception_handling(): Test exception handling
+    def test_start_order_exception_handling(self, mock_get_object):
+        # Arrange: Mocking the get_object_or_404 function to raise an exception and authenticate user
+        mock_get_object.side_effect = Exception("Test error")
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response_data['status'], 'error')
+        self.assertEqual(response_data['message'], 'Test error')
+
+    # test_start_order_unauthenticated(): Test the case when user is not authenticated
+    def test_start_order_unauthenticated(self):
+        # Act: Make a POST request to StartOrderView without authentication
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response_data['detail'], "Authentication credentials were not provided.")
+    
+    # test_start_order_unauthorized(): Test the case when user is authenticated but not authorized (not admin or manager)
+    def test_start_order_unauthorized(self):
+        # Arrange: Change user role to 'user' and authenticate
+        self.user.role = 'user'
+        self.user.save()
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response_data['detail'], "You do not have permission to perform this action.")
+    
+    @patch('orders.views.get_object_or_404')
+    @patch('orders.views.timezone.now')
+    # test_timestamp_set_correctly(): Test that timestamp is set correctly
+    def test_start_order_timestamp_set_correctly(self, mock_now, mock_get_object):
+        # Arrange: Mocking the timezone and get_object_or_404 functions, and authenticate user
+        test_time = timezone.make_aware(datetime(2023, 1, 1, 12, 0))
+        mock_now.return_value = test_time
+        mock_get_object.return_value = self.order
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check response status and data, and that timestamp is set correctly
+        self.assertEqual(self.order.start_timestamp, test_time)
+        self.assertEqual(response_data['start_timestamp'], test_time.isoformat())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
