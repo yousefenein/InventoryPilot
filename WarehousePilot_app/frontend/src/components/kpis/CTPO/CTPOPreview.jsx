@@ -121,7 +121,7 @@ const CTPOPreview = () => {
 
       {/* Header row: Title + Details button */}
       <div className="flex justify-between items-center mb-4 ">
-        <h2 className="text-xl font-semibold dark:text-white">Cycle Time Per Order</h2>
+        <h2 className="text-xl font-semibold text-black dark:text-white">Cycle Time Per Order</h2>
         <button
           onClick={handleDetailsClick}
           className="bg-gray-500 dark:bg-gray-700 hover:bg-red-600 dark:hover:bg-red-700 text-white py-1 px-3 rounded transition-colors"
