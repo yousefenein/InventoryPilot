@@ -1,15 +1,19 @@
 import warnings
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="django.db.models.fields")
 
-from django.test import TestCase, Client
+from django.test import TestCase, Client, RequestFactory
 from django.urls import reverse
 from inventory.models import Inventory, InventoryPicklist, InventoryPicklistItem
 from parts.models import Part
-from orders.models import Orders
+from orders.models import Orders, OrderPart
 from auth_app.models import users
 from django.utils import timezone
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
+from rest_framework.test import force_authenticate
+from unittest.mock import patch, MagicMock, PropertyMock
+from .views import ThroughputView
+import logging
 
 class KPIDashboardTests(TestCase):
     def setUp(self):
@@ -268,21 +272,7 @@ class KPIDashboardTests(TestCase):
         url = reverse('active_orders_details')
         response = self.client.post(url)
         self.assertEqual(response.status_code, 405)
-    
-    
-    
 
-from django.test import TestCase, RequestFactory
-from django.urls import reverse
-from rest_framework.test import force_authenticate
-from auth_app.models import users
-from datetime import date, timedelta
-from unittest.mock import patch, MagicMock, PropertyMock
-from django.utils import timezone
-from orders.models import Orders, OrderPart
-from inventory.models import InventoryPicklistItem
-from .views import ThroughputView
-import logging
 
 class ThroughputViewTests(TestCase):
     def setUp(self):
@@ -300,7 +290,7 @@ class ThroughputViewTests(TestCase):
             theme_preference='light'
         )
         self.view = ThroughputView.as_view()
-        self.url = reverse('throughput_threshold')  # Using reverse() with URL name
+        self.url = reverse('throughput_threshold')
         
         # Set up test data dates
         self.today = timezone.now().date()
