@@ -38,20 +38,18 @@ from collections import defaultdict
 
 logger = logging.getLogger('WarehousePilot_app')
 
-# IsAdminUser: Allows access to admin users
-class IsAuthorized(BasePermission):
+# IsAdminUser: Allows access to admin and manager users
+class IsAllowedUser(BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and (request.user.role == 'admin' or request.user.role == 'manager')
-
 
 #generates an inventory picklist and a maufacturing list of an order once the order is "started"
 # Note: print statements have been commented out and can be uncommented for debugging if needed
 class GenerateInventoryAndManufacturingListsView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsAuthorized]
+    permission_classes = [IsAuthenticated, IsAllowedUser]
     def post(self, request):
         try:
-
             #retrieve the order id from the http request
             orderID = request.data.get("orderID")
             logger.debug("GenerateInventoryAndManufacturingListsView\nOrder ID: %s", orderID)
@@ -215,6 +213,7 @@ class GenerateInventoryAndManufacturingListsView(APIView):
                 
             logger.info("Successfully generated the inventory picklist and manufacturing for order %s", orderID)
             return Response({'detail':'inventory picklist and manufacturing list generation successful'}, status=status.HTTP_200_OK)
+        
         except Orders.DoesNotExist:
             logger.error("Order with ID %s does not exist", orderID)
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -226,7 +225,7 @@ class GenerateInventoryAndManufacturingListsView(APIView):
 
 class OrdersView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAllowedUser]
 
     def get(self, request):
         try:

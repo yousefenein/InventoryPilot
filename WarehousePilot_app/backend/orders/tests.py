@@ -9,33 +9,30 @@ This file includes:
 
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient, force_authenticate
-from .models import Orders, OrderPart
-from parts.models import Part
 from rest_framework import status
 from datetime import date  
-from inventory.models import Inventory, InventoryPicklist, InventoryPicklistItem
 from auth_app.models import users
 from rest_framework_simplejwt.tokens import RefreshToken
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from datetime import timedelta
 from django.utils import timezone
-
 from django.test import TestCase
-from unittest.mock import patch, MagicMock
 from django.db.models.query import QuerySet
-
+from django.test import TestCase, override_settings
+from rest_framework.test import APIClient, APIRequestFactory
+from rest_framework import status
+from django.db import connection
+from unittest.mock import patch, MagicMock
 from .models import (
     Orders,
     OrderPart,
     Part
 )
-
 from inventory.models import (
     Inventory,
     InventoryPicklist,
     InventoryPicklistItem,
 )
-
 from manufacturingLists.models import (
     ManufacturingLists,
     ManufacturingListItem
@@ -524,7 +521,6 @@ class InventoryPicklistViewTest(APITestCase):
 
         print("Passed: test_unauthenticated_access")
 
-
 class CycleTimePerOrderViewTests(APITestCase):
     # setUp(): used to set up values shared between tests.
     def setUp(self):
@@ -804,3 +800,133 @@ class CycleTimePerOrderViewTests(APITestCase):
         # Assert: Check response status and data
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
+
+
+class OrdersViewTests(TestCase):
+    def setUp(self):
+        # Create a client instance and setup url
+        self.client = APIClient()
+        self.url = reverse('ordersview')
+
+        # Create a test user with test values
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )
+        
+        # Sample test data
+        self.test_data = [
+            (1, 120, 'Pending', '2023-12-31', None),
+            (2, 60, 'In Progress', '2023-12-15', '2023-12-01 10:00:00')
+        ]
+        
+    @patch('django.db.connection.cursor')
+    # test_get_orders_success(): Test the successful retrieval of orders
+    def test_get_orders_success(self, mock_cursor_func):
+        # Arrange: Mocking the database cursor and connection, and authenticate user
+        mock_cursor = MagicMock()
+        mock_cursor.execute.return_value = None
+        mock_cursor.fetchall.return_value = self.test_data
+        
+        mock_cursor_func.return_value.__enter__.return_value = mock_cursor
+        
+        self.client.force_authenticate(user=self.user)
+        
+        # Act: Make a GET request to OrdersView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]['order_id'], 1)
+        self.assertEqual(response.data[1]['status'], 'In Progress')
+        mock_cursor.execute.assert_called_once()
+    
+    # test_get_orders_unauthenticated(): Test the case when user is not authenticated
+    def test_get_orders_unauthenticated(self):
+        # Act: Make a GET request to OrdersView without authentication
+        response = self.client.get(self.url)
+        
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
+
+    # test_get_orders_unauthorized(): Test the case when user is authenticated but not authorized (not admin or manager)
+    def test_get_orders_unauthorized(self):
+        # Arrange: Change user role to 'user' and authenticate
+        self.user.role = 'user'  # Change role to non-admin
+        self.user.save()
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a GET request to OrdersView
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], "You do not have permission to perform this action.")
+    
+    @patch('django.db.connection.cursor')
+    # test_get_orders_database_error(): Test the case when there is a database error
+    def test_get_orders_database_error(self, mock_cursor_func):
+        # Arrange: Mock database to raise an exception and authenticate user
+        mock_cursor = MagicMock()
+        mock_cursor.execute.side_effect = Exception("Database error")
+        mock_cursor_func.return_value.__enter__.return_value = mock_cursor
+        
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a GET request to OrdersView
+        response = self.client.get(self.url)
+        
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data['error'], "Database error")
+    
+    @patch('django.db.connection.cursor')
+    # test_empty_result_set(): Test handling of empty result set from database
+    def test_empty_result_set(self, mock_cursor_func):
+        # Arrange: Mock empty database result and authenticate user
+        mock_cursor = MagicMock()
+        mock_cursor.execute.return_value = None
+        mock_cursor.fetchall.return_value = []
+        
+        mock_cursor_func.return_value.__enter__.return_value = mock_cursor
+        
+        self.client.force_authenticate(user=self.user)
+        
+        # Act: Make a GET request to OrdersView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    @patch('django.db.connection.cursor')
+    # test_null_start_timestamp_handling(): Test proper handling of NULL start_timestamp values
+    def test_null_start_timestamp_handling(self, mock_cursor_func):
+        # Arrange: Mock database to return NULL start_timestamp and authenticate user
+        test_data = [(3, 90, 'Pending', '2023-12-20', None)]
+        
+        mock_cursor = MagicMock()
+        mock_cursor.execute.return_value = None
+        mock_cursor.fetchall.return_value = test_data
+        
+        mock_cursor_func.return_value.__enter__.return_value = mock_cursor
+        
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a GET request to OrdersView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data[0]['start_timestamp'])
