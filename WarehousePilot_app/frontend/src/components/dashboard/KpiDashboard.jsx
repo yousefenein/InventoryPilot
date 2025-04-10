@@ -10,6 +10,7 @@ import NavBar from "../navbar/App";
 import axios from "axios";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import CTPOPreview from "../kpis/CTPO/CTPOPreview";
+import StockLevelsPreview from "./StockLevelsPreview"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -157,10 +158,7 @@ const KPIDashboard = ({ userData }) => {
 
           {/* Details Section */}
           <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Details</h2>
-            <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              Table/Data Placeholder
-            </div>
+            <StockLevelsPreview />
           </div>
         </main>
       </div>
