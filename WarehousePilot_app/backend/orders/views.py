@@ -292,7 +292,7 @@ class StartOrderView(APIView):
 
 class InventoryPicklistView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAllowedUser]
 
     def get(self, request):
         try:
