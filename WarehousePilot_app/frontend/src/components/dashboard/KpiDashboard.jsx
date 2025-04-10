@@ -64,9 +64,12 @@ const KPIDashboard = ({ userData }) => {
       <div className="flex-1 sm:ml-10 sm:mt-2">
         <NavBar />
         <main className="flex-1 p-12">
-          {/* Overview Section - Top 3 Cards */}
+          {/* Overview Section - Top 2 Cards */}
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
             {/* Active Orders Card */}
+
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Active Orders</h2>
@@ -82,12 +85,12 @@ const KPIDashboard = ({ userData }) => {
               ) : error ? (
                 <p className="text-red-500 text-center">{error}</p>
               ) : (
-                <div className="flex flex-col">
+                <div className="flex flex-col items-center">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-3xl font-bold text-gray-800 dark:text-white">{totalActiveOrders.toLocaleString()}</p>
                   </div>
-                  <div>
-                    <LineChart width={300} height={150} data={activeOrdersData}>
+                  <div className="w-full flex justify-center">
+                    <LineChart width={600} height={300} data={activeOrdersData}>
                       <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#4A5568' : '#E2E8F0'} />
                       <XAxis dataKey="date" hide />
                       <YAxis hide />
@@ -99,6 +102,7 @@ const KPIDashboard = ({ userData }) => {
               )}
             </div>
 
+
             {/* Completed Orders Card */}
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Completed Orders</h2>
@@ -107,13 +111,13 @@ const KPIDashboard = ({ userData }) => {
               ) : error ? (
                 <p className="text-red-500 text-center">{error}</p>
               ) : (
-                <div className="flex flex-col">
+                <div className="flex flex-col items-center">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-3xl font-bold text-gray-800 dark:text-white">{totalCompletedOrders.toLocaleString()}</p>
-                    <p className="text-red-500">-25%</p>
+                    <p className="text-red-500 text-xl ml-2">{`-25%`}</p> {/* Adjusted size and margin */}
                   </div>
-                  <div>
-                    <LineChart width={300} height={150} data={completedOrdersData}>
+                  <div className="w-full flex justify-center">
+                    <LineChart width={600} height={300} data={completedOrdersData}>
                       <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#4A5568' : '#E2E8F0'} />
                       <XAxis dataKey="date" hide />
                       <YAxis hide />
@@ -124,6 +128,8 @@ const KPIDashboard = ({ userData }) => {
                 </div>
               )}
             </div>
+
+
 
 
           </div>
