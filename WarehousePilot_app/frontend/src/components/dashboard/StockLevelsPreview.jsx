@@ -70,7 +70,7 @@ const StockLevelsPreview = () => {
   const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
 
   const handleDetailsClick = () => {
-    navigate("/inventory"); // Navigate to the full inventory page
+    navigate("/inventory-stock"); // Navigate to the full inventory page
   };
 
   return (
