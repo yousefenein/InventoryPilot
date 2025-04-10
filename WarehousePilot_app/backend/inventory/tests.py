@@ -127,11 +127,9 @@ class AssignedPicklistViewTest(TestCase):
         self.picklist.assigned_employee_id = None
         self.picklist.save()
 
-        url = reverse('assigned_inventory_picklist')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual([], response.data)
-        #self.assertEqual(len(response.data), 0)
 
     def test_get_assigned_picklists_error(self):
         # Simulate an error by deleting the user
@@ -139,3 +137,8 @@ class AssignedPicklistViewTest(TestCase):
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 401)
+        
+    def test_unathenticated(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer invalidtoken123')
+        response = self.client.get(self.url)
+        
