@@ -113,10 +113,9 @@ class AssignedPicklistViewTest(TestCase):
             sku_color=self.part,
             amount=10,
         )
-
+        self.url = reverse('assigned_inventory_picklist')
     def test_get_assigned_picklists_success(self):
-        url = reverse('assigned_inventory_picklist')
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["order_id"], int(self.order.order_id))
@@ -129,7 +128,7 @@ class AssignedPicklistViewTest(TestCase):
         self.picklist.save()
 
         url = reverse('assigned_inventory_picklist')
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual([], response.data)
         #self.assertEqual(len(response.data), 0)
@@ -138,6 +137,5 @@ class AssignedPicklistViewTest(TestCase):
         # Simulate an error by deleting the user
         self.user.delete()
 
-        url = reverse('assigned_inventory_picklist')
-        response = self.client.get(url)
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 401)
