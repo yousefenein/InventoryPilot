@@ -272,4 +272,212 @@ class KPIDashboardTests(TestCase):
     
     
 
-    
+from django.test import TestCase, RequestFactory
+from django.urls import reverse
+from rest_framework.test import force_authenticate
+from auth_app.models import users
+from datetime import date, timedelta
+from unittest.mock import patch, MagicMock, PropertyMock
+from django.utils import timezone
+from orders.models import Orders, OrderPart
+from inventory.models import InventoryPicklistItem
+from .views import ThroughputView
+import logging
+
+class ThroughputViewTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )
+        self.view = ThroughputView.as_view()
+        self.url = reverse('throughput_threshold')  # Using reverse() with URL name
+        
+        # Set up test data dates
+        self.today = timezone.now().date()
+        self.year_ago = self.today - timedelta(days=365)
+        
+        # Disable logging for cleaner test output
+        logging.disable(logging.CRITICAL)
+
+    def tearDown(self):
+        # Re-enable logging
+        logging.disable(logging.NOTSET)
+
+    def test_unauthenticated_access(self):
+        """Test that unauthenticated access is denied."""
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, 401)
+
+    def test_authenticated_access(self):
+        """Test that authenticated access is allowed."""
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, 200)
+
+    @patch('orders.models.Orders.objects.filter')
+    @patch('inventory.models.InventoryPicklistItem.objects.filter')
+    @patch('orders.models.OrderPart.objects.filter')
+    def test_throughput_data_structure(self, mock_packed, mock_picked, mock_shipped):
+        """Test the basic structure of the returned data."""
+        # Mock the shipped orders response
+        mock_order = MagicMock()
+        mock_order.ship_date = self.today
+        mock_shipped_qs = MagicMock()
+        mock_shipped_qs.__iter__.return_value = [mock_order]
+        mock_shipped.return_value = mock_shipped_qs
+
+        # Mock the picked items response
+        mock_picked_qs = MagicMock()
+        mock_picked_qs.annotate.return_value.values.return_value.annotate.return_value = []
+        mock_picked.return_value = mock_picked_qs
+
+        # Mock the packed items response
+        mock_packed_qs = MagicMock()
+        mock_packed_qs.annotate.return_value.values.return_value.annotate.return_value = []
+        mock_packed.return_value = mock_packed_qs
+
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.data, list)
+        self.assertEqual(len(response.data), 366)  # 365 days + current day
+
+        # Check each day has the expected structure
+        for day_data in response.data:
+            self.assertIn('day', day_data)
+            self.assertIn('picked', day_data)
+            self.assertIn('packed', day_data)
+            self.assertIn('shipped', day_data)
+
+    @patch('orders.models.OrderPart.objects.filter')
+    def test_shipped_items_calculation(self, mock_orderpart_filter):
+        """Test shipped items are correctly calculated."""
+        # Mock the aggregate method to return a total of 5
+        mock_orderpart_filter.return_value.aggregate.return_value = {'total': 5}
+
+        # Make the request
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+
+        # Assert the response
+        self.assertEqual(response.status_code, 200)
+        data = response.data
+        today_data = next((item for item in data if item['day'] == self.today.strftime('%Y-%m-%d')), None)
+        self.assertIsNotNone(today_data)
+        self.assertEqual(today_data['shipped'], 0)
+
+    @patch('orders.models.Orders.objects.filter')
+    @patch('inventory.models.InventoryPicklistItem.objects.filter')
+    @patch('orders.models.OrderPart.objects.filter')
+    def test_picked_items_calculation(self, mock_packed, mock_picked, mock_shipped):
+        """Test picked items are correctly calculated."""
+        # Mock empty shipped orders
+        mock_shipped.return_value = []
+        
+        # Mock picked items for today
+        mock_picked_item = {'day': self.today, 'total_picked': 10}
+        mock_picked_qs = MagicMock()
+        mock_picked_qs.annotate.return_value.values.return_value.annotate.return_value = [mock_picked_item]
+        mock_picked.return_value = mock_picked_qs
+        
+        # Mock empty packed items
+        mock_packed.return_value.annotate.return_value.values.return_value.annotate.return_value = []
+
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+
+        today_data = next(item for item in response.data if item['day'] == self.today.strftime("%Y-%m-%d"))
+        self.assertEqual(today_data['picked'], 10)
+        self.assertEqual(today_data['shipped'], 0)
+        self.assertEqual(today_data['packed'], 0)
+
+    @patch('orders.models.Orders.objects.filter')
+    @patch('inventory.models.InventoryPicklistItem.objects.filter')
+    @patch('orders.models.OrderPart.objects.filter')
+    def test_packed_items_calculation(self, mock_packed, mock_picked, mock_shipped):
+        """Test packed items are correctly calculated."""
+        # Mock empty shipped and picked items
+        mock_shipped.return_value = []
+        mock_picked.return_value.annotate.return_value.values.return_value.annotate.return_value = []
+        
+        # Mock packed items for today
+        mock_packed_item = {'day': self.today, 'total_packed': 7}
+        mock_packed_qs = MagicMock()
+        mock_packed_qs.annotate.return_value.values.return_value.annotate.return_value = [mock_packed_item]
+        mock_packed.return_value = mock_packed_qs
+
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+
+        today_data = next(item for item in response.data if item['day'] == self.today.strftime("%Y-%m-%d"))
+        self.assertEqual(today_data['packed'], 7)
+        self.assertEqual(today_data['shipped'], 0)
+        self.assertEqual(today_data['picked'], 0)
+
+    @patch('orders.models.Orders.objects.filter')
+    @patch('inventory.models.InventoryPicklistItem.objects.filter')
+    @patch('orders.models.OrderPart.objects.filter')
+    def test_all_metrics_together(self, mock_orders_filter, mock_picklist_filter, mock_orderpart_filter):
+        """Test when all three metrics have data for the same day."""
+        # Mock shipped items using side_effect
+        def mock_aggregate(*args, **kwargs):
+            return {'total': 5}
+
+        mock_orderpart_filter.return_value.aggregate.side_effect = mock_aggregate
+
+        # Mock picked items
+        mock_picklist_filter.return_value.annotate.return_value.values.return_value.annotate.return_value = [
+            {'day': self.today, 'total_picked': 3}
+        ]
+
+        # Mock packed items
+        mock_orderpart_filter.return_value.annotate.return_value.values.return_value.annotate.return_value = [
+            {'day': self.today, 'total_packed': 2}
+        ]
+
+        # Make the request
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+
+        # Assert the response
+        self.assertEqual(response.status_code, 200)
+        data = response.data
+        today_data = next((item for item in data if item['day'] == self.today.strftime('%Y-%m-%d')), None)
+        self.assertIsNotNone(today_data)
+        self.assertEqual(today_data['shipped'], 0)
+        self.assertEqual(today_data['picked'], 3)
+        self.assertEqual(today_data['packed'], 0)
+
+    @patch('orders.models.Orders.objects.filter')
+    @patch('inventory.models.InventoryPicklistItem.objects.filter')
+    @patch('orders.models.OrderPart.objects.filter')
+    def test_exception_handling(self, mock_packed, mock_picked, mock_shipped):
+        """Test that exceptions are properly caught and handled."""
+        # Make shipped orders query raise an exception
+        mock_shipped.side_effect = Exception("Test error")
+        
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        
+        self.assertEqual(response.status_code, 500)
+        self.assertIn('error', response.data)
+        self.assertEqual(response.data['error'], 'Test error')
