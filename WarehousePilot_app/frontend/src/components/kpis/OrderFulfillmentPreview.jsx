@@ -92,7 +92,7 @@ const OrderFulfillmentPreview = () => {
 
       {/* Header row */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+        <h2 className="text-xl font-semibold text-black dark:text-gray-200">
           Order Fulfillment
         </h2>
         <button

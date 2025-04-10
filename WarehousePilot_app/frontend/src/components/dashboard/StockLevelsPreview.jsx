@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell, Pagination } from "@heroui/react";
-import { Box, Typography, CircularProgress, TextField } from '@mui/material';
+import { CircularProgress, TextField } from '@mui/material';
+import { Pagination } from "@heroui/react";
 import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -70,14 +70,14 @@ const StockLevelsPreview = () => {
   const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
 
   const handleDetailsClick = () => {
-    navigate("/inventory-stock"); // Navigate to the full inventory page
+    navigate("/inventory"); // Navigate to the full inventory page
   };
 
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
       {/* Header row with title and details button */}
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-xl font-semibold dark:text-white">Inventory Overview</h2>
+        <h2 className="text-xl font-semibold text-black dark:text-white">Inventory Overview</h2>
         <button
           onClick={handleDetailsClick}
           className="bg-gray-500 dark:bg-gray-700 hover:bg-red-600 dark:hover:bg-red-700 text-white py-1 px-3 rounded transition-colors"
@@ -87,7 +87,7 @@ const StockLevelsPreview = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6">
+      <div className="mb-6 dark:text-white">
         <TextField
           label="Search by SKU Color ID"
           variant="outlined"
@@ -108,25 +108,56 @@ const StockLevelsPreview = () => {
           <CircularProgress />
         </div>
       ) : error ? (
-        <Typography variant="body1" color="error" className="dark:text-red-500">{error}</Typography>
+        <div className="text-red-500 dark:text-red-400">{error}</div>
       ) : (
         <>
-          <Table aria-label="Stock Levels Table" className="w-full">
-            <TableHeader>
-              {columns.map((column, index) => (
-                <TableColumn key={index} className="dark:text-white">{column}</TableColumn>
-              ))}
-            </TableHeader>
-            <TableBody items={paginatedRows}>
-              {(item) => (
-                <TableRow key={item.key}>
-                  <TableCell className="dark:text-gray-300">{item.sku_color_id}</TableCell>
-                  <TableCell className="dark:text-gray-300">{item.qty}</TableCell>
-                  <TableCell className="dark:text-gray-300">{item.warehouse_number}</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          {/* Table with alternate row styling and rounded corners */}
+          <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100 dark:bg-gray-700">
+                  {columns.map((column, index) => (
+                    <th 
+                      key={index} 
+                      className={`text-left p-3 font-semibold dark:text-white ${
+                        index === 0 ? 'rounded-tl-lg' : ''
+                      } ${index === columns.length - 1 ? 'rounded-tr-lg' : ''}`}
+                    >
+                      {column}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedRows.map((item, index) => (
+                  <tr 
+                    key={item.key} 
+                    className={index % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-700"}
+                  >
+                    <td className="p-3 dark:text-gray-300">{item.sku_color_id}</td>
+                    <td className="p-3 dark:text-gray-300">{item.qty}</td>
+                    <td className="p-3 dark:text-gray-300">{item.warehouse_number}</td>
+                  </tr>
+                ))}
+                {paginatedRows.length > 0 && (
+                  <tr className={paginatedRows.length % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-700"}>
+                    <td 
+                      className="rounded-bl-lg p-3 dark:text-gray-300" 
+                      colSpan="1"
+                    ></td>
+                    <td 
+                      className="p-3 dark:text-gray-300" 
+                      colSpan="1"
+                    ></td>
+                    <td 
+                      className="rounded-br-lg p-3 dark:text-gray-300" 
+                      colSpan="1"
+                    ></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {/* Pagination */}
           {totalPages > 0 && (
@@ -150,7 +181,5 @@ const StockLevelsPreview = () => {
 };
 
 export default StockLevelsPreview;
-
-
 
 

@@ -59,7 +59,7 @@ const OrderPickingAccuracy = () => {
 <div className="flex flex-col">
   {/* Title and Button on the same line */}
   <div className="flex items-center justify-between mb-4">
-    <h2 className="text-xl font-semibold">Picking Accuracy</h2>
+    <h2 className="text-xl font-semibold text-black dark:text-white" >Picking Accuracy</h2>
     <button
       onClick={() => navigate('/order-picking')}
       className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-red-600"
@@ -68,10 +68,11 @@ const OrderPickingAccuracy = () => {
     </button>
   </div>
 
-  <div>
-    <p className="text-3xl font-bold">{totalPicks.toLocaleString()}</p>
-    <p className={`${accuracyPercentage >= targetAccuracy ? 'text-green-500' : 'text-red-500'} text-2xl ml-3`}>
-      {accuracyPercentage}% {/* Adjusted font size and margin */}
+  {/* Aligning Number and Percentage */}
+  <div className="flex items-baseline mb-4"> {/* Use flex to align items horizontally */}
+    <p className="text-3xl font-bold mr-2">{totalPicks.toLocaleString()}</p> {/* Add margin-right to space the number and percentage */}
+    <p className={`${accuracyPercentage >= targetAccuracy ? 'text-green-500' : 'text-red-500'} text-2xl`}>
+      {accuracyPercentage}% {/* Adjust font size */}
     </p>
   </div>
 

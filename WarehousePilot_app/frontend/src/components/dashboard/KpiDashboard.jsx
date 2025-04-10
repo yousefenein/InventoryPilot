@@ -138,7 +138,7 @@ const KPIDashboard = ({ userData }) => {
           {/* First Row of Graphs */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-              <ThroughputThresholdKpiPreview/>
+              <OrderPickingAccuracy />
             </div>
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <OrderFulfillmentPreview/>
@@ -150,9 +150,10 @@ const KPIDashboard = ({ userData }) => {
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <CTPOPreview />
             </div>
+            
            {/* Order Picking Accuracy Card */}
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-                <OrderPickingAccuracy />
+              <ThroughputThresholdKpiPreview/>
             </div>
           </div>
 
