@@ -26,7 +26,7 @@ from collections import defaultdict
 
 from django.http import JsonResponse
 from django.db import connection
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.utils import timezone 
 
@@ -38,173 +38,190 @@ from collections import defaultdict
 
 logger = logging.getLogger('WarehousePilot_app')
 
+# IsAdminUser: Allows access to admin users
+class IsAuthorized(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and (request.user.role == 'admin' or request.user.role == 'manager')
+
+
 #generates an inventory picklist and a maufacturing list of an order once the order is "started"
 # Note: print statements have been commented out and can be uncommented for debugging if needed
 class GenerateInventoryAndManufacturingListsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAuthorized]
     def post(self, request):
-        #retrieve the order id from the http request
-        orderID = request.data.get("orderID")
-        logger.debug("GenerateInventoryAndManufacturingListsView\nOrder ID: %s", orderID)
-        #retrieve the order object from the database using the order id
-        order = Orders.objects.get(order_id=orderID)
-        logger.debug("Retrieved order: %s", order.__dict__)
-        
-        #get all the parts of the order
-        orderParts = OrderPart.objects.filter(order_id=order)
-        #'''
-        logger.debug("Order parts: %s", ', '.join([str(x.order_part_id) for x in orderParts]))
-        #'''
-        #get a list of the UNIQUE sku_colors from the parts in the order
-        #***
-        orderPartSkuColor = list(set(orderParts.values_list('sku_color', flat=True)))
-        #'''
-        logger.debug("Unique Order Parts SKU COLORS: %s", ', '.join([str(x) for x in orderPartSkuColor]))
-        #'''
-        #get all the objects in inventory that have a quantity greater than 0, amount needed equal to 0 and match the sku_colors of the parts in the order
-        inventory = Inventory.objects.filter(sku_color__in=orderPartSkuColor, qty__gt = 0, amount_needed__lt = F('qty'))
-        #'''
-        logger.debug("Matching parts in inventory with a quantity greater than 0: %s", ', '.join([str(x) for x in inventory]))
-        logger.debug("Inventory count: %s", inventory.count())
-        #'''
-        if inventory.exists() == True: #if there were matching objects in inventory
-            logger.debug("ENTER 1st IF BLOCK")
-            #find all the unique skus in the matching inventory objects, since there can be more than one object in inventory with the same sku
-            inventorySkus = set(list(inventory.values_list("sku_color", flat=True)))
-            logger.debug(f"inventory matching skus: {inventorySkus}")
-            #create an inventory picklist for the order
-            inventoryPicklist = InventoryPicklist.objects.create(status = False, order_id=order)
-            # create a list of picklist items
-            manufacturingList= ManufacturingLists(order_id=order, status='Pending')
-            inventoryPicklistItems = []
-            manuListItems = []
-            for s in inventorySkus: #loop through the unique matching inventory sku set
-                part_obj = Part.objects.get(sku_color=s)
-                # find the total of the quantity of each unique sku in inventory, aggregating all the inventory objects with the same sku together
-                totalInventoryQty = Inventory.objects.filter(sku_color=part_obj).aggregate(total=Sum('qty'))['total']                
-                logger.debug(f"total inventory qty: {totalInventoryQty}")
-                ##orderQty = OrderPart.objects.get(order_id=order, sku_color=s).__getattribute__("qty")
-                orderQty = OrderPart.objects.filter(order_id=order, sku_color=part_obj).aggregate(total=Sum('qty'))['total']                
-                logger.debug(f"total order qty: {orderQty}")
-                order_part_details = OrderPart.objects.filter(order_id=order, sku_color=part_obj).first()
-                #if inventory amount exceeds needed amount, only the needed amount will be chosen, and if needed amount exceeds available amount, only the available amount is chosen
-                manuListItemQty = 0
-                if orderQty <= totalInventoryQty:
-                    picklistQty = orderQty
-                    logger.debug(f"picklist qty: {picklistQty}")
-                else: #amount needed exceeds amount available in inventory
-                    picklistQty = totalInventoryQty
-                    logger.debug(f"picklist qty: {picklistQty}")
-                    #create a manufacturing list item with the remaining amount needed for the order
-                    manuListItemQty = orderQty - picklistQty
-                    logger.debug(f"manuList qty: {manuListItemQty}")
-                    manuListItems.append(ManufacturingListItem(manufacturing_list_id=manufacturingList, sku_color=part_obj, amount=manuListItemQty))
-                    for x in Inventory.objects.filter(sku_color=part_obj):
-                        x.amount_needed=manuListItemQty
-                        x.save()
-                
-                #add the picklist item with the appropriate amount to the list of inventory picklist items
-                matchingInventoryItems = Inventory.objects.filter(sku_color=part_obj).order_by('qty')
-                index = 0
-                while picklistQty > 0 and index < matchingInventoryItems.count():
-                    inventoryLocationQty = matchingInventoryItems[index].qty
-                    # Desired location name from the OrderPart
-                    preferred_location_name = order_part_details.location
+        try:
 
-                    # Try to find a matching Inventory object with that location and sku
-                    location = Inventory.objects.filter(
-                        sku_color=part_obj,
-                        location=preferred_location_name
-                    ).order_by('qty').first()
-
-                    # Fallback if not found: use the next best match
-                    if not location:
-                        location = matchingInventoryItems[index]
-                    amount_to_pick = min(picklistQty, inventoryLocationQty)
+            #retrieve the order id from the http request
+            orderID = request.data.get("orderID")
+            logger.debug("GenerateInventoryAndManufacturingListsView\nOrder ID: %s", orderID)
+            #retrieve the order object from the database using the order id
+            order = Orders.objects.get(order_id=orderID)
+            logger.debug("Retrieved order: %s", order.__dict__)
+            
+            #get all the parts of the order
+            orderParts = OrderPart.objects.filter(order_id=order)
+            #'''
+            logger.debug("Order parts: %s", ', '.join([str(x.order_part_id) for x in orderParts]))
+            #'''
+            #get a list of the UNIQUE sku_colors from the parts in the order
+            #***
+            orderPartSkuColor = list(set(orderParts.values_list('sku_color', flat=True)))
+            #'''
+            logger.debug("Unique Order Parts SKU COLORS: %s", ', '.join([str(x) for x in orderPartSkuColor]))
+            #'''
+            #get all the objects in inventory that have a quantity greater than 0, amount needed equal to 0 and match the sku_colors of the parts in the order
+            inventory = Inventory.objects.filter(sku_color__in=orderPartSkuColor, qty__gt = 0, amount_needed__lt = F('qty'))
+            #'''
+            logger.debug("Matching parts in inventory with a quantity greater than 0: %s", ', '.join([str(x) for x in inventory]))
+            logger.debug("Inventory count: %s", inventory.count())
+            #'''
+            if inventory.exists() == True: #if there were matching objects in inventory
+                logger.debug("ENTER 1st IF BLOCK")
+                #find all the unique skus in the matching inventory objects, since there can be more than one object in inventory with the same sku
+                inventorySkus = set(list(inventory.values_list("sku_color", flat=True)))
+                logger.debug(f"inventory matching skus: {inventorySkus}")
+                #create an inventory picklist for the order
+                inventoryPicklist = InventoryPicklist.objects.create(status = False, order_id=order)
+                # create a list of picklist items
+                manufacturingList= ManufacturingLists(order_id=order, status='Pending')
+                inventoryPicklistItems = []
+                manuListItems = []
+                for s in inventorySkus: #loop through the unique matching inventory sku set
+                    part_obj = Part.objects.get(sku_color=s)
+                    # find the total of the quantity of each unique sku in inventory, aggregating all the inventory objects with the same sku together
+                    totalInventoryQty = Inventory.objects.filter(sku_color=part_obj).aggregate(total=Sum('qty'))['total']                
+                    logger.debug(f"total inventory qty: {totalInventoryQty}")
+                    ##orderQty = OrderPart.objects.get(order_id=order, sku_color=s).__getattribute__("qty")
+                    orderQty = OrderPart.objects.filter(order_id=order, sku_color=part_obj).aggregate(total=Sum('qty'))['total']                
+                    logger.debug(f"total order qty: {orderQty}")
+                    order_part_details = OrderPart.objects.filter(order_id=order, sku_color=part_obj).first()
+                    #if inventory amount exceeds needed amount, only the needed amount will be chosen, and if needed amount exceeds available amount, only the available amount is chosen
+                    manuListItemQty = 0
+                    if orderQty <= totalInventoryQty:
+                        picklistQty = orderQty
+                        logger.debug(f"picklist qty: {picklistQty}")
+                    else: #amount needed exceeds amount available in inventory
+                        picklistQty = totalInventoryQty
+                        logger.debug(f"picklist qty: {picklistQty}")
+                        #create a manufacturing list item with the remaining amount needed for the order
+                        manuListItemQty = orderQty - picklistQty
+                        logger.debug(f"manuList qty: {manuListItemQty}")
+                        manuListItems.append(ManufacturingListItem(manufacturing_list_id=manufacturingList, sku_color=part_obj, amount=manuListItemQty))
+                        for x in Inventory.objects.filter(sku_color=part_obj):
+                            x.amount_needed=manuListItemQty
+                            x.save()
                     
-                    inventoryPicklistItems.append(InventoryPicklistItem(
-                        picklist_id=inventoryPicklist,
-                        sku_color=part_obj,
-                        amount=amount_to_pick,
-                        status=False,
-                        location=location,
-                        area=order_part_details.area,
-                        lineup_nb=order_part_details.lineup_nb,
-                        model_nb=order_part_details.final_model,
-                        material_type=order_part_details.material_type
-                    ))
+                    #add the picklist item with the appropriate amount to the list of inventory picklist items
+                    matchingInventoryItems = Inventory.objects.filter(sku_color=part_obj).order_by('qty')
+                    index = 0
+                    while picklistQty > 0 and index < matchingInventoryItems.count():
+                        inventoryLocationQty = matchingInventoryItems[index].qty
+                        # Desired location name from the OrderPart
+                        preferred_location_name = order_part_details.location
 
-                    location.amount_needed += amount_to_pick
-                    location.save()
+                        # Try to find a matching Inventory object with that location and sku
+                        location = Inventory.objects.filter(
+                            sku_color=part_obj,
+                            location=preferred_location_name
+                        ).order_by('qty').first()
 
-                    picklistQty -= amount_to_pick
-                    index += 1                
-            #bulk create all the inventory picklist items in the database
-            InventoryPicklistItem.objects.bulk_create(inventoryPicklistItems)
-            #'''
-            #logger.debug("All Picklist Items: %s", ', '.join([str(x) for x in InventoryPicklistItem.objects.filter(picklist_id=inventoryPicklist)])) inventoryPicklist is referred outside the scope of the if block
-            #'''
-            if len(manuListItems) > 0:
-                logger.debug("**Creating manufacturing list 1st if block")
-                manufacturingList.save()
-                ManufacturingListItem.objects.bulk_create(manuListItems)
-                
-        logger.debug(f"orderPartSkuColor): {orderPartSkuColor}")
-        logger.debug(f"orderPartSkuColor len: {len(orderPartSkuColor)}")
-        invSkuLen = len(set(list(inventory.values_list("sku_color", flat=True))))
-        logger.debug(f"matching inventory sku len): {invSkuLen}")
-        #if not all the parts in the order matched with the parts in inventory, then we have remaining parts that need to be in the manufacturing list
-        if inventory.exists() == False or (len((set(orderPartSkuColor)) - set(list(inventory.values_list("sku_color", flat=True)))) > 0):
-            logger.debug("ENTER 2nd IF BLOCK")
+                        # Fallback if not found: use the next best match
+                        if not location:
+                            location = matchingInventoryItems[index]
+                        amount_to_pick = min(picklistQty, inventoryLocationQty)
+                        
+                        inventoryPicklistItems.append(InventoryPicklistItem(
+                            picklist_id=inventoryPicklist,
+                            sku_color=part_obj,
+                            amount=amount_to_pick,
+                            status=False,
+                            location=location,
+                            area=order_part_details.area,
+                            lineup_nb=order_part_details.lineup_nb,
+                            model_nb=order_part_details.final_model,
+                            material_type=order_part_details.material_type
+                        ))
+
+                        location.amount_needed += amount_to_pick
+                        location.save()
+
+                        picklistQty -= amount_to_pick
+                        index += 1                
+                #bulk create all the inventory picklist items in the database
+                InventoryPicklistItem.objects.bulk_create(inventoryPicklistItems)
+                #'''
+                #logger.debug("All Picklist Items: %s", ', '.join([str(x) for x in InventoryPicklistItem.objects.filter(picklist_id=inventoryPicklist)])) inventoryPicklist is referred outside the scope of the if block
+                #'''
+                if len(manuListItems) > 0:
+                    logger.debug("**Creating manufacturing list 1st if block")
+                    manufacturingList.save()
+                    ManufacturingListItem.objects.bulk_create(manuListItems)
+                    
+            logger.debug(f"orderPartSkuColor): {orderPartSkuColor}")
+            logger.debug(f"orderPartSkuColor len: {len(orderPartSkuColor)}")
             invSkuLen = len(set(list(inventory.values_list("sku_color", flat=True))))
             logger.debug(f"matching inventory sku len): {invSkuLen}")
-            logger.debug(f"orderPartSkuColor): {len(orderPartSkuColor)}")
-            #create the manufacturing list if it is not already created
-            if (ManufacturingLists.objects.filter(order_id=order).exists()) == False:
-                logger.debug("**Creating manufacturing list 2nd if block")
-                manuList = ManufacturingLists.objects.create(status = 'Pending', order_id=order)
-            else: #retrieve the manufacturing list if it already exists
-                manuList = ManufacturingLists.objects.get(order_id=order)
-            manuListItems= [] #create list of manufacturing list items
-            #if there is no inventory picklist for the order, then create all the parts in the order as manufacturing list items
-            logger.debug(f"Is there a picklist?: {InventoryPicklist.objects.filter(order_id=order).exists()}")
-            if (InventoryPicklist.objects.filter(order_id=order).exists()) == False:
-                logger.debug("there is no picklist")
-                for s in orderPartSkuColor:
-                    logger.debug(f"add manuList item {s}")
-                    ##orderQty = OrderPart.objects.get(order_id=order, sku_color=s).__getattribute__("qty")
-                    orderQty = OrderPart.objects.filter(order_id=order, sku_color=s).aggregate(total=Sum('qty'))['total']
-                    manuListItems.append(ManufacturingListItem(sku_color=Part.objects.get(sku_color=s), manufacturing_list_id = manuList, amount=orderQty))
-            else: #otherwise if there is an inventory picklist for the order, for the remaining order parts that did not get compared to the inventory items earlier (line 42 if block), make the manufacturing list item for them
-                logger.debug("there was a picklist")
-                inventoryPicklist = InventoryPicklist.objects.get(order_id=order)
-                inventoryPicklistSkus = InventoryPicklistItem.objects.filter(picklist_id = inventoryPicklist).values_list('sku_color', flat=True)
-                #***
-                manuSkus = list(set(OrderPart.objects.filter(Q(order_id = order) & ~Q(sku_color__in = inventoryPicklistSkus)).values_list('sku_color', flat=True)))
-                logger.debug(f"manuSkus: {manuSkus}")
-                for s in manuSkus:
-                    ##orderQty = OrderPart.objects.get(order_id=order, sku_color=Part.objects.get(sku_color=s)).__getattribute__("qty")
-                    orderQty = OrderPart.objects.filter(order_id=order, sku_color=s).aggregate(total=Sum('qty'))['total']
-                    logger.debug("add manuList item")
-                    manuListItems.append(ManufacturingListItem(sku_color=Part.objects.get(sku_color=s), manufacturing_list_id=manuList, amount = orderQty))
-            ManufacturingListItem.objects.bulk_create(manuListItems)
-        #create empty inventory picklist for the order
-        inventoryPicklist = InventoryPicklist.objects.get_or_create(status = False, order_id=order)
+            #if not all the parts in the order matched with the parts in inventory, then we have remaining parts that need to be in the manufacturing list
+            if inventory.exists() == False or (len((set(orderPartSkuColor)) - set(list(inventory.values_list("sku_color", flat=True)))) > 0):
+                logger.debug("ENTER 2nd IF BLOCK")
+                invSkuLen = len(set(list(inventory.values_list("sku_color", flat=True))))
+                logger.debug(f"matching inventory sku len): {invSkuLen}")
+                logger.debug(f"orderPartSkuColor): {len(orderPartSkuColor)}")
+                #create the manufacturing list if it is not already created
+                if (ManufacturingLists.objects.filter(order_id=order).exists()) == False:
+                    logger.debug("**Creating manufacturing list 2nd if block")
+                    manuList = ManufacturingLists.objects.create(status = 'Pending', order_id=order)
+                else: #retrieve the manufacturing list if it already exists
+                    manuList = ManufacturingLists.objects.get(order_id=order)
+                manuListItems= [] #create list of manufacturing list items
+                #if there is no inventory picklist for the order, then create all the parts in the order as manufacturing list items
+                logger.debug(f"Is there a picklist?: {InventoryPicklist.objects.filter(order_id=order).exists()}")
+                if (InventoryPicklist.objects.filter(order_id=order).exists()) == False:
+                    logger.debug("there is no picklist")
+                    for s in orderPartSkuColor:
+                        logger.debug(f"add manuList item {s}")
+                        ##orderQty = OrderPart.objects.get(order_id=order, sku_color=s).__getattribute__("qty")
+                        orderQty = OrderPart.objects.filter(order_id=order, sku_color=s).aggregate(total=Sum('qty'))['total']
+                        manuListItems.append(ManufacturingListItem(sku_color=Part.objects.get(sku_color=s), manufacturing_list_id = manuList, amount=orderQty))
+                else: #otherwise if there is an inventory picklist for the order, for the remaining order parts that did not get compared to the inventory items earlier (line 42 if block), make the manufacturing list item for them
+                    logger.debug("there was a picklist")
+                    inventoryPicklist = InventoryPicklist.objects.get(order_id=order)
+                    inventoryPicklistSkus = InventoryPicklistItem.objects.filter(picklist_id = inventoryPicklist).values_list('sku_color', flat=True)
+                    #***
+                    manuSkus = list(set(OrderPart.objects.filter(Q(order_id = order) & ~Q(sku_color__in = inventoryPicklistSkus)).values_list('sku_color', flat=True)))
+                    logger.debug(f"manuSkus: {manuSkus}")
+                    for s in manuSkus:
+                        ##orderQty = OrderPart.objects.get(order_id=order, sku_color=Part.objects.get(sku_color=s)).__getattribute__("qty")
+                        orderQty = OrderPart.objects.filter(order_id=order, sku_color=s).aggregate(total=Sum('qty'))['total']
+                        logger.debug("add manuList item")
+                        manuListItems.append(ManufacturingListItem(sku_color=Part.objects.get(sku_color=s), manufacturing_list_id=manuList, amount = orderQty))
+                ManufacturingListItem.objects.bulk_create(manuListItems)
+            #create empty inventory picklist for the order
+            inventoryPicklist = InventoryPicklist.objects.get_or_create(status = False, order_id=order)
 
-        #'''
-        try:
-            manuList = ManufacturingLists.objects.get(order_id = order)
-        except ManufacturingLists.DoesNotExist:
-            manuList = None
-            logger.error("Manufacturing list for order %s does not exist (GenerateInventoryAndManufacturingListsView)", orderID)
-        
-        logger.debug(f"manufacturing list object: {manuList}")
-        if manuList != None:
-            logger.info("All Manufacturing List Items: %s", '\n'.join([str(x.__dict__) for x in ManufacturingListItem.objects.filter(manufacturing_list_id = manuList)]))
-        #'''
-        logger.info("All Inventory Pick List Items: %s", '\n'.join([str(x.__dict__) for x in InventoryPicklistItem.objects.filter(picklist_id = (InventoryPicklist.objects.get(order_id = order))) ]))
+            #'''
+            try:
+                manuList = ManufacturingLists.objects.get(order_id = order)
+            except ManufacturingLists.DoesNotExist:
+                manuList = None
+                logger.error("Manufacturing list for order %s does not exist (GenerateInventoryAndManufacturingListsView)", orderID)
             
-        logger.info("Successfully generated the inventory picklist and manufacturing for order %s", orderID)
-        return Response({'detail':'inventory picklist and manufacturing list generation successful'}, status=status.HTTP_200_OK)
+            logger.debug(f"manufacturing list object: {manuList}")
+            if manuList != None:
+                logger.info("All Manufacturing List Items: %s", '\n'.join([str(x.__dict__) for x in ManufacturingListItem.objects.filter(manufacturing_list_id = manuList)]))
+            #'''
+            logger.info("All Inventory Pick List Items: %s", '\n'.join([str(x.__dict__) for x in InventoryPicklistItem.objects.filter(picklist_id = (InventoryPicklist.objects.get(order_id = order))) ]))
+                
+            logger.info("Successfully generated the inventory picklist and manufacturing for order %s", orderID)
+            return Response({'detail':'inventory picklist and manufacturing list generation successful'}, status=status.HTTP_200_OK)
+        except Orders.DoesNotExist:
+            logger.error("Order with ID %s does not exist", orderID)
+            return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            logger.error("An error occurred: %s", str(e))
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class OrdersView(APIView):
@@ -390,8 +407,8 @@ class InventoryPicklistItemsView(APIView):
             )
 
 class CycleTimePerOrderView(APIView):
-    #authentication_classes = [JWTAuthentication]
-    #permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -499,8 +516,8 @@ class CycleTimePerOrderView(APIView):
             return Response({"error": str(e)}, status=500)
 
 class DelayedOrders(APIView):
-    #authentication_classes = [JWTAuthentication]
-    #permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         try:
@@ -596,5 +613,4 @@ class CycleTimePerOrderPreview(APIView):
 
             return Response(result, status=200)
         except Exception as e:
-            return Response({"error": str(e)}, status=500)       
-
+            return Response({"error": str(e)}, status=500)
