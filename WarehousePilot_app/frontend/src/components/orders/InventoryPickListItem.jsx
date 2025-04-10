@@ -488,7 +488,7 @@ const InventoryPicklistItem = () => {
 
     switch (columnKey) {
       case "picklist_item_id":
-        return <div>{item.picklist_item_id}</div>;
+        return item.picklist_item_id;
       case "location":
         return <span className="bg-blue-100 text-black-800 font-semibold px-2 py-1 rounded dark:text-gray-700">{item.location || 'N/A'}</span>;
       case "required_quantity":
@@ -496,13 +496,13 @@ const InventoryPicklistItem = () => {
       case "sku_color":
         return <span className="bg-blue-100 text-black-800 font-semibold px-2 py-1 rounded dark:text-gray-700">{item.sku_color || 'N/A'}</span>;
       case "lineup_nb":
-        return <div>{item.lineup_nb || 'N/A'}</div>;
+        return (item.lineup_nb || 'N/A');
       case "model_nb":
-        return <div>{item.model_nb || 'N/A'}</div>;
+        return (item.model_nb || 'N/A');
       case "material_type":
-        return <div>{item.material_type || 'N/A'}</div>;
+        return (item.material_type || 'N/A');
       case "area":
-        return <div>{item.area || 'N/A'}</div>;
+        return (item.area || 'N/A');
       case "actual_picked_quantity":
         return (
           <span className="bg-green-100 text-black-800 font-semibold px-2 py-1 rounded dark:text-gray-700">
@@ -790,87 +790,96 @@ const InventoryPicklistItem = () => {
             ) : (
               <div>
                 {/* Inventory Items Section */}
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold mb-4 dark:text-white">
-                    Inventory Pick List Items
-                  </h2>
-                  {inventoryError ? (
-                    <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded">
-                      {inventoryError}
-                    </div>
-                  ) : paginatedInventoryItems.length > 0 ? (
-                    <>
-                      <Table
-                        aria-label="Inventory Pick List"
-                        className="min-w-full shadow-lg"
-                        isHeaderSticky
-                        isStriped
-                        selectionMode="multiple"
-                        bottomContentPlacement="outside"
-                        classNames={{
-                          td: "before:bg-transparent",
-                        }}
-                        topContentPlacement="outside"
-                      >
-                        <TableHeader className="shadow-xl">
-                          {visibleTableColumns.map((column) => (
-                            <TableColumn
-                              key={column.uid}
-                              className="text-gray-800 font-bold text-base dark:text-gray-200"
+                        <div className="mb-8">
+                          <h2 className="text-xl font-semibold mb-4 dark:text-white">
+                          Inventory Pick List Items
+                          </h2>
+                          {inventoryError ? (
+                          <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded">
+                            {inventoryError}
+                          </div>
+                          ) : paginatedInventoryItems.length > 0 ? (
+                          <>
+                            <Table
+                            aria-label="Inventory Pick List"
+                            className="min-w-full shadow-lg"
+                            isHeaderSticky
+                            isStriped
+                            selectionMode="multiple"
+                            bottomContentPlacement="outside"
+                            classNames={{
+                              td: "before:bg-transparent",
+                            }}
+                            topContentPlacement="outside"
                             >
-                              {column.name}
-                            </TableColumn>
-                          ))}
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedInventoryItems.map((item) => (
-                            <TableRow key={item.picklist_item_id}>
+                            <TableHeader className="shadow-xl">
                               {visibleTableColumns.map((column) => (
-                                <TableCell key={`${item.picklist_item_id}-${column.uid}`}>
+                              <TableColumn
+                                key={column.uid}
+                                className="text-gray-800 font-bold text-base dark:text-gray-200"
+                              >
+                                {column.name}
+                              </TableColumn>
+                              ))}
+                            </TableHeader>
+                            <TableBody>
+                              {paginatedInventoryItems.map((item) => (
+                              <TableRow key={item.picklist_item_id}>
+                                {visibleTableColumns.map((column) => (
+                                <TableCell
+                                  key={`${item.picklist_item_id}-${column.uid}`}
+                                  className={
+                                  column.uid !== "sku_color" &&
+                                  column.uid !== "status" &&
+                                  column.uid !== "picked_at"
+                                    ? "text-center"
+                                    : ""
+                                  }
+                                >
                                   {renderCell(item, column.uid)}
                                 </TableCell>
+                                ))}
+                              </TableRow>
                               ))}
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                            </TableBody>
+                            </Table>
 
-                      <div className="flex justify-between items-center mt-4">
-                        <span>
-                          Page {inventoryPage} of {totalInventoryPages}
-                        </span>
-                        <Pagination
-                          total={totalInventoryPages}
-                          initialPage={1}
-                          current={inventoryPage}
-                          onChange={(newPage) => setInventoryPage(newPage)}
-                          color="default"
-                          classNames={{
-                            item: "bg-white text-black",
-                            cursor: "bg-black text-white",
-                          }}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded">
-                      No inventory items found for this order.
-                    </div>
-                  )}
-                </div>
+                            <div className="flex justify-between items-center mt-4">
+                            <span>
+                              Page {inventoryPage} of {totalInventoryPages}
+                            </span>
+                            <Pagination
+                              total={totalInventoryPages}
+                              initialPage={1}
+                              current={inventoryPage}
+                              onChange={(newPage) => setInventoryPage(newPage)}
+                              color="default"
+                              classNames={{
+                              item: "bg-white text-black",
+                              cursor: "bg-black text-white",
+                              }}
+                            />
+                            </div>
+                          </>
+                          ) : (
+                          <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded">
+                            No inventory items found for this order.
+                          </div>
+                          )}
+                        </div>
 
-                <Modal isOpen={pickModalOpen} onClose={closePickModal}>
-                  <ModalContent>
-                    <div className="p-4">
-                      {selectedItem && (
-                        <>
-                          <h2 className="text-xl font-semibold mb-4">
-                            Pick Item Confirmation
-                          </h2>
-                          <p>
-                            Please scan the SKU and input the quantity for the <b>{selectedItem.sku_color}</b> item to confirm.
-                          </p>
-                        {/* Display department in confirmation modal */}
+                        <Modal isOpen={pickModalOpen} onClose={closePickModal}>
+                          <ModalContent>
+                          <div className="p-4">
+                            {selectedItem && (
+                            <>
+                              <h2 className="text-xl font-semibold mb-4">
+                              Pick Item Confirmation
+                              </h2>
+                              <p>
+                              Please scan the SKU and input the quantity for the <b>{selectedItem.sku_color}</b> item to confirm.
+                              </p>
+                            {/* Display department in confirmation modal */}
                         {selectedItem.department && (
                           <p className="mt-2">
                             <b>Department:</b> {selectedItem.department}
