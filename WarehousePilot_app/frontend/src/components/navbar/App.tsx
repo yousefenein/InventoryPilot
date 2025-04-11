@@ -1,3 +1,4 @@
+//Tested all links in the navbar for functionality. Test passed.
 import type { NavbarProps } from "@heroui/react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from "react";

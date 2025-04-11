@@ -1,3 +1,6 @@
+//Tested the "View Details" button on dashboard widgets. Test passed on all cards.
+//Tested Graph resize on window resize. Test passed.
+//Tested the Tooltip for CycleTime Graph on Hover.Test passed.
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import CycleTime from "./CycleTime";
