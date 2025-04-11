@@ -17,29 +17,29 @@ class OAInputView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, *args, **kwargs):
-        logger.info("📥 Received a POST request for file upload.")
+        logger.info(" Received a POST request for file upload.")
 
         if "file" not in request.FILES:
-            logger.error("❌ No file uploaded!")
+            logger.error(" No file uploaded!")
             return Response({"error": "No file uploaded"}, status=400)
 
         file = request.FILES["file"]
         file_extension = os.path.splitext(file.name)[1].lower()
         file_path = default_storage.save(f"uploads/{file.name}", file)
-        logger.info(f"📂 File saved at: {file_path}")
+        logger.info(f" File saved at: {file_path}")
 
         try:
-            logger.info(f"📊 Detecting file type: {file_extension}")
+            logger.info(f" Detecting file type: {file_extension}")
 
             if file_extension in [".xlsm", ".xlsx"]:
                 df = pd.read_excel(file_path, engine="openpyxl")
             elif file_extension == ".csv":
                 df = pd.read_csv(file_path)
             else:
-                logger.error(f"❌ Unsupported file format: {file_extension}")
+                logger.error(f" Unsupported file format: {file_extension}")
                 return Response({"error": f"Unsupported file format: {file_extension}"}, status=400)
 
-            logger.info(f"✅ Successfully loaded file. Shape: {df.shape}")
+            logger.info(f" Successfully loaded file. Shape: {df.shape}")
 
             # Define required columns and rename them
             COLUMN_MAPPING = {
@@ -62,11 +62,11 @@ class OAInputView(APIView):
             # Check if required columns exist
             missing_columns = [col for col in COLUMN_MAPPING.keys() if col not in df.columns]
             if missing_columns:
-                logger.error(f"❌ Missing columns in uploaded file: {missing_columns}")
-                return Response({"error": f"Missing columns: {missing_columns}"}, status=400)
+                logger.warning(f" Missing columns in uploaded file (proceeding anyway): {missing_columns}")
 
-            df = df[list(COLUMN_MAPPING.keys())].rename(columns=COLUMN_MAPPING)
-            logger.info(f"📋 Columns after renaming: {list(df.columns)}")
+            available_columns = [col for col in COLUMN_MAPPING.keys() if col in df.columns]
+            df = df[available_columns].rename(columns=COLUMN_MAPPING)
+            logger.info(f" Columns after renaming: {list(df.columns)}")
 
             # Clean and validate all columns before anything else
             df["order_id"] = pd.to_numeric(df["order_id"], errors="coerce")
@@ -78,7 +78,7 @@ class OAInputView(APIView):
             removed_count = original_count - df.shape[0]
             logger.info(f" Removed {removed_count} invalid/missing rows. Remaining: {df.shape[0]}")
 
-            # ✅ Insert Orders into `Orders` Table
+            # Insert Orders into `Orders` Table
             unique_orders = df[['order_id', 'due_date', 'client_name', 'project_type']].drop_duplicates()
             new_orders = []
 
@@ -95,7 +95,7 @@ class OAInputView(APIView):
 
             if new_orders:
                 Orders.objects.bulk_create(new_orders)
-                logger.info(f"✅ Inserted {len(new_orders)} new orders.")
+                logger.info(f" Inserted {len(new_orders)} new orders.")
 
             # Insert Parts into `OrderPart` Table
             new_parts = []
@@ -107,7 +107,7 @@ class OAInputView(APIView):
                 try:
                     part = Part.objects.get(sku_color__iexact=normalized_sku)  # Case-insensitive match
                 except Part.DoesNotExist:
-                    logger.error(f"❌ Part with SKU '{normalized_sku}' does not exist. Skipping entry.")
+                    logger.error(f" Part with SKU '{normalized_sku}' does not exist. Skipping entry.")
                     continue  
 
                 if not OrderPart.objects.filter(order_id=order, sku_color=part, final_model=row["final_model"]).exists():
@@ -126,27 +126,28 @@ class OAInputView(APIView):
                         importance=row["importance"]
                     ))
                 else:
-                    logger.info(f"⚠️ OrderPart with order_id {order.order_id} and SKU {part.sku_color} already exists. Skipping entry.")
+                    logger.info(f" OrderPart with order_id {order.order_id} and SKU {part.sku_color} already exists. Skipping entry.")
 
             if new_parts:
                 OrderPart.objects.bulk_create(new_parts)
-                logger.info(f"✅ Inserted {len(new_parts)} order parts.")
+                logger.info(f" Inserted {len(new_parts)} order parts.")
 
-            # ✅ Delete the uploaded file after processing
+            #  Delete the uploaded file after processing
             if os.path.exists(file_path):
                 os.remove(file_path)
-                logger.info(f"🗑️ Deleted uploaded file: {file_path}")
+                logger.info(f" Deleted uploaded file: {file_path}")
 
             return Response({
-                "message": f"File processed. {len(new_orders)} new orders and {len(new_parts)} parts inserted."
+                "message": f"File processed. {len(new_orders)} new orders and {len(new_parts)} parts inserted.",
+                "note": f"Missing columns skipped: {missing_columns}" if missing_columns else "All columns were present."
             }, status=201)
-
+        
         except Exception as e:
-            logger.error(f"❌ Error processing file: {e}")
+            logger.error(f" Error processing file: {e}")
 
-            # ✅ Delete file if an error occurs
+            # Delete file if an error occurs
             if os.path.exists(file_path):
                 os.remove(file_path)
-                logger.info(f"🗑️ Deleted uploaded file due to error: {file_path}")
+                logger.info(f" Deleted uploaded file due to error: {file_path}")
 
             return Response({"error": str(e)}, status=400)
