@@ -1,315 +1,610 @@
 """
 
 This file includes:
-- Tests for generating manufacturing and inventory lists (`GenerateListsTests`).
+- Tests for generating manufacturing and inventory lists (`GenerateInventoryAndManufacturingListsViewTests`).
 - Tests for retrieving inventory picklist items (`InventoryPicklistItemsViewTest`).
 - Tests for retrieving inventory picklist ( A.K.A orders that have been started )
 - Tests for cycle time per order (`CycleTimePerOrderViewTests`).
+- Tests for order retrieval (`OrdersViewTests`).
+- Tests for starting an order (`StartOrderViewTests`).
+- Tests for delayed orders (`DelayedOrdersViewTests`).
 """
 
 from django.urls import reverse
-from rest_framework.test import APITestCase, APIClient
-from .models import Orders, OrderPart
-from parts.models import Part
+from rest_framework.test import APITestCase, APIClient, force_authenticate
 from rest_framework import status
-from datetime import date  
-from inventory.models import Inventory, InventoryPicklist, InventoryPicklistItem
+from datetime import date, datetime, timedelta
 from auth_app.models import users
 from rest_framework_simplejwt.tokens import RefreshToken
-from unittest.mock import patch
-from datetime import timedelta
+from unittest.mock import patch, MagicMock
 from django.utils import timezone
+from django.test import TestCase
+from django.db.models.query import QuerySet
+from rest_framework.test import APIClient
+from unittest.mock import patch, MagicMock
+from .models import (
+    Orders,
+    OrderPart,
+    Part
+)
+from inventory.models import (
+    Inventory,
+    InventoryPicklist,
+    InventoryPicklistItem,
+)
+from manufacturingLists.models import (
+    ManufacturingLists,
+    ManufacturingListItem
+)
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 
-# Create your tests here.
-class GenerateListsTests(APITestCase):
+class GenerateInventoryAndManufacturingListsViewTests(TestCase):
     def setUp(self):
-        Orders.objects.create(order_id = 12345)
+        # Set up the test client and URL for the view
+        self.client = APIClient()
+        self.url = reverse('generateLists')
+        self.order_id = 123
+
+        # Create a test admin user
+        self.admin_user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False
+        )
         
-    def test_varied(self):
-        print("___________ STARTING TEST test_varied _______________")
-        order = Orders.objects.get(order_id = 12345)
-        Part.objects.bulk_create(
-            [
-                Part(sku_color='equal to inventory'),
-                Part(sku_color='more than inventory'),
-                Part(sku_color='less than inventory'),
-                Part(sku_color='not in inventory'),
-            ]
-        )
-        parts = Part.objects.all()
-        print("all created parts in test db:")
-        for p in parts:
-            print(p.sku_color)
-        Inventory.objects.bulk_create(
-            [
-                Inventory(location = 'loc1Test', sku_color = parts[0], qty=10, warehouse_number = 'TestHouse', amount_needed = 0),
-                Inventory(location = 'loc2Test', sku_color = parts[1], qty=3, warehouse_number = 'TestHouse', amount_needed = 0),
-                Inventory(location = 'loc3Test', sku_color = parts[2], qty=8, warehouse_number = 'TestHouse', amount_needed = 0),
-                Inventory(location = 'loc4Test', sku_color = parts[2], qty=12, warehouse_number = 'TestHouse', amount_needed = 0),
-            ]
-        )
-        OrderPart.objects.bulk_create(
-            [
-                OrderPart(order_id = order, sku_color = parts[0], qty = 10),
-                OrderPart(order_id = order, sku_color=parts[1], qty = 10),
-                OrderPart(order_id = order, sku_color=parts[2], qty = 10),
-                OrderPart(order_id = order, sku_color=parts[3], qty = 10),
-            ]
-        )
-        url = reverse('generateLists')
-        response = self.client.post(url, {'orderID' : '12345'}, format='json')
-        print('varied test case')
-        print(response.data)
-        pass
+        # Create a real order instance for testing
+        self.mock_order = Orders.objects.create(order_id=self.order_id, status="Pending")
         
-    def test_no_inventory_picklist(self):
-        print("___________ STARTING TEST test_no_inventory_picklist _______________")
-        order = Orders.objects.get(order_id = 12345)
-        Part.objects.bulk_create(
-            [
-                Part(sku_color='not in inventory'),
-            ]
-        )
-        parts = Part.objects.all()
-        print("all created parts in test db:")
-        for p in parts:
-            print(p.sku_color)
-        OrderPart.objects.bulk_create(
-            [
-                OrderPart(order_id = order, sku_color = parts[0], qty = 10),
-            ]
-        )
-        url = reverse('generateLists')
-        response = self.client.post(url, {'orderID' : '12345'}, format='json')
-        print('no inventory picklist test case')
-        print(response.data)
-        pass
+        # Mock order parts
+        self.mock_order_part1 = MagicMock(spec=OrderPart)
+        self.mock_order_part1.sku_color = "SKU001-RED"
+        self.mock_order_part1.qty = 10
+        self.mock_order_part1.location = "Location1"
+        self.mock_order_part1.area = "Area1"
+        self.mock_order_part1.lineup_nb = "Lineup1"
+        self.mock_order_part1.final_model = "Model1"
+        self.mock_order_part1.material_type = "Material1"
+        self.mock_order_part1.order_id = self.mock_order
         
-    def test_no_manuList(self):
-        print("___________ STARTING TEST test_no_manuList _______________")
-        order = Orders.objects.get(order_id = 12345)
-        Part.objects.bulk_create(
-            [
-                Part(sku_color='only in inventory'),
-            ]
-        )
-        parts = Part.objects.all()
-        print("all created parts in test db:")
-        for p in parts:
-            print(p.sku_color)
-        Inventory.objects.bulk_create(
-            [
-                Inventory(location = 'loc3Test', sku_color = parts[0], qty=8, warehouse_number = 'TestHouse', amount_needed = 0),
-                Inventory(location = 'loc4Test', sku_color = parts[0], qty=12, warehouse_number = 'TestHouse', amount_needed = 0),
-            ]
-        )
-        OrderPart.objects.bulk_create(
-            [
-                OrderPart(order_id = order, sku_color = parts[0], qty = 5),
-            ]
-        )
-        url = reverse('generateLists')
-        response = self.client.post(url, {'orderID' : '12345'}, format='json')
-        print('no manuList test case')
-        print(response.data)
-        pass   
+        self.mock_order_part2 = MagicMock(spec=OrderPart)
+        self.mock_order_part2.sku_color = "SKU002-BLUE"
+        self.mock_order_part2.qty = 5
+        self.mock_order_part2.location = "Location2"
+        self.mock_order_part2.area = "Area2"
+        self.mock_order_part2.lineup_nb = "Lineup2"
+        self.mock_order_part2.final_model = "Model2"
+        self.mock_order_part2.material_type = "Material2"
+        self.mock_order_part2.order_id = self.mock_order
 
+        # Create real part instances for testing
+        self.part1 = Part.objects.create(sku_color="SKU001-RED", sku="SKU001", description="Test Part 1", qty_per_box=10, weight=1.2)
+        self.part2 = Part.objects.create(sku_color="SKU002-BLUE", sku="SKU002", description="Test Part 2", qty_per_box=5, weight=0.8)
+        
+        # Mock inventory items
+        self.mock_inventory1 = MagicMock(spec=Inventory)
+        self.mock_inventory1.sku_color = "SKU001-RED"
+        self.mock_inventory1.qty = 8
+        self.mock_inventory1.amount_needed = 0
+        self.mock_inventory1.location = "Location1"
+        
+        self.mock_inventory2 = MagicMock(spec=Inventory)
+        self.mock_inventory2.sku_color = "SKU001-RED"
+        self.mock_inventory2.qty = 4
+        self.mock_inventory2.amount_needed = 0
+        self.mock_inventory2.location = "Location1A"
+        
+        # Mock picklist and manufacturing list
+        self.mock_picklist = MagicMock(spec=InventoryPicklist, order_id=self.mock_order, status=False)
+        self.mock_manu_list = ManufacturingLists(order_id=self.mock_order, status='Pending')
+        
+        # Mock picklist items and manufacturing list items
+        self.mock_picklist_item = MagicMock(spec=InventoryPicklistItem)
+        self.mock_manu_list_item = MagicMock(spec=ManufacturingListItem)
+    
+    @patch('orders.models.Orders.objects.get')
+    @patch('orders.models.OrderPart.objects.filter')
+    @patch('inventory.models.Inventory.objects.filter')
+    @patch('inventory.models.InventoryPicklist.objects.create')
+    @patch('manufacturingLists.models.ManufacturingLists.objects.create')
+    @patch('inventory.models.InventoryPicklistItem.objects.bulk_create')
+    @patch('manufacturingLists.models.ManufacturingListItem.objects.bulk_create')
+    # test_generate_lists_with_inventory_match(): Test the case when the order parts match the inventory items
+    def test_generate_lists_with_inventory_match(
+        self, mock_manu_bulk_create, mock_inv_bulk_create, 
+        mock_manu_create, mock_picklist_create, mock_inv_filter, 
+        mock_order_part_filter, mock_order_get
+    ):
+        # Arrange: Mocking order, order parts, inventory, picklist, and manufacturing list; and authenticating user
+        mock_order_get.return_value = self.mock_order
 
-class InventoryPicklistItemsViewTest(APITestCase):
-
-    def setUp(self):
-        #  a mock user
-        self.user = users.objects.create_user(
-            username="testuser",
-            password="testpassword",
-            email="testuser@example.com",
-            role="Employee",
-            date_of_hire="1990-01-01",
-            first_name="Test",
-            last_name="User",
-            department="Inventory"
-        )
-
-        # JWT token for authentication
-        refresh = RefreshToken.for_user(self.user)
-        self.token = str(refresh.access_token)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token}')
-
-        #  a mock order
-        self.order = Orders.objects.create(
-            order_id=1,
-            status="Pending",
-            due_date="2025-01-30",
-            estimated_duration=5
-        )
-
-        #  a mock inventory picklist for the order
-        self.picklist = InventoryPicklist.objects.create(
-            order_id=self.order,
-            assigned_employee_id=self.user,
-            status=True
+        mock_order_part_filter.return_value = MagicMock(
+            spec=QuerySet,
+            values_list=MagicMock(return_value=["SKU001-RED", "SKU002-BLUE"]),
+            __iter__=MagicMock(return_value=iter([
+                OrderPart(order_id=self.mock_order, sku_color=self.part1, qty=10),
+                OrderPart(order_id=self.mock_order, sku_color=self.part2, qty=5)
+            ]))
         )
 
-        # a mock part
-        self.part = Part.objects.create(
-            sku_color="Blue",
-            sku="ABC123",
-            description="Test part",
-            qty_per_box=10,
-            weight=1.2
+        mock_inv_filter.return_value = MagicMock(
+            spec=QuerySet,
+            aggregate=MagicMock(return_value={'total': 12}),  
+            values_list=MagicMock(return_value=["SKU001-RED"]),
+            order_by=MagicMock(return_value=[self.mock_inventory1, self.mock_inventory2]),
+            count=MagicMock(return_value=2)
         )
 
-        #  a mock inventory location
-        self.location = Inventory.objects.create(
-            location="A1",
-            sku_color=self.part,
-            qty=100,
-            warehouse_number="W1",
-            amount_needed=5
-        )
+        mock_picklist_create.return_value = self.mock_picklist
+        mock_manu_create.return_value = self.mock_manu_list
 
-        #  a mock inventory picklist item
-        self.picklist_item = InventoryPicklistItem.objects.create(
-            picklist_id=self.picklist,
-            location=self.location,
-            sku_color=self.part,
-            amount=5,
-            status=False
-        )
+        self.client.force_authenticate(user=self.admin_user)
 
-    def test_get_inventory_picklist_items_success(self):
-        # Test successful retrieval of inventory picklist items
-        url = reverse('inventory_picklist_items', kwargs={'order_id': self.order.order_id})
-        response = self.client.get(url)
+        # Act: Make POST request to generate lists
+        response = self.client.post(self.url, {'orderID': self.order_id}, format='json')
 
+        # Assert: Check response status and data
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['location'], "A1")
-        self.assertEqual(response.data[0]['sku_color'], "Blue")
-        self.assertEqual(response.data[0]['quantity'], 5)
-        self.assertEqual(response.data[0]['status'], False)
-        print("test_get_inventory_picklist_items_success passed.")
+        self.assertEqual(response.data['detail'], "inventory picklist and manufacturing list generation successful")
 
-    def test_get_inventory_picklist_items_order_not_found(self):
-        # Test when the order does not exist
-        url = reverse('inventory_picklist_items', kwargs={'order_id': 999})
-        response = self.client.get(url)
+    @patch('orders.models.Orders.objects.get')
+    @patch('orders.models.OrderPart.objects.filter')
+    @patch('inventory.models.Inventory.objects.filter')
+    @patch('manufacturingLists.models.ManufacturingLists.objects.create')
+    @patch('manufacturingLists.models.ManufacturingListItem.objects.bulk_create')
+    @patch('inventory.models.InventoryPicklist.objects.get_or_create')
+    # test_generate_lists_no_inventory_match(): Test the case when no order parts match inventory items
+    def test_generate_lists_no_inventory_match(
+        self, mock_picklist_get_or_create, mock_manu_bulk_create,
+        mock_manu_create, mock_inv_filter, mock_order_part_filter, 
+        mock_order_get
+    ):
+        # Arrange: Mocking instances of models and authenticate user
+        mock_order_get.return_value = self.mock_order
 
+        mock_order_part_filter.return_value = MagicMock(
+            spec=QuerySet,
+            values_list=MagicMock(return_value=["SKU001-RED", "SKU002-BLUE"]),
+            __iter__=MagicMock(return_value=iter([
+                OrderPart(order_id=self.mock_order, sku_color=self.part1, qty=10),
+                OrderPart(order_id=self.mock_order, sku_color=self.part2, qty=5)
+            ]))
+        )
+
+        mock_inv_filter.return_value = MagicMock(
+            spec=QuerySet,
+            exists=MagicMock(return_value=False),
+            values_list=MagicMock(return_value=[])
+        )
+
+        mock_manu_create.return_value = self.mock_manu_list
+        mock_picklist_get_or_create.return_value = (self.mock_picklist, True)
+
+        InventoryPicklist.objects.create(order_id=self.mock_order, status=False)
+
+        self.client.force_authenticate(user=self.admin_user)
+
+        # Act: Make POST request to generate lists
+        response = self.client.post(self.url, {'orderID': self.order_id}, format='json')
+
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_manu_create.assert_called_once_with(status='Pending', order_id=self.mock_order)
+        self.assertTrue(mock_manu_bulk_create.called)
+
+    @patch('orders.models.Orders.objects.get')
+    @patch('orders.models.OrderPart.objects.filter')
+    @patch('inventory.models.Inventory.objects.filter')
+    @patch('manufacturingLists.models.ManufacturingLists.objects.create')
+    @patch('manufacturingLists.models.ManufacturingListItem.objects.bulk_create')
+    @patch('inventory.models.InventoryPicklist.objects.get_or_create')
+    @patch('parts.models.Part.objects.get')
+    # test_generate_lists_partial_inventory_match(): Test the case when some order parts match inventory items
+    def test_generate_lists_partial_inventory_match(
+        self, mock_part_get, mock_picklist_get_or_create, mock_manu_bulk_create,
+        mock_manu_create, mock_inv_filter, mock_order_part_filter, 
+        mock_order_get
+    ):
+        # Arrange: Mocking instances of models and authenticating user
+        mock_order_get.return_value = self.mock_order
+
+        mock_part_get.side_effect = lambda sku_color: self.part1 if sku_color == "SKU001-RED" else self.part2
+
+        mock_order_parts = MagicMock(spec=QuerySet)
+        mock_order_parts.values_list.return_value = ["SKU001-RED", "SKU002-BLUE"]
+        mock_order_part_filter.return_value = mock_order_parts
+
+        mock_inventory_qs = MagicMock(spec=QuerySet)
+        mock_inventory_qs.count.return_value = 2 
+        mock_inventory_qs.__iter__.return_value = iter([
+            self.mock_inventory1,
+            self.mock_inventory2
+        ])
+        mock_inv_filter.return_value = mock_inventory_qs
+
+        InventoryPicklist.objects.create(order_id=self.mock_order, status=False)
+
+        mock_manu_create.return_value = self.mock_manu_list
+        mock_picklist_get_or_create.return_value = (self.mock_picklist, True)
+
+        self.client.force_authenticate(user=self.admin_user)
+
+        # Act: Make POST request to generate lists
+        response = self.client.post(self.url, {'orderID': self.order_id}, format='json')
+
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['detail'], "inventory picklist and manufacturing list generation successful")
+        self.assertTrue(mock_manu_bulk_create.called)
+
+    @patch('orders.models.Orders.objects.get')
+    # test_generate_lists_order_not_found(): Test the case when order doesn't exist
+    def test_generate_lists_order_not_found(self, mock_order_get):
+        # Arrange: Mocking order not found and authenticating user
+        mock_order_get.side_effect = Orders.DoesNotExist
+        self.client.force_authenticate(user=self.admin_user)
+
+        # Act: Make POST request to generate lists with non-existing order ID
+        response = self.client.post(self.url, {'orderID': self.order_id}, format='json')
+
+        # Assert: Check if exception was raised and response status code is 404
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['error'], "Order not found")
-        print("test_get_inventory_picklist_items_order_not_found passed.")
 
-    def test_get_inventory_picklist_items_no_picklist(self):
-        # Test when no inventory picklist exists for the order
-        order_without_picklist = Orders.objects.create(
-            order_id=2,
-            status="Pending",
-            due_date="2025-02-01",
-            estimated_duration=3
-        )
-        url = reverse('inventory_picklist_items', kwargs={'order_id': order_without_picklist.order_id})
-        response = self.client.get(url)
+    @patch('orders.models.Orders.objects.get')
+    @patch('orders.models.OrderPart.objects.filter')
+    @patch('inventory.models.Inventory.objects.filter')
+    @patch('manufacturingLists.models.ManufacturingLists.objects.create')
+    @patch('manufacturingLists.models.ManufacturingListItem.objects.bulk_create')
+    @patch('inventory.models.InventoryPicklist.objects.filter')
+    # test_generate_lists_no_picklist(): Test the case when picklist doesn't exist
+    def test_generate_lists_no_picklist(
+        self, mock_picklist_filter, mock_manu_bulk_create,
+        mock_manu_create, mock_inv_filter, mock_order_part_filter, 
+        mock_order_get
+    ):
+        # Arrange: Mocking instances of models and authenticating user
+        mock_order_get.return_value = self.mock_order
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['error'], "No picklist found for the given order")
-        print("test_get_inventory_picklist_items_no_picklist passed.")
-
-
-class InventoryPicklistViewTest(APITestCase):
-    def setUp(self):
-        #  a mock user
-        self.user = users.objects.create_user(
-            username="testuser",
-            password="password",
-            email="testuser@example.com",
-            role="Employee",
-            date_of_hire="1990-01-01",
-            first_name="Test",
-            last_name="User",
-            department="Inventory"
+        mock_picklist_filter.return_value = MagicMock(
+            exists=MagicMock(return_value=False)
         )
 
-        #  mock orders
-        self.order1 = Orders.objects.create(order_id=1, status="In Progress", due_date=date(2025, 2, 15))
-        self.order2 = Orders.objects.create(order_id=2, status="In Progress", due_date=date(2025, 2, 20))
-        self.order3 = Orders.objects.create(order_id=3, status="Pending", due_date=date(2025, 3, 1))  # Not started
-
-        #  a mock inventory picklist for order1 (partially filled)
-        self.picklist1 = InventoryPicklist.objects.create(order_id=self.order1, assigned_employee_id=self.user, status=True)
-        self.part1 = Part.objects.create(sku_color="Blue")
-        self.item1 = InventoryPicklistItem.objects.create(
-            picklist_id=self.picklist1,
-            location=None,
-            sku_color=self.part1,
-            amount=10,
-            status=False
+        mock_order_part_filter.return_value = MagicMock(
+            spec=QuerySet,
+            values_list=MagicMock(return_value=["SKU001-RED", "SKU002-BLUE"]),
+            __iter__=MagicMock(return_value=iter([
+                OrderPart(order_id=self.mock_order, sku_color=self.part1, qty=10),
+                OrderPart(order_id=self.mock_order, sku_color=self.part2, qty=5)
+            ]))
         )
 
-        # a mock inventory picklist for order2 (completely filled)
-        self.picklist2 = InventoryPicklist.objects.create(order_id=self.order2, assigned_employee_id=self.user, status=True)
-        self.part2 = Part.objects.create(sku_color="Red")
-        self.item2 = InventoryPicklistItem.objects.create(
-            picklist_id=self.picklist2,
-            location=None,
-            sku_color=self.part2,
-            amount=5,
-            status=True
+        mock_inv_filter.return_value = MagicMock(
+            spec=QuerySet,
+            exists=MagicMock(return_value=False),
+            values_list=MagicMock(return_value=[])
         )
 
-    def test_get_inventory_picklist_success(self):
-        print("Running: test_get_inventory_picklist_success")
-        # Authenticate as the user
-        self.client.force_authenticate(user=self.user)
+        mock_manu_create.return_value = self.mock_manu_list
 
-        url = reverse('inventory_picklist')
-        response = self.client.get(url)
+        self.client.force_authenticate(user=self.admin_user)
 
+        # Act: Make POST request to generate lists
+        response = self.client.post(self.url, {'orderID': self.order_id}, format='json')
+
+        # Assert: Check response status and data
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)  # Only `In Progress` orders should be included
+        self.assertEqual(response.data['detail'], "inventory picklist and manufacturing list generation successful")
 
-        # Verify order1 details
-        order1 = response.data[0]
-        self.assertEqual(order1["order_id"], 1)
-        self.assertFalse(order1["already_filled"])  # Partially filled
-        self.assertEqual(order1["assigned_to"], "testuser")
-
-        # Verify order2 details 
-        order2 = response.data[1]
-        self.assertEqual(order2["order_id"], 2)
-        self.assertTrue(order2["already_filled"])  # Completely filled
-        self.assertEqual(order2["assigned_to"], "testuser")
-
-        print("Passed: test_get_inventory_picklist_success")
-
-    def test_get_inventory_picklist_no_in_progress_orders(self):
-        print("Running: test_get_inventory_picklist_no_in_progress_orders")
-        # Update orders to have no "In Progress" status
-        self.order1.status = "Completed"
-        self.order1.save()
-        self.order2.status = "Completed"
-        self.order2.save()
-
-        # Authenticate as the user
-        self.client.force_authenticate(user=self.user)
-
-        url = reverse('inventory_picklist')
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)  # No "In Progress" orders
-
-        print("Passed: test_get_inventory_picklist_no_in_progress_orders")
-
-    def test_unauthenticated_access(self):
-        print("Running: test_unauthenticated_access")
-        # Test without authentication
-        url = reverse('inventory_picklist')
-        response = self.client.get(url)
-
+    # test_generate_lists_unauthenticated(): Test the case when user is not authenticated
+    def test_generate_lists_unauthenticated(self):        
+        # Act: Make POST request to generate lists without authentication
+        response = self.client.post(self.url, {'orderID': self.order_id}, format='json')
+        
+        # Assert: Check if exception was raised
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
 
-        print("Passed: test_unauthenticated_access")
+    # test_generate_lists_unauthorized(): Test the case when user is authenticated but not authorized (not admin or manager)
+    def test_generate_lists_unauthorized(self):
+        # Arrange: Change user role to 'user' and authenticate
+        self.admin_user.role = 'user'  # Change role to non-admin
+        self.admin_user.save()
 
+        self.client.force_authenticate(user=self.admin_user)
+
+        # Act: Make POST request to generate lists
+        response = self.client.post(self.url, {'orderID': self.order_id}, format='json')
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], "You do not have permission to perform this action.")
+
+class InventoryPicklistItemsViewTests(TestCase):
+    def setUp(self):
+        # Create a client instance and setup url
+        self.client = APIClient()
+        self.order_id = 123
+        self.url = reverse('inventory_picklist_items', kwargs={'order_id': self.order_id})
+
+        # Create a test user
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )
+
+        # Create mock instances for Orders and InventoryPicklist
+        self.mock_order = MagicMock(spec=Orders)
+        self.mock_order.order_id = self.order_id
+
+        self.mock_picklist = MagicMock(spec=InventoryPicklist)
+        self.mock_picklist.picklist_id = 456
+        self.mock_picklist.order_id = self.order_id
+
+    @patch('orders.models.Orders.objects.get')
+    @patch('inventory.models.InventoryPicklist.objects.get')
+    @patch('inventory.models.InventoryPicklistItem.objects.filter')
+    # test_get_inventory_picklist_items_success(): Test successful retrieval of picklist items
+    def test_get_inventory_picklist_items_success(self, mock_item_filter, mock_picklist_get, mock_order_get):
+        # Arrange: Mocking database queries and authenticate user
+        mock_order_get.return_value = self.mock_order
+        
+        mock_picklist_get.return_value = self.mock_picklist
+        
+        test_time = datetime.now()
+        mock_item_filter.return_value.order_by.return_value.values.return_value = [
+            {
+                'picklist_item_id': 1,
+                'location__location': 'A1',
+                'location__warehouse_number': 'WH01',
+                'sku_color__sku_color': 'SKU001-RED',
+                'amount': 5,
+                'status': True,
+                'item_picked_timestamp': test_time,
+                'picked_at': test_time,
+                'area': 'Area1',
+                'lineup_nb': 'LN001',
+                'model_nb': 'MN001',
+                'material_type': 'Material1',
+                'manually_picked': False,
+                'repick': False,
+                'repick_reason': None,
+                'actual_picked_quantity': 5
+            }
+        ]
+
+        self.client.force_authenticate(self.user)
+
+        # Act: Make a GET request to InventoryPicklistItemView
+        response = self.client.get(self.url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['picklist_item_id'], 1)
+        self.assertEqual(response.data[0]['location'], 'A1')
+        self.assertEqual(response.data[0]['department'], 'WH01')
+        self.assertEqual(response.data[0]['sku_color'], 'SKU001-RED')
+        self.assertEqual(response.data[0]['quantity'], 5)
+        self.assertEqual(response.data[0]['status'], True)
+        self.assertEqual(response.data[0]['item_picked_timestamp'], test_time)
+        self.assertEqual(response.data[0]['picked_at'], test_time)
+        self.assertEqual(response.data[0]['area'], 'Area1')
+        self.assertEqual(response.data[0]['lineup_nb'], 'LN001')
+        self.assertEqual(response.data[0]['model_nb'], 'MN001')
+        self.assertEqual(response.data[0]['material_type'], 'Material1')
+        self.assertEqual(response.data[0]['manually_picked'], False)
+        self.assertEqual(response.data[0]['repick'], False)
+        self.assertEqual(response.data[0]['repick_reason'], None)
+        self.assertEqual(response.data[0]['actual_picked_quantity'], 5)
+    
+    @patch('orders.models.Orders.objects.get')
+    # test_get_inventory_picklist_order_not_found(): Handle test case when order doesn't exist
+    def test_get_inventory_picklist_items_order_not_found(self, mock_order_get):
+        # Arrange: Mocking order instance to throw an exception and authenticate user
+        mock_order_get.side_effect = Orders.DoesNotExist
+
+        self.client.force_authenticate(self.user)
+
+        # Act: Make a GET request to InventoryPicklistItemView
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['error'], 'Order not found')
+
+    @patch('orders.models.Orders.objects.get')
+    @patch('inventory.models.InventoryPicklist.objects.get')
+    # test_get_inventory_picklist_items_picklist_not_found(): Handle test case when picklist doesn't exist
+    def test_get_inventory_picklist_items_picklist_not_found(self, mock_picklist_get, mock_order_get):
+        # Arrange: Mocking order and picklist instances to throw an exception and authenticate user
+        mock_order_get.return_value = self.mock_order
+        mock_picklist_get.side_effect = InventoryPicklist.DoesNotExist
+
+        self.client.force_authenticate(self.user)
+
+        # Act: Make a GET request to InventoryPicklistItemView
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['error'], 'No picklist found for the given order')
+    
+    @patch('orders.models.Orders.objects.get')
+    @patch('inventory.models.InventoryPicklist.objects.get')
+    @patch('inventory.models.InventoryPicklistItem.objects.filter')
+    # test_get_inventory_picklist_items_empty_picklist(): Handle test case when picklist is empty
+    def test_get_inventory_picklist_items_empty_picklist(self, mock_item_filter, mock_picklist_get, mock_order_get):
+        # Arrange: Mocking database queries and authenticate user
+        mock_order_get.return_value = self.mock_order
+        
+        self.mock_picklist.order_id = None
+        self.mock_picklist.save()
+        mock_picklist_get.return_value = self.mock_picklist
+        
+        mock_item_filter.return_value.order_by.return_value.values.return_value = []
+
+        self.client.force_authenticate(self.user)
+
+        # Act: Make a GET request to InventoryPicklistItemView
+        response = self.client.get(self.url)
+
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+    
+    @patch('orders.models.Orders.objects.get')
+    # test_get_inventory_picklist_items_database_exception(): Handle test case where database retrieval throws an exception
+    def test_get_inventory_picklist_items_database_exception(self, mock_order_get):
+        # Arrange: Mocking order instance to throw exception and authenticate user
+        mock_order_get.side_effect = Exception("Unexpected error")
+
+        self.client.force_authenticate(self.user)
+
+        # Act: Make a GET request to InventoryPicklistItemView
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data['error'], 'Unexpected error')
+    
+    # test_get_inventory_picklist_items_unauthenticated(): Test the case where user is unauthenticated
+    def test_get_inventory_picklist_items_unauthenticated(self):
+        # Act: Make a GET request to InventoryPicklistItemView
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
+
+class InventoryPicklistViewTests(TestCase):
+    def setUp(self):
+        # Create a client instance and setup url
+        self.client = APIClient()
+        self.order_id = 123
+        self.url = reverse('inventory_picklist')
+
+        # Create a test user
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )        
+
+    @patch('orders.models.Orders.objects.filter')
+    @patch('inventory.models.InventoryPicklistItem.objects.filter')
+    @patch('inventory.models.InventoryPicklist.objects.filter')
+    # test_get_inventory_picklists_success(): Test successful retrieval of picklists
+    def test_get_inventory_picklists_success(self, mock_picklist_filter, mock_item_filter, mock_order_filter):
+        # Arrange: Mocking database queries and authenticate user
+        test_date = datetime.now() + timedelta(days=7)
+        mock_order_filter.return_value.values.return_value = [
+            {'order_id': 1, 'due_date': test_date},
+            {'order_id': 2, 'due_date': test_date}
+        ]
+        
+        mock_item_filter.side_effect = [
+            MagicMock(exists=MagicMock(return_value=False)),
+            MagicMock(exists=MagicMock(return_value=True))
+        ]
+        
+        mock_picklist_filter.return_value.values_list.return_value.first.side_effect = [
+            'employee1',
+            None      
+        ]
+
+        self.client.force_authenticate(self.user)
+
+        # Act: Make a GET request to InventoryPicklistView
+        response = self.client.get(self.url)
+
+        # Assert: Check response status and data, and verify data from orders
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        
+        self.assertEqual(response.data[0]['order_id'], 1)
+        self.assertTrue(response.data[0]['already_filled'])
+        self.assertEqual(response.data[0]['assigned_to'], 'employee1')
+        
+        self.assertEqual(response.data[1]['order_id'], 2)
+        self.assertFalse(response.data[1]['already_filled'])
+        self.assertIsNone(response.data[1]['assigned_to'])
+
+    @patch('orders.models.Orders.objects.filter')
+    # test_get_inventory_picklists_empty(): Test when no orders are in progress
+    def test_get_inventory_picklists_empty(self, mock_order_filter):
+        # Arrange: Mocking database queries to return no orders and authenticate user
+        mock_order_filter.return_value.values.return_value = []
+
+        self.client.force_authenticate(self.user)
+
+        # Act: Make a GET request to InventoryPicklistView
+        response = self.client.get(self.url)
+
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+        self.assertEqual(response.data, [])
+    
+    @patch('orders.models.Orders.objects.filter')
+    # test_get_inventory_picklists_exception(): Test exception handling 
+    def test_get_inventory_picklists_exception(self, mock_order_filter):
+        # Arrange: Mocking orders instance to raise an exception and authenticate user
+        mock_order_filter.side_effect = Exception("Database error")
+
+        self.client.force_authenticate(self.user)
+
+        # Act: Make a GET request to InventoryPicklistView
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data['error'], 'Database error')
+
+    # test_get_inventory_picklists_unauthenticated(): Test picklist retrieval when user is unauthenticated
+    def test_get_inventory_picklists_unauthenticated(self):
+        # Act: Make a GET request to InventoryPicklistView without authentication
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
+    
+    # test_get_inventory_picklists_unauthorized(): Test picklist retrieval when user is authenticated but unauthorized (not admin or manager)
+    def test_get_inventory_picklists_unauthorized(self):
+        # Arrange: Change user role to 'user' and authenticate
+        self.user.role = 'user'
+        self.user.save()
+
+        self.client.force_authenticate(self.user)
+
+        # Act: Make a GET request to InventoryPicklistView
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], "You do not have permission to perform this action.")
 
 class CycleTimePerOrderViewTests(APITestCase):
     # setUp(): used to set up values shared between tests.
@@ -590,3 +885,381 @@ class CycleTimePerOrderViewTests(APITestCase):
         # Assert: Check response status and data
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
+
+class OrdersViewTests(TestCase):
+    def setUp(self):
+        # Create a client instance and setup url
+        self.client = APIClient()
+        self.url = reverse('ordersview')
+
+        # Create a test user with test values
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )
+        
+        # Sample test data
+        self.test_data = [
+            (1, 120, 'Pending', '2023-12-31', None),
+            (2, 60, 'In Progress', '2023-12-15', '2023-12-01 10:00:00')
+        ]
+        
+    @patch('django.db.connection.cursor')
+    # test_get_orders_success(): Test the successful retrieval of orders
+    def test_get_orders_success(self, mock_cursor_func):
+        # Arrange: Mocking database cursor and connection, and authenticate user
+        mock_cursor = MagicMock()
+        mock_cursor.execute.return_value = None
+        mock_cursor.fetchall.return_value = self.test_data
+        
+        mock_cursor_func.return_value.__enter__.return_value = mock_cursor
+        
+        self.client.force_authenticate(user=self.user)
+        
+        # Act: Make a GET request to OrdersView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]['order_id'], 1)
+        self.assertEqual(response.data[1]['status'], 'In Progress')
+        mock_cursor.execute.assert_called_once()
+    
+    # test_get_orders_unauthenticated(): Test the case when user is not authenticated
+    def test_get_orders_unauthenticated(self):
+        # Act: Make a GET request to OrdersView without authentication
+        response = self.client.get(self.url)
+        
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
+
+    # test_get_orders_unauthorized(): Test the case when user is authenticated but not authorized (not admin or manager)
+    def test_get_orders_unauthorized(self):
+        # Arrange: Change user role to 'user' and authenticate
+        self.user.role = 'user'  # Change role to non-admin
+        self.user.save()
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a GET request to OrdersView
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], "You do not have permission to perform this action.")
+    
+    @patch('django.db.connection.cursor')
+    # test_get_orders_database_error(): Test the case when there is a database error
+    def test_get_orders_database_error(self, mock_cursor_func):
+        # Arrange: Mock database to raise an exception and authenticate user
+        mock_cursor = MagicMock()
+        mock_cursor.execute.side_effect = Exception("Database error")
+        mock_cursor_func.return_value.__enter__.return_value = mock_cursor
+        
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a GET request to OrdersView
+        response = self.client.get(self.url)
+        
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data['error'], "Database error")
+    
+    @patch('django.db.connection.cursor')
+    # test_empty_result_set(): Test handling of empty result set from database
+    def test_get_orders_empty_result_set(self, mock_cursor_func):
+        # Arrange: Mock empty database result and authenticate user
+        mock_cursor = MagicMock()
+        mock_cursor.execute.return_value = None
+        mock_cursor.fetchall.return_value = []
+        
+        mock_cursor_func.return_value.__enter__.return_value = mock_cursor
+        
+        self.client.force_authenticate(user=self.user)
+        
+        # Act: Make a GET request to OrdersView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+    @patch('django.db.connection.cursor')
+    # test_get_orders_null_start_timestamp_handling(): Test proper handling of NULL start_timestamp values
+    def test_null_start_timestamp_handling(self, mock_cursor_func):
+        # Arrange: Mock database to return NULL start_timestamp and authenticate user
+        test_data = [(3, 90, 'Pending', '2023-12-20', None)]
+        
+        mock_cursor = MagicMock()
+        mock_cursor.execute.return_value = None
+        mock_cursor.fetchall.return_value = test_data
+        
+        mock_cursor_func.return_value.__enter__.return_value = mock_cursor
+        
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a GET request to OrdersView
+        response = self.client.get(self.url)
+        
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data[0]['start_timestamp'])
+
+class StartOrderViewTests(TestCase):
+    def setUp(self):
+        # Create a client instance and setup url
+        self.client = APIClient()
+        self.order_id = 123
+        self.url = reverse('start_order', kwargs={'order_id': self.order_id})
+
+        # Create a test user with test values
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )
+        
+        # Create a mock order
+        self.order = MagicMock(spec=Orders)
+        self.order.order_id = self.order_id
+        self.order.status = 'Not Started'
+
+    @patch('orders.views.get_object_or_404')
+    @patch('orders.views.timezone.now')
+    # test_start_order_success(): Test successful order start
+    def test_start_order_success(self, mock_now, mock_get_object):
+        # Arrange: Mocking timezone and get_object_or_404 functions, and authenticate user
+        test_time = timezone.make_aware(datetime(2023, 1, 1, 12, 0))
+        mock_now.return_value = test_time
+        mock_get_object.return_value = self.order
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()  # Use .json() to access the response content
+
+
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['order_status'], 'In Progress')
+        self.assertEqual(response_data['start_timestamp'], test_time.isoformat())
+    
+    @patch('orders.views.get_object_or_404')
+    # test_start_order_already_in_progress(): Test starting an already in-progress order
+    def test_start_order_already_in_progress(self, mock_get_object):
+        # Arrange: Mocking get_object_or_404 function and authenticate user
+        self.order.status = 'In Progress'
+        self.order.save()
+        mock_get_object.return_value = self.order
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response_data['status'], 'error')
+        self.assertEqual(response_data['message'], 'Order is already in progress')
+
+    @patch('orders.views.get_object_or_404')
+    # test_start_order_with_null_status(): Test that order with NULL status gets default status
+    def test_start_order_with_null_status(self, mock_get_object):
+        # Arrange: Mocking get_object_or_404 function and authenticate user
+        self.order.status = None
+        self.order.save()
+        mock_get_object.return_value = self.order
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check response status and data, and that status got updated
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(self.order.status, 'In Progress')
+    
+    @patch('orders.views.get_object_or_404')
+    # test_start_order_exception_handling(): Test exception handling
+    def test_start_order_exception_handling(self, mock_get_object):
+        # Arrange: Mocking get_object_or_404 function to raise an exception and authenticate user
+        mock_get_object.side_effect = Exception("Test error")
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response_data['status'], 'error')
+        self.assertEqual(response_data['message'], 'Test error')
+
+    # test_start_order_unauthenticated(): Test the case when user is not authenticated
+    def test_start_order_unauthenticated(self):
+        # Act: Make a POST request to StartOrderView without authentication
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response_data['detail'], "Authentication credentials were not provided.")
+    
+    # test_start_order_unauthorized(): Test the case when user is authenticated but not authorized (not admin or manager)
+    def test_start_order_unauthorized(self):
+        # Arrange: Change user role to 'user' and authenticate
+        self.user.role = 'user'
+        self.user.save()
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check if exception was raised
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response_data['detail'], "You do not have permission to perform this action.")
+    
+    @patch('orders.views.get_object_or_404')
+    @patch('orders.views.timezone.now')
+    # test_timestamp_set_correctly(): Test that timestamp is set correctly
+    def test_start_order_timestamp_set_correctly(self, mock_now, mock_get_object):
+        # Arrange: Mocking timezone and get_object_or_404 functions, and authenticate user
+        test_time = timezone.make_aware(datetime(2023, 1, 1, 12, 0))
+        mock_now.return_value = test_time
+        mock_get_object.return_value = self.order
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to StartOrderView
+        response = self.client.post(self.url, self.order_id, format='json')
+        response_data = response.json()
+
+        # Assert: Check response status and data, and that timestamp is set correctly
+        self.assertEqual(self.order.start_timestamp, test_time)
+        self.assertEqual(response_data['start_timestamp'], test_time.isoformat())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class DelayedOrdersViewTests(TestCase):
+    def setUp(self):
+        # Create a client instance and setup url
+        self.client = APIClient()
+        self.order_id = 123
+        self.url = reverse('delayed_orders')
+
+        # Create a test user with test values
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )
+
+        # Create test data
+        delayed_order = {
+            'order_id': 123,
+            'due_date': datetime(2023, 1, 5).date(),  # 5 days late
+            'ship_complete_timestamp': None,
+            'start_timestamp': datetime(2023, 1, 1)
+        }
+        self.test_date = datetime(2023, 1, 10).date()
+
+        # Mock database query retrievals
+        self.mock_queryset_success = MagicMock()
+        self.mock_queryset_success.values.return_value.filter.return_value = [delayed_order]
+
+        self.mock_queryset_empty = MagicMock()
+        self.mock_queryset_empty.values.return_value.filter.return_value = []
+
+        
+    @patch('orders.views.timezone.now')
+    @patch('orders.models.Orders.objects.all')
+    # test_get_delayed_orders_success(): Test successful retrieval of delayed orders
+    def test_get_delayed_orders_success(self, mock_orders_all, mock_now):
+        # Arrange: Mocking timezone and Orders queryset, and authenticate user
+        mock_now.return_value.date.return_value = self.test_date
+        mock_orders_all.return_value = self.mock_queryset_success
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to Delayed Orders view
+        response = self.client.get(self.url)
+
+        # Assert: Check response status and data, and verify query was correctly constructed
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['order_id'], 123)
+        self.assertEqual(response.data[0]['delay'], 5)
+    
+    @patch('orders.views.timezone.now')
+    @patch('orders.models.Orders.objects.all')
+    # test_get_delayed_orders_no_orders(): Handle test case when there are no delayed orders
+    def test_get_delayed_orders_no_orders(self, mock_orders_all, mock_now):
+        # Arrange: Mocking timezone and Orders (empty) queryset, and authenticate user
+        mock_now.return_value.date.return_value = self.test_date
+        mock_orders_all.return_value = self.mock_queryset_empty
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to Delayed Orders view
+        response = self.client.get(self.url)
+
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+    
+    @patch('orders.views.timezone.now')
+    @patch('orders.models.Orders.objects.all')
+    # test_get_delayed_orders_database_exception(): Handle the test case where an error occurs during database retrieval
+    def test_get_delayed_orders_database_exception(self, mock_orders_all, mock_now):
+        # Arrange: Mocking timezone and orders to throw an exception, and authenticate user
+        mock_now.return_value.date.return_value = datetime(2023, 1, 10).date()
+        mock_orders_all.side_effect = Exception("Database error")
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to Delayed Orders view
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data['error'], 'Database error')
+    
+    # test_get_delayed_orders_unauthenticated(): Handle the test case when unauthenticated user sends a GET request
+    def test_get_delayed_orders_unauthenticated(self):
+        # Act: Make a POST request to Delayed Orders view
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
