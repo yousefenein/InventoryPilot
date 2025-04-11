@@ -2,7 +2,7 @@
 
 ## Release Demo
 Release 3: **https://drive.google.com/file/d/1A0P-mhyDx5q1hXIzOz_FQGD1S1wqSAA2/view?usp=sharing**  <br/>
-Release 2: **https://drive.google.com/file/d/1A0P-mhyDx5q1hXIzOz_FQGD1S1wqSAA2/view?usp=sharing**
+Release 2: **https://drive.google.com/file/d/1UAyWNS10-HoNQkFiJOYEpXlHf-HG4FO0/view?usp=sharing**
 
 ## Top 5 most important files 
 
