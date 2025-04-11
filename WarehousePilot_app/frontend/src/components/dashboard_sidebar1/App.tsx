@@ -1,3 +1,5 @@
+//Tested Sidebar Collapse Button.Test passed.
+//Tested Sidebar links(including logout). Test passed.
 "use client";
 
 import React, { useState, useEffect } from "react";
