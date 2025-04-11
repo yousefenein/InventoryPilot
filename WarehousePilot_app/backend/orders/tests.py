@@ -1,12 +1,13 @@
 """
 
 This file includes:
-- Tests for generating manufacturing and inventory lists (`GenerateListsTests`).
+- Tests for generating manufacturing and inventory lists (`GenerateInventoryAndManufacturingListsViewTests`).
 - Tests for retrieving inventory picklist items (`InventoryPicklistItemsViewTest`).
 - Tests for retrieving inventory picklist ( A.K.A orders that have been started )
 - Tests for cycle time per order (`CycleTimePerOrderViewTests`).
 - Tests for order retrieval (`OrdersViewTests`).
 - Tests for starting an order (`StartOrderViewTests`).
+- Tests for delayed orders (`DelayedOrdersViewTests`).
 """
 
 from django.urls import reverse
@@ -37,7 +38,6 @@ from manufacturingLists.models import (
 )
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-
 
 class GenerateInventoryAndManufacturingListsViewTests(TestCase):
     def setUp(self):
@@ -1162,3 +1162,104 @@ class StartOrderViewTests(TestCase):
         self.assertEqual(self.order.start_timestamp, test_time)
         self.assertEqual(response_data['start_timestamp'], test_time.isoformat())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class DelayedOrdersViewTests(TestCase):
+    def setUp(self):
+        # Create a client instance and setup url
+        self.client = APIClient()
+        self.order_id = 123
+        self.url = reverse('delayed_orders')
+
+        # Create a test user with test values
+        self.user = users.objects.create_user(
+            first_name='Test',
+            last_name='Admin',
+            username="admin",
+            password="adminpassword",
+            email="admin@example.com",
+            date_of_hire='1990-01-01',
+            department='Testing',
+            role='admin',
+            is_staff=False,
+            theme_preference='light'
+        )
+
+        # Create test data
+        delayed_order = {
+            'order_id': 123,
+            'due_date': datetime(2023, 1, 5).date(),  # 5 days late
+            'ship_complete_timestamp': None,
+            'start_timestamp': datetime(2023, 1, 1)
+        }
+        self.test_date = datetime(2023, 1, 10).date()
+
+        # Mock database query retrievals
+        self.mock_queryset_success = MagicMock()
+        self.mock_queryset_success.values.return_value.filter.return_value = [delayed_order]
+
+        self.mock_queryset_empty = MagicMock()
+        self.mock_queryset_empty.values.return_value.filter.return_value = []
+
+        
+    @patch('orders.views.timezone.now')
+    @patch('orders.models.Orders.objects.all')
+    # test_get_delayed_orders_success(): Test successful retrieval of delayed orders
+    def test_get_delayed_orders_success(self, mock_orders_all, mock_now):
+        # Arrange: Mocking timezone and Orders queryset, and authenticate user
+        mock_now.return_value.date.return_value = self.test_date
+        mock_orders_all.return_value = self.mock_queryset_success
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to Delayed Orders view
+        response = self.client.get(self.url)
+
+        # Assert: Check response status and data, and verify query was correctly constructed
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['order_id'], 123)
+        self.assertEqual(response.data[0]['delay'], 5)
+    
+    @patch('orders.views.timezone.now')
+    @patch('orders.models.Orders.objects.all')
+    # test_get_delayed_orders_no_orders(): Handle test case when there are no delayed orders
+    def test_get_delayed_orders_no_orders(self, mock_orders_all, mock_now):
+        # Arrange: Mocking timezone and Orders (empty) queryset, and authenticate user
+        mock_now.return_value.date.return_value = self.test_date
+        mock_orders_all.return_value = self.mock_queryset_empty
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to Delayed Orders view
+        response = self.client.get(self.url)
+
+        # Assert: Check response status and data
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+    
+    @patch('orders.views.timezone.now')
+    @patch('orders.models.Orders.objects.all')
+    # test_get_delayed_orders_database_exception(): Handle the test case where an error occurs during database retrieval
+    def test_get_delayed_orders_database_exception(self, mock_orders_all, mock_now):
+        # Arrange: Mocking timezone and orders to throw an exception, and authenticate user
+        mock_now.return_value.date.return_value = datetime(2023, 1, 10).date()
+        mock_orders_all.side_effect = Exception("Database error")
+
+        self.client.force_authenticate(user=self.user)
+
+        # Act: Make a POST request to Delayed Orders view
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data['error'], 'Database error')
+    
+    # test_get_delayed_orders_unauthenticated(): Handle the test case when unauthenticated user sends a GET request
+    def test_get_delayed_orders_unauthenticated(self):
+        # Act: Make a POST request to Delayed Orders view
+        response = self.client.get(self.url)
+
+        # Assert: Check if exception is raised
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.data['detail'], "Authentication credentials were not provided.")
