@@ -180,7 +180,8 @@ const ManufacturingListItem = () => {
 
                 <TableBody items={paginatedRows}>
                   {(item) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id}
+                    className="odd:bg-white even:bg-gray-100 dark:odd:bg-gray-800 dark:even:bg-gray-700">
                       <TableCell>{item.manufacturing_list_item_id}</TableCell>
                       <TableCell>{item.sku_color}</TableCell>
                       <TableCell>{item.quantity}</TableCell>

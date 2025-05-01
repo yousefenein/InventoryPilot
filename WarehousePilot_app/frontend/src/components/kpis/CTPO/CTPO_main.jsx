@@ -1,7 +1,6 @@
 // CTPO: Cycle Time Per Order
 // This page displays more in-depth information about cycle time per order
 
-
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
@@ -23,6 +22,7 @@ import { Icon } from "@iconify/react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import SideBar from "../../dashboard_sidebar1/App";
+import NavBar from "../../navbar/App";
 import ProgressBar from "./progressbar";
 import DelayedOrdersNotifCard from "./DelayedOrderAlerts/App"
 
@@ -36,6 +36,7 @@ const CTPO = () => {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const rowsPerPage = 8;
 
@@ -114,6 +115,29 @@ const CTPO = () => {
     fetchOrders();
   }, []);
 
+  useEffect(() => {
+    // Check for dark mode class on the HTML element
+    const htmlElement = document.documentElement;
+    setIsDarkMode(htmlElement.classList.contains('dark'));
+
+    // Set up a mutation observer to watch for class changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          setIsDarkMode(htmlElement.classList.contains('dark'));
+        }
+      });
+    });
+
+    observer.observe(htmlElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+
   const handleViewOrderDetails = (order_id) => {
     navigate(`/manufacturing_list_item/${order_id}`);
   };
@@ -125,109 +149,129 @@ const CTPO = () => {
 
   const CTPO_COLUMNS = ["Order ID", "Status", "Cycle Time"];
 
+  const COLORS = isDarkMode ? ["#8884d8", "#ff4444"] : ["#8B0000", "#A52A2A"];
+
+  const handleViewDetails = () => {
+    navigate('/kpi');
+  };
   return (
-    <div className="h-full w-full dark:bg-gray-900">
-      <div className="w-screen flex-1">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
-        <SideBar />
-        <main className="flex p-6 h-screen w-screen">
-          <div className="mt-2 p-8 w-screen">
-            <h1 className="text-2xl font-bold mb-6 dark:text-white">Cycle Time Per Order Statistics</h1>
+      <SideBar />
+      <div className="flex-1">
+        <NavBar />
+        <main className="max-w-screen mx-auto p-10">
 
-            {/* Error message */}
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-                {error}
-              </div>
-            )}
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-3xl font-bold mb-6 dark:text-white ">Cycle Time Per Order Statistics</h1>
+            <button
+              className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600'} text-white py-1 px-3 rounded`}
+              onClick={handleViewDetails}
+            >
+              Back to KPI Overview
+            </button>
+          </div>
+          {/* Error message */}
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+              {error}
+            </div>
+          )}
 
-            <div className="flex justify-between items-center mb-5">
-              {/* Search Input */}
-              <div className="flex items-center gap-2">
-                <Input
-                  size="md"
-                  placeholder="Search orders"
-                  value={filterValue}
-                  onChange={(e) => setFilterValue(e.target.value)}
-                  endContent={<SearchIcon className="text-default-400" width={16} />}
-                  className="w-72"
-                />
-              </div>
-
-              {/* Delayed Orders Notifications */}
-              <div className="flex items-center gap-6">
-                <Popover>
-                  <PopoverTrigger>
-                    <Button isIconOnly variant="flat">
-                      <Badge
-                        style={{ backgroundColor: "#b91c1c" }} // Custom red color
-                        content=" "
-                        shape="circle"
-                        isInvisible={!unreadNotifications}
-                      >
-                        <Icon icon="solar:bell-outline" width={24} />
-                      </Badge>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent>
-                    <DelayedOrdersNotifCard onMarkAllAsRead={handleNotificationsRead} />
-                  </PopoverContent>
-                </Popover>
-              </div>
+          <div className="flex justify-between items-center mb-5">
+            {/* Search Input */}
+            <div className="flex items-center gap-2">
+              <Input
+                size="md"
+                placeholder="Search orders"
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+                endContent={<SearchIcon className="text-default-400" width={16} />}
+                className="w-72"
+              />
             </div>
 
-            {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <div>Loading...</div>
-              </div>
-            ) : (
-              <>
-                <Table aria-label="CTPO" className="min-w-full w-full"
-                
-                
+            {/* Delayed Orders Notifications */}
+            <div className="flex items-center gap-6">
+              <Popover>
+                <PopoverTrigger>
+                  <Button isIconOnly variant="flat">
+                    <Badge
+                      style={{ backgroundColor: "#b91c1c" }} // Custom red color
+                      content=" "
+                      shape="circle"
+                      isInvisible={!unreadNotifications}
+                    >
+                      <Icon icon="solar:bell-outline" width={24} />
+                    </Badge>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                  <DelayedOrdersNotifCard onMarkAllAsRead={handleNotificationsRead} />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div>Loading...</div>
+            </div>
+          ) : (
+            <>
+              <Table aria-label="CTPO" className="min-w-full w-full"
+
+
                 classNames={{
                   wrapper: "dark:bg-gray-800",
                   th: "dark:bg-gray-700 dark:text-white",
                   tr: "dark:hover:bg-gray-700",
                   td: "dark:text-white dark:before:bg-transparent"
                 }}
-                >
-                  <TableHeader>
-                    {CTPO_COLUMNS.map((column) => (
-                      <TableColumn key={column}>{column}</TableColumn>
-                    ))}
-                  </TableHeader>
+              >
+                <TableHeader>
+                  {CTPO_COLUMNS.map((column) => (
+                    <TableColumn key={column}>{column}</TableColumn>
+                  ))}
+                </TableHeader>
 
-                  <TableBody items={paginatedRows}>
-                    {(item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.order_id}</TableCell>
-                        <TableCell>{item.status ? item.status : "N/A"}</TableCell>
-                        <TableCell><ProgressBar
-                          pickTime={item.pick_time}
-                          packTime={item.pack_time}
-                          shipTime={item.ship_time} />
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                <TableBody items={paginatedRows}>
+                  {(item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.order_id}</TableCell>
+                      <TableCell>{item.status ? item.status : "N/A"}</TableCell>
+                      <TableCell><ProgressBar
+                        pickTime={item.pick_time}
+                        packTime={item.pack_time}
+                        shipTime={item.ship_time} />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
 
-                <div className="flex justify-between items-center mt-4">
-                  <span>
-                    Page {page} of {totalPages}
-                  </span>
-                  <Pagination
-                    total={totalPages}
-                    initialPage={1}
-                    current={page}
-                    onChange={(newPage) => setPage(newPage)}
-                  />
-                </div>
-              </>
-            )}
-          </div>
+              {/* Pagination*/}
+              <div className="flex justify-between items-center mt-4">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Page {page} of {totalPages}
+                </span>
+                <Pagination
+                  total={totalPages}
+                  initialPage={1}
+                  current={page}
+                  onChange={(newPage) => { setPage(newPage) }}
+                  className="text-gray-600 dark:text-gray-400"
+                  classNames={{
+                    item: "dark:bg-gray-700 dark:text-white",
+                    cursor: "bg-black text-white dark:bg-black dark:text-white"
+                  }}
+                />
+              </div>
+            </>
+          )}
+
         </main>
+
       </div>
     </div>
   );

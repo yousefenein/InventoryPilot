@@ -1,3 +1,6 @@
+//Tested the "View Details" button on dashboard widgets. Test passed on all cards.
+//Tested Graph resize on window resize. Test passed.
+//Tested the Tooltip for CycleTime Graph on Hover.Test passed.
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import CycleTime from "./CycleTime";
@@ -10,6 +13,7 @@ import NavBar from "../navbar/App";
 import axios from "axios";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import CTPOPreview from "../kpis/CTPO/CTPOPreview";
+import StockLevelsPreview from "./StockLevelsPreview"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -64,9 +68,12 @@ const KPIDashboard = ({ userData }) => {
       <div className="flex-1 sm:ml-10 sm:mt-2">
         <NavBar />
         <main className="flex-1 p-12">
-          {/* Overview Section - Top 3 Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          {/* Overview Section - Top 2 Cards */}
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
             {/* Active Orders Card */}
+
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Active Orders</h2>
@@ -82,12 +89,12 @@ const KPIDashboard = ({ userData }) => {
               ) : error ? (
                 <p className="text-red-500 text-center">{error}</p>
               ) : (
-                <div className="flex flex-col">
+                <div className="flex flex-col items-center">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-3xl font-bold text-gray-800 dark:text-white">{totalActiveOrders.toLocaleString()}</p>
                   </div>
-                  <div>
-                    <LineChart width={300} height={150} data={activeOrdersData}>
+                  <div className="w-full flex justify-center">
+                    <LineChart width={600} height={300} data={activeOrdersData}>
                       <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#4A5568' : '#E2E8F0'} />
                       <XAxis dataKey="date" hide />
                       <YAxis hide />
@@ -99,6 +106,7 @@ const KPIDashboard = ({ userData }) => {
               )}
             </div>
 
+
             {/* Completed Orders Card */}
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Completed Orders</h2>
@@ -107,13 +115,13 @@ const KPIDashboard = ({ userData }) => {
               ) : error ? (
                 <p className="text-red-500 text-center">{error}</p>
               ) : (
-                <div className="flex flex-col">
+                <div className="flex flex-col items-center">
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-3xl font-bold text-gray-800 dark:text-white">{totalCompletedOrders.toLocaleString()}</p>
-                    <p className="text-red-500">-25%</p>
+                    <p className="text-red-500 text-xl ml-2">{`-25%`}</p> {/* Adjusted size and margin */}
                   </div>
-                  <div>
-                    <LineChart width={300} height={150} data={completedOrdersData}>
+                  <div className="w-full flex justify-center">
+                    <LineChart width={600} height={300} data={completedOrdersData}>
                       <CartesianGrid strokeDasharray="3 3" stroke={document.documentElement.classList.contains('dark') ? '#4A5568' : '#E2E8F0'} />
                       <XAxis dataKey="date" hide />
                       <YAxis hide />
@@ -125,39 +133,36 @@ const KPIDashboard = ({ userData }) => {
               )}
             </div>
 
-            {/* Order Picking Accuracy Card */}
-            <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Order Picking Accuracy</h2>
-              <div className="accuracy-metrics">
-                <OrderPickingAccuracy />
-              </div>
-            </div>
+
+
+
           </div>
 
           {/* First Row of Graphs */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-              <ThroughputThresholdKpiPreview/>
+              <OrderPickingAccuracy />
             </div>
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <OrderFulfillmentPreview/>
             </div>
           </div>
 
-          {/* Second Row of Graphs */}
+           {/* Second Row of Graphs */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
               <CTPOPreview />
             </div>
-         
+            
+           {/* Order Picking Accuracy Card */}
+            <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
+              <ThroughputThresholdKpiPreview/>
+            </div>
           </div>
 
-          {/* Details Section */}
+          {/* Inventory preview Section */}
           <div className="bg-white dark:bg-gray-800 p-4 shadow rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Details</h2>
-            <div className="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-              Table/Data Placeholder
-            </div>
+            <StockLevelsPreview />
           </div>
         </main>
       </div>

@@ -99,7 +99,7 @@ export default function ThroughputThresholdKpiPreview() {
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
             {/* Header and View Details button */}
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold dark:text-white">Throughput Threshold</h2>
+                <h2 className="text-xl font-semibold text-black dark:text-white">Throughput Threshold</h2>
                 <button
                     onClick={handleViewDetails}
                     className="bg-gray-500 dark:bg-gray-700 hover:bg-red-600 dark:hover:bg-red-700 text-white py-1 px-3 rounded transition-colors"
