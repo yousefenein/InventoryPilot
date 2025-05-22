@@ -40,14 +40,14 @@ const OAInput = () => {
       }
   
       console.log("📤 Sending file to backend...");
-      console.log("🔍 API URL:", `${API_BASE_URL}oa_input/oa_in/`);
+      console.log("🔍 API URL:", `${API_BASE_URL}/oa_input/oa_in/`);
       console.log("🔍 Headers:", {
         Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data",
       });
   
       const response = await axios.post(
-        `${API_BASE_URL}oa_input/oa_in/`, 
+        `${API_BASE_URL}/oa_input/oa_in/`, 
         formData,
         {
           headers: {
