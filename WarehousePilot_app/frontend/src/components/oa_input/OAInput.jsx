@@ -10,6 +10,8 @@ const OAInput = () => {
   const [uploadResponse, setUploadResponse] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploadStartTime, setUploadStartTime] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleFileChange = (e) => {
@@ -29,6 +31,12 @@ const OAInput = () => {
     setLoading(true);
     setError(null);
     setUploadResponse(null);
+    setUploadStartTime(Date.now());
+    
+    // Start a timer to update the elapsed time every second
+    const timer = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - uploadStartTime) / 1000));
+    }, 1000);
   
     try {
       const token = localStorage.getItem("token");
@@ -65,6 +73,7 @@ const OAInput = () => {
       setError(`Failed to upload file: ${err.response?.data?.error || err.message}`);
     } finally {
       setLoading(false);
+      clearInterval(timer); // Clear the timer when upload completes or fails
     }
   };
 
@@ -91,18 +100,18 @@ const OAInput = () => {
                 <p><strong>Accepted formats:</strong> .xlsx, .xlsm, .csv</p>
                 <p><strong>Required columns with exact names and capitalization:</strong></p>
                 <ul className="list-disc list-inside">
-                  <li>275</li>
                   <li>NoCommande</li>
                   <li>QteAProd</li>
                   <li>NoProd</li>
                   <li>Departement</li>
                   <li>LineUpNo</li>
+                  <li>LineupName</li>
                   <li>MaxDate</li>
                   <li>NomClientLiv</li>
                   <li>ProjectType</li>
                   <li>StatutOA</li>
-                  <li>LOC / AREA / MODEL FINAL</li>
                 </ul>
+                <p><strong>Note:</strong> Column '275' (material type), 'LOC' (location), 'AREA', and 'MODEL FINAL' are also expected but may be derived from other columns.</p>
                 <p>Rows with missing or invalid values may be skipped.</p>
               </div>
             }
@@ -117,13 +126,19 @@ const OAInput = () => {
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           disabled={loading}
         >
-          {loading ? "Uploading..." : "Upload"}
+          {loading ? `Uploading... (${elapsedTime}s)` : "Upload"}
         </button>
       </CardBody>
       <Divider />
       <CardFooter className="text-center">
         {error && <p className="text-red-500">{error}</p>}
-        {uploadResponse && <p className="text-green-500">Upload Successful!</p>}
+        {uploadResponse && (
+          <div>
+            <p className="text-green-500">Upload Successful!</p>
+            {uploadResponse.message && <p className="text-sm mt-1">{uploadResponse.message}</p>}
+            {uploadResponse.note && <p className="text-xs text-gray-600 mt-1">{uploadResponse.note}</p>}
+          </div>
+        )}
       </CardFooter>
     </Card>
     </div>
